@@ -2,14 +2,15 @@
  * Ranking Alert Email Template
  */
 
-import { RankingAlertNotification, EmailTemplate } from '../notification-types';
+import { RankingAlertNotification, KeywordRankingChangeNotification, EmailTemplate } from '../notification-types';
 
 export function generateRankingAlertTemplate(
-  notification: RankingAlertNotification,
+  notification: RankingAlertNotification | KeywordRankingChangeNotification,
   unsubscribeUrl?: string
 ): EmailTemplate {
   const { data, recipientName } = notification;
-  const { companyName, keyword, location, oldPosition, newPosition, change, date, competitorData } = data;
+  const { companyName, keyword, location, oldPosition, newPosition, change, date } = data;
+  const competitorData = 'competitorData' in data ? data.competitorData : undefined;
 
   const isImprovement = change > 0;
   const changeAbs = Math.abs(change);

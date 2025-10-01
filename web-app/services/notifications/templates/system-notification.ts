@@ -2,10 +2,10 @@
  * System Notification Email Template
  */
 
-import { SystemNotification, EmailTemplate } from '../notification-types';
+import { SystemNotification, CompetitorAlertNotification, CitationIssueNotification, EmailTemplate } from '../notification-types';
 
 export function generateSystemNotificationTemplate(
-  notification: SystemNotification,
+  notification: SystemNotification | CompetitorAlertNotification | CitationIssueNotification,
   unsubscribeUrl?: string
 ): EmailTemplate {
   const { data, recipientName, priority } = notification;

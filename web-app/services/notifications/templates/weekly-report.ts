@@ -2,14 +2,27 @@
  * Weekly Report Email Template
  */
 
-import { WeeklyReportNotification, EmailTemplate } from '../notification-types';
+import { WeeklyReportNotification, ScheduledReportNotification, EmailTemplate } from '../notification-types';
 
 export function generateWeeklyReportTemplate(
-  notification: WeeklyReportNotification,
+  notification: WeeklyReportNotification | ScheduledReportNotification,
   unsubscribeUrl?: string
 ): EmailTemplate {
   const { data, recipientName } = notification;
-  const { companyName, reportPeriod, metrics, audits, competitors, reportUrl } = data;
+  const { companyName, reportPeriod, reportUrl } = data;
+
+  // Handle optional fields that may not exist in ScheduledReportNotification
+  const metrics = 'metrics' in data && data.metrics && typeof data.metrics === 'object' && 'rankingImprovements' in data.metrics
+    ? data.metrics as any
+    : { rankingImprovements: 0, rankingDecreases: 0, totalKeywords: 0, averagePosition: 0, topKeywords: [] };
+
+  const audits = 'audits' in data && data.audits
+    ? data.audits
+    : { total: 0, criticalIssues: 0, improvements: 0 };
+
+  const competitors = 'competitors' in data && data.competitors
+    ? data.competitors
+    : { total: 0, gainedPositions: 0, lostPositions: 0 };
 
   const rankingTrend = metrics.rankingImprovements > metrics.rankingDecreases ? 'up' : 'down';
   const trendColor = rankingTrend === 'up' ? '#10b981' : '#ef4444';
