@@ -95,6 +95,8 @@ export class IntegrationAutoConfig {
         return await this.configureGitHubMCP(creds, result)
       case 'vercel-mcp':
         return await this.configureVercelMCP(creds, result)
+      case 'playwright-mcp':
+        return await this.configurePlaywrightMCP(creds, result)
       default:
         result.errors.push(`Unknown integration: ${integrationName}`)
         return result
@@ -993,6 +995,260 @@ Benefits:
 `
       await fs.writeFile(readmePath, readmeContent)
       result.configFilesCreated.push('VERCEL_MCP_SETUP.md')
+
+      result.success = true
+    } catch (error) {
+      result.errors.push(error instanceof Error ? error.message : String(error))
+    }
+
+    return result
+  }
+
+  // Configure Playwright MCP
+  private async configurePlaywrightMCP(
+    creds: Record<string, string>,
+    result: AutoConfigResult
+  ): Promise<AutoConfigResult> {
+    try {
+      const browser = creds.browser || 'chrome'
+      const headless = creds.headless === 'true'
+      const capabilities = creds.capabilities?.split(',') || []
+
+      // Update .vscode/mcp.json to include Playwright MCP
+      const vscodeDir = path.join(this.projectPath, '.vscode')
+      await fs.ensureDir(vscodeDir)
+
+      const mcpConfigPath = path.join(vscodeDir, 'mcp.json')
+      let mcpConfig: any = {
+        $schema: 'https://modelcontextprotocol.io/schema/mcp.json',
+        inputs: [],
+        mcpServers: {},
+      }
+
+      // Read existing config if it exists
+      if (await fs.pathExists(mcpConfigPath)) {
+        mcpConfig = await fs.readJSON(mcpConfigPath)
+      }
+
+      // Add Playwright MCP server
+      if (!mcpConfig.mcpServers) mcpConfig.mcpServers = {}
+
+      const args = ['@playwright/mcp@latest']
+      if (browser && browser !== 'chrome') {
+        args.push('--browser', browser)
+      }
+      if (headless) {
+        args.push('--headless')
+      }
+      if (capabilities.length > 0) {
+        args.push('--caps', capabilities.join(','))
+      }
+
+      mcpConfig.mcpServers.playwright = {
+        command: 'npx',
+        args,
+        description: 'Playwright MCP server for browser automation and testing',
+        capabilities: [
+          'Browser automation using accessibility tree',
+          'Web scraping and testing',
+          'Multi-browser support (Chrome, Firefox, WebKit)',
+          'Screenshot and PDF generation',
+          'Network interception and mocking',
+        ],
+      }
+
+      await fs.writeJSON(mcpConfigPath, mcpConfig, { spaces: 2 })
+      result.configFilesCreated.push('.vscode/mcp.json')
+
+      // Create Playwright MCP config file
+      const configPath = path.join(this.projectPath, 'playwright-mcp.config.ts')
+      const configContent = `import { createPlaywrightMCPService } from './services/playwright-mcp'
+
+const playwrightMCP = createPlaywrightMCPService({
+  browser: '${browser}',
+  headless: ${headless},
+  ${capabilities.length > 0 ? `capabilities: ['${capabilities.join("', '")}'],` : ''}
+})
+
+export default playwrightMCP
+
+/**
+ * Playwright MCP is now configured!
+ *
+ * Use AI prompts like:
+ * - "Navigate to example.com and click the login button"
+ * - "Extract all product titles from the e-commerce page"
+ * - "Take a full-page screenshot of the homepage"
+ * - "Test the contact form submission"
+ *
+ * Browser: ${browser}
+ * Headless: ${headless}
+ * ${capabilities.length > 0 ? `Capabilities: ${capabilities.join(', ')}` : 'No additional capabilities'}
+ */
+`
+      await fs.writeFile(configPath, configContent)
+      result.configFilesCreated.push('playwright-mcp.config.ts')
+
+      // Create README for Playwright MCP setup
+      const readmePath = path.join(this.projectPath, 'PLAYWRIGHT_MCP_SETUP.md')
+      const readmeContent = `# Playwright MCP Setup
+
+## What is Playwright MCP?
+
+The Playwright MCP (Model Context Protocol) server connects AI agents to Playwright for browser automation, web scraping, and testing.
+
+## Already Configured
+
+✅ VS Code MCP configuration created (.vscode/mcp.json)
+✅ Browser: ${browser}
+✅ Headless: ${headless}
+${capabilities.length > 0 ? `✅ Capabilities: ${capabilities.join(', ')}` : ''}
+✅ Service wrapper ready (playwright-mcp.config.ts)
+
+## Key Features
+
+### Fast and Lightweight
+- Uses accessibility tree, not screenshots
+- LLM-friendly structured data
+- Deterministic tool application
+
+### Multi-Browser Support
+- Chrome / Chromium
+- Firefox
+- WebKit (Safari)
+- Microsoft Edge
+
+### Advanced Capabilities
+${capabilities.includes('vision') ? '- ✅ Vision: Screenshot and coordinate-based interactions' : '- Vision: Enable with --caps=vision'}
+${capabilities.includes('pdf') ? '- ✅ PDF: PDF generation from pages' : '- PDF: Enable with --caps=pdf'}
+${capabilities.includes('verify') ? '- ✅ Verify: Assertions and expectations' : '- Verify: Enable with --caps=verify'}
+${capabilities.includes('tracing') ? '- ✅ Tracing: Playwright trace recording' : '- Tracing: Enable with --caps=tracing'}
+
+## Usage in AI Agents
+
+### Claude Code
+\`\`\`bash
+# Already added to local config
+# Just start using it with prompts!
+\`\`\`
+
+### VS Code
+1. Open VS Code in this project
+2. MCP server auto-starts
+3. Use AI features with browser automation
+
+### Cursor
+Add to .cursor/mcp.json:
+\`\`\`json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
+\`\`\`
+
+## Example Prompts
+
+**Web Automation:**
+- "Navigate to google.com and search for 'playwright automation'"
+- "Go to example.com, click Sign In, and fill the login form"
+- "Open amazon.com and add the first product to cart"
+
+**Web Scraping:**
+- "Extract all product names and prices from the e-commerce page"
+- "Scrape article headlines from the news site"
+- "Get all email addresses from the contact page"
+
+**Testing:**
+- "Test the login flow with valid credentials"
+- "Validate that all links are not broken"
+- "Check mobile menu on iPhone viewport"
+
+${capabilities.includes('vision') ? `**Screenshots:**
+- "Take a full-page screenshot of the homepage"
+- "Capture the pricing table element"
+- "Screenshot in desktop and mobile viewports"` : ''}
+
+${capabilities.includes('pdf') ? `**PDF Generation:**
+- "Generate a PDF of the documentation site"
+- "Create a PDF report of the dashboard"
+- "Export the invoice page as PDF"` : ''}
+
+## Configuration Options
+
+Update .vscode/mcp.json args to customize:
+
+\`\`\`json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser", "chrome",
+        "--headless",
+        "--viewport-size", "1920x1080",
+        "--caps", "vision,pdf",
+        "--save-trace"
+      ]
+    }
+  }
+}
+\`\`\`
+
+**Available Options:**
+- \`--browser <browser>\` - chrome, firefox, webkit, msedge
+- \`--headless\` - Run in headless mode
+- \`--viewport-size <size>\` - e.g., "1280x720"
+- \`--device <device>\` - e.g., "iPhone 15"
+- \`--caps <capabilities>\` - vision, pdf, verify, tracing
+- \`--isolated\` - Clean state for each session
+- \`--save-trace\` - Save Playwright trace
+- \`--save-video <size>\` - Record video
+
+## Persistent vs Isolated Sessions
+
+**Persistent (default):**
+- Saves browser profile to disk
+- Keeps login sessions between runs
+- Profile location:
+  - Windows: \`%USERPROFILE%\\AppData\\Local\\ms-playwright\\mcp-chrome-profile\`
+  - macOS: \`~/Library/Caches/ms-playwright/mcp-chrome-profile\`
+  - Linux: \`~/.cache/ms-playwright/mcp-chrome-profile\`
+
+**Isolated:**
+- In-memory profile
+- Clean state for each session
+- Add \`--isolated\` flag
+
+## Browser Extension
+
+Connect to existing browser tabs using the Playwright MCP Bridge extension:
+- Chrome Web Store: Search "Playwright MCP Bridge"
+- GitHub: https://github.com/microsoft/playwright-mcp/tree/main/extension
+
+## Supported AI Clients
+
+- Claude Code ✅
+- Claude Desktop ✅
+- VS Code ✅
+- Cursor ✅
+- Windsurf ✅
+- Goose ✅
+- LM Studio ✅
+- Gemini CLI ✅
+
+## Learn More
+
+- [Playwright MCP GitHub](https://github.com/microsoft/playwright-mcp)
+- [Playwright Documentation](https://playwright.dev)
+- [MCP Protocol](https://modelcontextprotocol.io)
+`
+      await fs.writeFile(readmePath, readmeContent)
+      result.configFilesCreated.push('PLAYWRIGHT_MCP_SETUP.md')
 
       result.success = true
     } catch (error) {
