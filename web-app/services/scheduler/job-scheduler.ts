@@ -228,7 +228,6 @@ export class JobScheduler {
         await this.executeJob(jobName, job.handler);
       },
       {
-        scheduled: job.enabled,
         timezone: 'America/New_York',
       }
     );
@@ -236,8 +235,11 @@ export class JobScheduler {
     job.task = newTask;
     job.schedule = newSchedule;
 
+    // Start the task only if the job is enabled
     if (job.enabled) {
       newTask.start();
+    } else {
+      newTask.stop();
     }
 
     console.log(`Job '${jobName}' schedule updated to: ${newSchedule}`);
