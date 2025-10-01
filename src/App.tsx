@@ -14,6 +14,7 @@ import ProjectConfig from '@/pages/ProjectConfig'
 import IntegrationsHub from '@/pages/IntegrationsHub'
 import WebhookManager from '@/pages/WebhookManager'
 import IntegrationStatus from '@/pages/IntegrationStatus'
+import ProjectGenerator from '@/pages/ProjectGenerator'
 import Layout from '@/components/common/Layout'
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           <Route path="/ai-strategy" element={<AIStrategy />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/project-hub" element={<ProjectHub />} />
+          <Route path="/project-generator" element={<ProjectGenerator />} />
           <Route path="/integrations" element={<IntegrationsHub />} />
           <Route path="/webhooks" element={<WebhookManager />} />
           <Route path="/integration-status" element={<IntegrationStatus />} />

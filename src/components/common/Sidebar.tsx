@@ -4,6 +4,7 @@ import { cn } from '@/utils/cn'
 const navigation = [
   { name: 'Dashboard', path: '/', icon: '📊', section: 'main' },
   { name: 'Project Hub', path: '/project-hub', icon: '🚀', section: 'hub' },
+  { name: 'Project Generator', path: '/project-generator', icon: '⚡', section: 'hub' },
   { name: 'Company Profile', path: '/profile', icon: '🏢', section: 'main' },
   { name: 'Website Audit', path: '/audit', icon: '🔍', section: 'main' },
   { name: 'Local Rankings', path: '/ranking', icon: '📍', section: 'main' },
