@@ -91,6 +91,8 @@ export class IntegrationAutoConfig {
         return await this.configureFirecrawl(creds, result)
       case 'semrush-mcp':
         return await this.configureSemrushMCP(creds, result)
+      case 'github-mcp':
+        return await this.configureGitHubMCP(creds, result)
       default:
         result.errors.push(`Unknown integration: ${integrationName}`)
         return result
@@ -604,6 +606,172 @@ Check your balance in the Semrush dashboard.
 `
       await fs.writeFile(readmePath, readmeContent)
       result.configFilesCreated.push('SEMRUSH_MCP_SETUP.md')
+
+      result.success = true
+    } catch (error) {
+      result.errors.push(error instanceof Error ? error.message : String(error))
+    }
+
+    return result
+  }
+
+  // Configure GitHub MCP
+  private async configureGitHubMCP(
+    creds: Record<string, string>,
+    result: AutoConfigResult
+  ): Promise<AutoConfigResult> {
+    try {
+      const pat = creds.pat || creds.token || creds.apiKey
+      if (pat) {
+        await this.addEnvVars({
+          GITHUB_PERSONAL_ACCESS_TOKEN: pat,
+        })
+        result.envVarsAdded.push('GITHUB_PERSONAL_ACCESS_TOKEN')
+      }
+
+      // Update .vscode/mcp.json to include GitHub MCP
+      const vscodeDir = path.join(this.projectPath, '.vscode')
+      await fs.ensureDir(vscodeDir)
+
+      const mcpConfigPath = path.join(vscodeDir, 'mcp.json')
+      let mcpConfig: any = {
+        $schema: 'https://modelcontextprotocol.io/schema/mcp.json',
+        inputs: [],
+        mcpServers: {},
+      }
+
+      // Read existing config if it exists
+      if (await fs.pathExists(mcpConfigPath)) {
+        mcpConfig = await fs.readJSON(mcpConfigPath)
+      }
+
+      // Add GitHub input for PAT
+      if (!mcpConfig.inputs) mcpConfig.inputs = []
+      const githubTokenInput = mcpConfig.inputs.find((i: any) => i.id === 'github_token')
+      if (!githubTokenInput) {
+        mcpConfig.inputs.push({
+          type: 'promptString',
+          id: 'github_token',
+          description: 'GitHub Personal Access Token',
+          password: true,
+        })
+      }
+
+      // Add GitHub MCP server
+      if (!mcpConfig.mcpServers) mcpConfig.mcpServers = {}
+      mcpConfig.mcpServers.github = {
+        command: 'docker',
+        args: [
+          'run',
+          '-i',
+          '--rm',
+          '-e',
+          'GITHUB_PERSONAL_ACCESS_TOKEN',
+          'ghcr.io/github/github-mcp-server',
+        ],
+        env: {
+          GITHUB_PERSONAL_ACCESS_TOKEN: '${input:github_token}',
+        },
+        description: 'GitHub MCP server for repository management and automation',
+      }
+
+      await fs.writeJSON(mcpConfigPath, mcpConfig, { spaces: 2 })
+      result.configFilesCreated.push('.vscode/mcp.json')
+
+      // Create GitHub MCP config file
+      const configPath = path.join(this.projectPath, 'github-mcp.config.ts')
+      const configContent = `import { createGitHubMCPService } from './services/github-mcp'
+
+const githubMCP = createGitHubMCPService(
+  process.env.GITHUB_PERSONAL_ACCESS_TOKEN
+)
+
+export default githubMCP
+
+/**
+ * GitHub MCP is now configured!
+ *
+ * Use AI prompts like:
+ * - "List all repositories in my organization"
+ * - "Create an issue titled 'Bug: Login fails'"
+ * - "Show me failed workflow runs from the last week"
+ * - "Get code scanning alerts"
+ *
+ * Local Docker: ghcr.io/github/github-mcp-server
+ * Remote: https://api.githubcopilot.com/mcp/
+ */
+`
+      await fs.writeFile(configPath, configContent)
+      result.configFilesCreated.push('github-mcp.config.ts')
+
+      // Create README for GitHub MCP setup
+      const readmePath = path.join(this.projectPath, 'GITHUB_MCP_SETUP.md')
+      const readmeContent = `# GitHub MCP Setup
+
+## What is GitHub MCP?
+
+The GitHub MCP (Model Context Protocol) server connects AI agents to GitHub for repository management, issue tracking, CI/CD automation, and more.
+
+## Already Configured
+
+✅ VS Code MCP configuration created (.vscode/mcp.json)
+✅ Docker setup ready (ghcr.io/github/github-mcp-server)
+✅ Environment variable added (GITHUB_PERSONAL_ACCESS_TOKEN)
+✅ Service wrapper ready (github-mcp.config.ts)
+
+## Prerequisites
+
+1. **Docker** - Must be installed and running
+2. **GitHub PAT** - Create at https://github.com/settings/tokens
+
+## Available Toolsets
+
+- **repos** - Repository management
+- **issues** - Issue tracking
+- **pull_requests** - PR automation
+- **actions** - GitHub Actions & CI/CD
+- **code_security** - Security alerts
+- **projects** - Project boards
+- **discussions** - Discussions
+- **gists** - Gist management
+- **notifications** - Notifications
+- **users** - User profiles
+
+## Example AI Prompts
+
+**Repository Management:**
+- "List all repositories in my organization"
+- "Search for files containing 'config'"
+- "Create a branch called 'feature/new-feature'"
+
+**Issue Management:**
+- "Create an issue titled 'Bug: Login fails'"
+- "Add comment to issue #123"
+- "List all open issues"
+
+**Pull Requests:**
+- "Create a PR from feature-branch to main"
+- "Merge pull request #456"
+- "Get files changed in PR #789"
+
+**CI/CD:**
+- "Show me failed workflow runs"
+- "Trigger the Deploy workflow"
+- "Get logs for workflow run #12345"
+
+**Code Security:**
+- "List all code scanning alerts"
+- "Show me Dependabot updates"
+- "Get secret scanning alerts"
+
+## Usage
+
+The MCP server is configured to run in Docker. When you use AI agents,
+they'll automatically pull the ghcr.io/github/github-mcp-server image
+and authenticate using your GitHub PAT.
+`
+      await fs.writeFile(readmePath, readmeContent)
+      result.configFilesCreated.push('GITHUB_MCP_SETUP.md')
 
       result.success = true
     } catch (error) {
