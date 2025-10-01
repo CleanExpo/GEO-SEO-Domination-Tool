@@ -225,8 +225,25 @@ export class EmailService {
         const { generateSystemNotificationTemplate } = await import('./templates/system-notification');
         return generateSystemNotificationTemplate(notification, unsubscribeUrl);
 
-      default:
-        throw new Error(`Unsupported notification type: ${notification.type}`);
+      case 'keyword_ranking_change':
+        // Reuse ranking alert template for keyword changes
+        const { generateRankingAlertTemplate: generateKeywordTemplate } = await import('./templates/ranking-alert');
+        return generateKeywordTemplate(notification, unsubscribeUrl);
+
+      case 'competitor_alert':
+        // Reuse system notification template for competitor alerts
+        const { generateSystemNotificationTemplate: generateCompetitorTemplate } = await import('./templates/system-notification');
+        return generateCompetitorTemplate(notification, unsubscribeUrl);
+
+      case 'citation_issue':
+        // Reuse system notification template for citation issues
+        const { generateSystemNotificationTemplate: generateCitationTemplate } = await import('./templates/system-notification');
+        return generateCitationTemplate(notification, unsubscribeUrl);
+
+      case 'scheduled_report':
+        // Reuse weekly report template for scheduled reports
+        const { generateWeeklyReportTemplate: generateScheduledTemplate } = await import('./templates/weekly-report');
+        return generateScheduledTemplate(notification, unsubscribeUrl);
     }
   }
 
