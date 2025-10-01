@@ -8,6 +8,9 @@ import Citations from '@/pages/Citations'
 import Reports from '@/pages/Reports'
 import AIStrategy from '@/pages/AIStrategy'
 import Campaigns from '@/pages/Campaigns'
+import ProjectHub from '@/pages/ProjectHub'
+import ApiKeyManager from '@/pages/ApiKeyManager'
+import ProjectConfig from '@/pages/ProjectConfig'
 import Layout from '@/components/common/Layout'
 
 function App() {
@@ -23,6 +26,9 @@ function App() {
           <Route path="/citations" element={<Citations />} />
           <Route path="/ai-strategy" element={<AIStrategy />} />
           <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/project-hub" element={<ProjectHub />} />
+          <Route path="/api-keys" element={<ApiKeyManager />} />
+          <Route path="/project-config" element={<ProjectConfig />} />
           <Route path="/reports" element={<Reports />} />
         </Routes>
       </Layout>
