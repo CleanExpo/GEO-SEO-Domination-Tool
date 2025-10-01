@@ -1,23 +1,20 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Dashboard from '@/pages/Dashboard'
-import CompanyProfile from '@/pages/CompanyProfile'
-import WebsiteAudit from '@/pages/WebsiteAudit'
-import LocalRanking from '@/pages/LocalRanking'
-import CompetitorAnalysis from '@/pages/CompetitorAnalysis'
-import Citations from '@/pages/Citations'
-import Reports from '@/pages/Reports'
-import AIStrategy from '@/pages/AIStrategy'
-import Campaigns from '@/pages/Campaigns'
-import ProjectHub from '@/pages/ProjectHub'
-import ApiKeyManager from '@/pages/ApiKeyManager'
-import ProjectConfig from '@/pages/ProjectConfig'
-import IntegrationsHub from '@/pages/IntegrationsHub'
-import WebhookManager from '@/pages/WebhookManager'
-import IntegrationStatus from '@/pages/IntegrationStatus'
-import ProjectGenerator from '@/pages/ProjectGenerator'
-import WebsiteScraper from '@/pages/WebsiteScraper'
-import SchemaGenerator from '@/pages/SchemaGenerator'
+﻿import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from '@/components/common/Layout'
+import Dashboard from '@/pages/Dashboard'
+import Calendar from '@/pages/Calendar'
+import Contacts from '@/pages/Contacts'
+import Companies from '@/pages/Companies'
+import Deals from '@/pages/Deals'
+import Interactions from '@/pages/Interactions'
+import Tasks from '@/pages/Tasks'
+import Projects from '@/pages/Projects'
+import GitHubProjects from '@/pages/GitHubProjects'
+import Notes from '@/pages/Notes'
+import Prompts from '@/pages/Prompts'
+import ComponentsLibrary from '@/pages/ComponentsLibrary'
+import AITools from '@/pages/AITools'
+import Tutorials from '@/pages/Tutorials'
+import Support from '@/pages/Support'
 
 function App() {
   return (
@@ -25,23 +22,20 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/profile" element={<CompanyProfile />} />
-          <Route path="/audit" element={<WebsiteAudit />} />
-          <Route path="/scraper" element={<WebsiteScraper />} />
-          <Route path="/schema-generator" element={<SchemaGenerator />} />
-          <Route path="/ranking" element={<LocalRanking />} />
-          <Route path="/competitors" element={<CompetitorAnalysis />} />
-          <Route path="/citations" element={<Citations />} />
-          <Route path="/ai-strategy" element={<AIStrategy />} />
-          <Route path="/campaigns" element={<Campaigns />} />
-          <Route path="/project-hub" element={<ProjectHub />} />
-          <Route path="/project-generator" element={<ProjectGenerator />} />
-          <Route path="/integrations" element={<IntegrationsHub />} />
-          <Route path="/webhooks" element={<WebhookManager />} />
-          <Route path="/integration-status" element={<IntegrationStatus />} />
-          <Route path="/api-keys" element={<ApiKeyManager />} />
-          <Route path="/project-config" element={<ProjectConfig />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/contacts" element={<Contacts />} />
+          <Route path="/companies" element={<Companies />} />
+          <Route path="/deals" element={<Deals />} />
+          <Route path="/interactions" element={<Interactions />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/github-projects" element={<GitHubProjects />} />
+          <Route path="/notes" element={<Notes />} />
+          <Route path="/prompts" element={<Prompts />} />
+          <Route path="/components-library" element={<ComponentsLibrary />} />
+          <Route path="/ai-tools" element={<AITools />} />
+          <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/support" element={<Support />} />
         </Routes>
       </Layout>
     </BrowserRouter>
