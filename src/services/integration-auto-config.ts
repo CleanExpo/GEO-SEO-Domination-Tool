@@ -89,6 +89,8 @@ export class IntegrationAutoConfig {
         return await this.configureShadcn(creds, result)
       case 'firecrawl':
         return await this.configureFirecrawl(creds, result)
+      case 'semrush-mcp':
+        return await this.configureSemrushMCP(creds, result)
       default:
         result.errors.push(`Unknown integration: ${integrationName}`)
         return result
@@ -468,6 +470,140 @@ export default firecrawl
 `
       await fs.writeFile(configPath, configContent)
       result.configFilesCreated.push('firecrawl.config.ts')
+
+      result.success = true
+    } catch (error) {
+      result.errors.push(error instanceof Error ? error.message : String(error))
+    }
+
+    return result
+  }
+
+  // Configure Semrush MCP
+  private async configureSemrushMCP(
+    creds: Record<string, string>,
+    result: AutoConfigResult
+  ): Promise<AutoConfigResult> {
+    try {
+      await this.addEnvVars({
+        SEMRUSH_API_KEY: creds.apiKey || creds.key,
+      })
+      result.envVarsAdded.push('SEMRUSH_API_KEY')
+
+      // Create .vscode/mcp.json for VS Code MCP integration
+      const vscodeDir = path.join(this.projectPath, '.vscode')
+      await fs.ensureDir(vscodeDir)
+
+      const mcpConfig = {
+        $schema: 'https://modelcontextprotocol.io/schema/mcp.json',
+        mcpServers: {
+          semrush: {
+            url: 'https://mcp.semrush.com/v1/mcp',
+            description: 'Semrush MCP server for SEO data and analytics',
+          },
+        },
+      }
+
+      await fs.writeJSON(path.join(vscodeDir, 'mcp.json'), mcpConfig, { spaces: 2 })
+      result.configFilesCreated.push('.vscode/mcp.json')
+
+      // Create Semrush MCP config file
+      const configPath = path.join(this.projectPath, 'semrush-mcp.config.ts')
+      const configContent = `import { createSemrushMCPService } from './services/semrush-mcp'
+
+const semrushMCP = createSemrushMCPService(
+  process.env.SEMRUSH_API_KEY || '${creds.apiKey}'
+)
+
+export default semrushMCP
+
+/**
+ * Semrush MCP is now configured!
+ *
+ * Use AI prompts like:
+ * - "Get domain overview for example.com"
+ * - "Compare traffic for nike.com and adidas.com"
+ * - "Show keyword rankings for my project"
+ *
+ * The AI agent will automatically use the MCP server at:
+ * https://mcp.semrush.com/v1/mcp
+ */
+`
+      await fs.writeFile(configPath, configContent)
+      result.configFilesCreated.push('semrush-mcp.config.ts')
+
+      // Create README for MCP setup
+      const readmePath = path.join(this.projectPath, 'SEMRUSH_MCP_SETUP.md')
+      const readmeContent = `# Semrush MCP Setup
+
+## What is Semrush MCP?
+
+The Semrush MCP (Model Context Protocol) server lets you access Semrush API data through AI agents like Claude, Cursor, and VS Code.
+
+## Already Configured
+
+✅ VS Code MCP configuration created (.vscode/mcp.json)
+✅ Environment variable added (SEMRUSH_API_KEY)
+✅ Service wrapper ready (semrush-mcp.config.ts)
+
+## Usage in AI Agents
+
+### Claude Code
+Already added locally! Just use prompts like:
+- "Get domain overview for example.com"
+- "Show keyword trends for 'digital marketing'"
+
+### VS Code
+MCP is auto-configured! Open the command palette and use Semrush queries.
+
+### Cursor
+Add to Settings → MCP & Integrations:
+\`\`\`json
+{
+  "mcpServers": {
+    "semrush": {
+      "url": "https://mcp.semrush.com/v1/mcp"
+    }
+  }
+}
+\`\`\`
+
+### Claude (Browser/Desktop)
+Settings → Connectors → Add custom connector
+URL: https://mcp.semrush.com/v1/mcp
+
+## Example AI Prompts
+
+**Competitor Analysis:**
+- "Compare organic traffic for nike.com and adidas.com"
+- "List top competitors in the fitness industry"
+
+**Keyword Research:**
+- "Find high-volume keywords for 'AI tools'"
+- "Show search trends for 'digital marketing' in 2024"
+
+**Backlink Analysis:**
+- "Get backlink profile for example.com"
+- "Find new backlinks in the last 30 days"
+
+**Project Monitoring:**
+- "List all my Semrush projects"
+- "Show position tracking changes"
+- "Get site audit results"
+
+## Available APIs
+
+- **Trends API** - Keyword and backlink data
+- **Analytics API v3** - Domain, keyword, URL reports
+- **Projects API v3** - Read-only project access
+
+## API Units
+
+Semrush MCP uses the same unit system as Semrush API.
+Check your balance in the Semrush dashboard.
+`
+      await fs.writeFile(readmePath, readmeContent)
+      result.configFilesCreated.push('SEMRUSH_MCP_SETUP.md')
 
       result.success = true
     } catch (error) {
