@@ -1,4 +1,4 @@
-import { PerplexityService } from './perplexity'
+import { ClaudeService } from './claude'
 
 export interface AISearchStrategy {
   id?: number
@@ -34,10 +34,10 @@ export interface AIVisibilityCheck {
 }
 
 export class AISearchService {
-  private perplexity: PerplexityService
+  private claude: ClaudeService
 
-  constructor(perplexityApiKey: string) {
-    this.perplexity = new PerplexityService(perplexityApiKey)
+  constructor(anthropicApiKey: string) {
+    this.claude = new ClaudeService(anthropicApiKey)
   }
 
   // Strategy 1: AI Search Revolution - Check brand visibility in AI responses
@@ -46,15 +46,16 @@ export class AISearchService {
 
     for (const query of queries) {
       try {
-        const response = await this.perplexity.query(
-          `${query} in the ${industry} industry. Provide a comprehensive answer.`
+        const response = await this.claude.query(
+          `${query} in the ${industry} industry. Provide a comprehensive answer.`,
+          'You are a helpful AI assistant providing detailed, accurate information about industries and businesses.'
         )
 
         const brandMentioned = response.toLowerCase().includes(brandName.toLowerCase())
         const position = brandMentioned ? response.toLowerCase().indexOf(brandName.toLowerCase()) : -1
 
         results.push({
-          ai_platform: 'Perplexity',
+          ai_platform: 'Claude',
           query,
           brand_mentioned: brandMentioned,
           position_in_response: position !== -1 ? position : undefined,
@@ -79,7 +80,7 @@ export class AISearchService {
 
     Format as a structured content cluster strategy.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // Strategy 3: Buyer Journey & Psychographics
@@ -93,7 +94,7 @@ export class AISearchService {
 
     Provide actionable psychographic insights for content strategy.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // Strategy 4: Seasonality Analysis
@@ -109,7 +110,7 @@ export class AISearchService {
 
     Provide a seasonal content strategy with specific timing recommendations.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // Strategy 5: Trust & Authority Building
@@ -125,7 +126,7 @@ export class AISearchService {
 
     Focus on tactics that make the brand citeable by AI search tools.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // Strategy 6: Content-Driven Commerce
@@ -141,7 +142,7 @@ export class AISearchService {
 
     Focus on content that captures intent before users leave to AI answers.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // Perplexity Background Search Analysis
@@ -157,7 +158,7 @@ export class AISearchService {
 
     Help me understand how to structure content for maximum AI visibility.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // AI Citation Worthiness Score
@@ -176,7 +177,7 @@ export class AISearchService {
 
     Provide a detailed assessment with actionable recommendations.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 
   // Competitor AI Dominance Analysis
@@ -190,7 +191,7 @@ export class AISearchService {
 
     for (const query of testQueries) {
       const prompt = `${query} in the ${industry} industry`
-      const response = await this.perplexity.query(prompt)
+      const response = await this.claude.query(prompt, 'You are an expert competitive analyst focusing on AI search visibility.')
 
       const mentions = {
         query,
@@ -234,6 +235,6 @@ export class AISearchService {
 
     Optimize for Perplexity, ChatGPT, and Google AI Overview citations.`
 
-    return this.perplexity.query(prompt)
+    return this.claude.query(prompt, 'You are an expert SEO strategist specializing in topic clusters and content architecture.')
   }
 }
