@@ -2,22 +2,77 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText, Settings, Home } from 'lucide-react';
+import {
+  LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
+  Settings, Home, Users, Calendar, Target, CheckSquare, FolderKanban,
+  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones
+} from 'lucide-react';
 
 const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Companies', href: '/companies', icon: Building2 },
-  { name: 'SEO Audits', href: '/audits', icon: Search },
-  { name: 'Keywords', href: '/keywords', icon: TrendingUp },
-  { name: 'Rankings', href: '/rankings', icon: BarChart3 },
-  { name: 'Reports', href: '/reports', icon: FileText },
+  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, section: 'SEO' },
+  { name: 'Companies', href: '/companies', icon: Building2, section: 'SEO' },
+  { name: 'SEO Audits', href: '/audits', icon: Search, section: 'SEO' },
+  { name: 'Keywords', href: '/keywords', icon: TrendingUp, section: 'SEO' },
+  { name: 'Rankings', href: '/rankings', icon: BarChart3, section: 'SEO' },
+  { name: 'Reports', href: '/reports', icon: FileText, section: 'SEO' },
+];
+
+const crmNavigation = [
+  { name: 'Contacts', href: '/crm/contacts', icon: Users, section: 'Pipeline' },
+  { name: 'Deals', href: '/crm/deals', icon: Target, section: 'Pipeline' },
+  { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare, section: 'Pipeline' },
+  { name: 'Calendar', href: '/crm/calendar', icon: Calendar, section: 'Workspace' },
+];
+
+const projectsNavigation = [
+  { name: 'Projects', href: '/projects', icon: FolderKanban, section: 'Projects' },
+  { name: 'GitHub Projects', href: '/projects/github', icon: Github, section: 'Projects' },
+  { name: 'Notes & Docs', href: '/projects/notes', icon: Notes, section: 'Projects' },
+];
+
+const resourcesNavigation = [
+  { name: 'Prompts', href: '/resources/prompts', icon: MessageSquare, section: 'Resources' },
+  { name: 'Components', href: '/resources/components', icon: Wrench, section: 'Resources' },
+  { name: 'AI Tools', href: '/resources/ai-tools', icon: Wrench, section: 'Resources' },
+  { name: 'Tutorials', href: '/resources/tutorials', icon: BookOpen, section: 'Resources' },
+];
+
+const membersNavigation = [
+  { name: 'Support', href: '/support', icon: Headphones, section: 'Members' },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
+  const renderNavSection = (title: string, items: typeof navigation) => (
+    <div className="mb-6">
+      <p className="text-xs uppercase tracking-wide text-gray-500 px-3 mb-2 font-semibold">
+        {title}
+      </p>
+      <div className="space-y-1">
+        {items.map((item) => {
+          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-emerald-100 text-emerald-900'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.name}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 flex flex-col">
+    <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 flex flex-col overflow-hidden">
       {/* Logo */}
       <div className="p-6 border-b border-gray-200/50">
         <Link href="/" className="flex items-center gap-2">
@@ -30,26 +85,12 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <div className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-emerald-100 text-emerald-900'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </div>
+      <nav className="flex-1 p-4 overflow-y-auto">
+        {renderNavSection('SEO Tools', navigation)}
+        {renderNavSection('CRM & Pipeline', crmNavigation)}
+        {renderNavSection('Projects', projectsNavigation)}
+        {renderNavSection('Resources', resourcesNavigation)}
+        {renderNavSection('Members', membersNavigation)}
       </nav>
 
       {/* Settings */}
