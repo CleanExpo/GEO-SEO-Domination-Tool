@@ -11,6 +11,9 @@ import {
   EmailTemplate,
   NotificationPreferences,
   UnsubscribeTokenData,
+  RankingAlertNotification,
+  SystemNotification,
+  WeeklyReportNotification,
 } from './notification-types';
 
 /**
@@ -228,22 +231,22 @@ export class EmailService {
       case 'keyword_ranking_change':
         // Reuse ranking alert template for keyword changes
         const { generateRankingAlertTemplate: generateKeywordTemplate } = await import('./templates/ranking-alert');
-        return generateKeywordTemplate(notification as any, unsubscribeUrl);
+        return generateKeywordTemplate(notification as RankingAlertNotification, unsubscribeUrl);
 
       case 'competitor_alert':
         // Reuse system notification template for competitor alerts
         const { generateSystemNotificationTemplate: generateCompetitorTemplate } = await import('./templates/system-notification');
-        return generateCompetitorTemplate(notification as any, unsubscribeUrl);
+        return generateCompetitorTemplate(notification as SystemNotification, unsubscribeUrl);
 
       case 'citation_issue':
         // Reuse system notification template for citation issues
         const { generateSystemNotificationTemplate: generateCitationTemplate } = await import('./templates/system-notification');
-        return generateCitationTemplate(notification as any, unsubscribeUrl);
+        return generateCitationTemplate(notification as SystemNotification, unsubscribeUrl);
 
       case 'scheduled_report':
         // Reuse weekly report template for scheduled reports
         const { generateWeeklyReportTemplate: generateScheduledTemplate } = await import('./templates/weekly-report');
-        return generateScheduledTemplate(notification as any, unsubscribeUrl);
+        return generateScheduledTemplate(notification as WeeklyReportNotification, unsubscribeUrl);
     }
   }
 

@@ -137,13 +137,82 @@ export interface SystemNotification extends BaseNotification {
 }
 
 /**
+ * Keyword Ranking Change Notification
+ */
+export interface KeywordRankingChangeNotification extends BaseNotification {
+  type: 'keyword_ranking_change';
+  data: {
+    companyId: number;
+    companyName: string;
+    keyword: string;
+    location: string;
+    oldPosition: number;
+    newPosition: number;
+    change: number;
+    date: string;
+  };
+}
+
+/**
+ * Competitor Alert Notification
+ */
+export interface CompetitorAlertNotification extends BaseNotification {
+  type: 'competitor_alert';
+  data: {
+    title: string;
+    message: string;
+    competitorName: string;
+    actionUrl?: string;
+    actionText?: string;
+    metadata?: Record<string, any>;
+  };
+}
+
+/**
+ * Citation Issue Notification
+ */
+export interface CitationIssueNotification extends BaseNotification {
+  type: 'citation_issue';
+  data: {
+    title: string;
+    message: string;
+    citationSource?: string;
+    actionUrl?: string;
+    actionText?: string;
+    metadata?: Record<string, any>;
+  };
+}
+
+/**
+ * Scheduled Report Notification
+ */
+export interface ScheduledReportNotification extends BaseNotification {
+  type: 'scheduled_report';
+  data: {
+    companyId: number;
+    companyName: string;
+    reportPeriod: {
+      start: string;
+      end: string;
+    };
+    reportType: string;
+    reportUrl?: string;
+    metrics?: Record<string, any>;
+  };
+}
+
+/**
  * Union type for all notifications
  */
 export type Notification =
   | WeeklyReportNotification
   | RankingAlertNotification
   | AuditCompleteNotification
-  | SystemNotification;
+  | SystemNotification
+  | KeywordRankingChangeNotification
+  | CompetitorAlertNotification
+  | CitationIssueNotification
+  | ScheduledReportNotification;
 
 /**
  * Notification Preferences
