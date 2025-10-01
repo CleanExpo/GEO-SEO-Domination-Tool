@@ -110,7 +110,7 @@ export class FirecrawlService {
 
       // Check if crawl response is an error
       if ('success' in crawlResponse && !crawlResponse.success) {
-        throw new Error(crawlResponse.error || 'Failed to start crawl')
+        throw new Error((crawlResponse as any).error || 'Failed to start crawl')
       }
 
       // Poll for crawl status
@@ -126,7 +126,7 @@ export class FirecrawlService {
 
         // Check if status response is an error
         if ('success' in statusResponse && !statusResponse.success) {
-          throw new Error(statusResponse.error || 'Failed to check crawl status')
+          throw new Error((statusResponse as any).error || 'Failed to check crawl status')
         }
         status = statusResponse.status
 
