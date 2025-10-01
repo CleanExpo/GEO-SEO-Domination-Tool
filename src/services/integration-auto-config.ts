@@ -2,6 +2,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import { createSupabaseConnector, SupabaseConnector } from './connectors/supabase-connector'
 import { createGitHubConnector, GitHubConnector } from './connectors/github-connector'
+import { createShadcnSetup, ShadcnSetup } from './shadcn-setup'
 
 export interface IntegrationCredentials {
   integrationName: string
@@ -84,6 +85,10 @@ export class IntegrationAutoConfig {
         return await this.configureAnthropic(creds, result)
       case 'stripe':
         return await this.configureStripe(creds, result)
+      case 'shadcn':
+        return await this.configureShadcn(creds, result)
+      case 'firecrawl':
+        return await this.configureFirecrawl(creds, result)
       default:
         result.errors.push(`Unknown integration: ${integrationName}`)
         return result
@@ -403,6 +408,69 @@ export default stripe
     }
 
     await fs.writeFile(envPath, envContent.trim() + '\n')
+  }
+
+  // Configure shadcn/ui
+  private async configureShadcn(
+    creds: Record<string, string>,
+    result: AutoConfigResult
+  ): Promise<AutoConfigResult> {
+    try {
+      const shadcnSetup = createShadcnSetup()
+
+      const setupResult = await shadcnSetup.setupShadcn({
+        projectPath: this.projectPath,
+        baseColor: (creds.baseColor as any) || 'neutral',
+        cssVariables: true,
+        components: creds.components ? creds.components.split(',') : ['button', 'card', 'input', 'label'],
+      })
+
+      result.configFilesCreated = setupResult.filesCreated
+      result.dependenciesInstalled = ['tailwindcss', '@tailwindcss/vite', 'class-variance-authority', 'clsx', 'tailwind-merge']
+      result.initializationRun = setupResult.success
+
+      if (setupResult.errors.length > 0) {
+        result.errors.push(...setupResult.errors)
+      }
+
+      result.success = setupResult.success
+    } catch (error) {
+      result.errors.push(error instanceof Error ? error.message : String(error))
+    }
+
+    return result
+  }
+
+  // Configure Firecrawl
+  private async configureFirecrawl(
+    creds: Record<string, string>,
+    result: AutoConfigResult
+  ): Promise<AutoConfigResult> {
+    try {
+      await this.addEnvVars({
+        FIRECRAWL_API_KEY: creds.apiKey || creds.key,
+      })
+      result.envVarsAdded.push('FIRECRAWL_API_KEY')
+
+      // Create Firecrawl config file
+      const configPath = path.join(this.projectPath, 'firecrawl.config.ts')
+      const configContent = `import FirecrawlApp from '@mendable/firecrawl-js'
+
+const firecrawl = new FirecrawlApp({
+  apiKey: process.env.FIRECRAWL_API_KEY || '${creds.apiKey}',
+})
+
+export default firecrawl
+`
+      await fs.writeFile(configPath, configContent)
+      result.configFilesCreated.push('firecrawl.config.ts')
+
+      result.success = true
+    } catch (error) {
+      result.errors.push(error instanceof Error ? error.message : String(error))
+    }
+
+    return result
   }
 
   // Fetch credentials from connected integrations in database

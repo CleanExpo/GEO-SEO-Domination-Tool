@@ -7,6 +7,7 @@ const navigation = [
   { name: 'Project Generator', path: '/project-generator', icon: '⚡', section: 'hub' },
   { name: 'Company Profile', path: '/profile', icon: '🏢', section: 'main' },
   { name: 'Website Audit', path: '/audit', icon: '🔍', section: 'main' },
+  { name: 'Website Scraper', path: '/scraper', icon: '🕷️', section: 'main' },
   { name: 'Local Rankings', path: '/ranking', icon: '📍', section: 'main' },
   { name: 'Competitors', path: '/competitors', icon: '⚔️', section: 'main' },
   { name: 'Citations', path: '/citations', icon: '📝', section: 'main' },
