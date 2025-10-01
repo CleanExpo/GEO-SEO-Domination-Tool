@@ -86,10 +86,14 @@ export class JobScheduler {
         await this.executeJob(name, handler);
       },
       {
-        scheduled: false, // Don't start immediately
         timezone: 'America/New_York', // Adjust to your timezone
       }
     );
+
+    // Stop the task if not enabled
+    if (!enabled) {
+      task.stop();
+    }
 
     this.jobs.set(name, {
       name,
