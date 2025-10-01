@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
 
     // Initialize database connection
     const db = await getDatabase();
+    await db.initialize();
 
     // Create email service
     const emailService = createEmailService(db);
@@ -112,9 +113,10 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const db = await getDatabase();
+    await db.initialize();
 
     // Get queue statistics
-    const stats = await db.get(`
+    const stats = await db.queryOne(`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,

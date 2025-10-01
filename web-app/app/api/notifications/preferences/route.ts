@@ -26,11 +26,13 @@ export async function GET(request: NextRequest) {
 
     const db = await getDatabase();
 
+    await db.initialize();
+
     const query = email
       ? 'SELECT * FROM notification_preferences WHERE email = ?'
       : 'SELECT * FROM notification_preferences WHERE user_id = ?';
 
-    const row = await db.get(query, [email || userId]);
+    const row = await db.queryOne(query, [email || userId]);
 
     if (!row) {
       // Return default preferences if none found
@@ -120,10 +122,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const db = await getDatabase();
+    await db.initialize();
     const emailService = createEmailService(db);
 
     // Check if preferences exist
-    const existing = await db.get(
+    const existing = await db.queryOne(
       'SELECT * FROM notification_preferences WHERE email = ?',
       [body.email]
     );
@@ -159,7 +162,7 @@ export async function PUT(request: NextRequest) {
 
     if (existing) {
       // Update existing preferences
-      await db.run(
+      await db.query(
         `UPDATE notification_preferences
          SET user_id = ?, enabled = ?, channels = ?, types = ?, frequency = ?,
              quiet_hours = ?, updated_at = datetime('now')
@@ -176,7 +179,7 @@ export async function PUT(request: NextRequest) {
       );
     } else {
       // Insert new preferences
-      await db.run(
+      await db.query(
         `INSERT INTO notification_preferences
          (user_id, email, enabled, channels, types, frequency, quiet_hours, unsubscribe_token, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
@@ -228,6 +231,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const db = await getDatabase();
+    await db.initialize();
 
     let targetEmail = email;
 
@@ -247,7 +251,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Disable all notifications for this email
-    await db.run(
+    await db.query(
       `UPDATE notification_preferences
        SET enabled = 0, updated_at = datetime('now')
        WHERE email = ?`,
