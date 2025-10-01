@@ -52,7 +52,7 @@ export class FirecrawlService {
   // Scrape a single URL
   async scrapeUrl(url: string, options?: ScrapeOptions): Promise<ScrapedData> {
     try {
-      const response: ScrapeResponse = await this.app.scrapeUrl(url, {
+      const response = await this.app.scrapeUrl(url, {
         formats: options?.formats || ['markdown', 'html', 'links'],
         onlyMainContent: options?.onlyMainContent ?? true,
         includeTags: options?.includeTags,
@@ -60,6 +60,11 @@ export class FirecrawlService {
         waitFor: options?.waitFor,
         timeout: options?.timeout,
       })
+
+      // Check if response is an error
+      if ('success' in response && !response.success) {
+        throw new Error(response.error || 'Failed to scrape URL')
+      }
 
       return {
         url,
