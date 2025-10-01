@@ -349,7 +349,7 @@ export class EmailService {
       return;
     }
 
-    const queuedNotifications = await this.db.all<NotificationQueueEntry>(
+    const queuedNotifications = (await this.db.all(
       `SELECT * FROM notification_queue
        WHERE status = 'queued'
        AND attempts < max_attempts
@@ -357,7 +357,7 @@ export class EmailService {
        ORDER BY priority DESC, created_at ASC
        LIMIT ?`,
       [this.config.batchSize]
-    );
+    )) as NotificationQueueEntry[];
 
     for (const entry of queuedNotifications) {
       try {
