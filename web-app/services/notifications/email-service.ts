@@ -228,22 +228,22 @@ export class EmailService {
       case 'keyword_ranking_change':
         // Reuse ranking alert template for keyword changes
         const { generateRankingAlertTemplate: generateKeywordTemplate } = await import('./templates/ranking-alert');
-        return generateKeywordTemplate(notification, unsubscribeUrl);
+        return generateKeywordTemplate(notification as any, unsubscribeUrl);
 
       case 'competitor_alert':
         // Reuse system notification template for competitor alerts
         const { generateSystemNotificationTemplate: generateCompetitorTemplate } = await import('./templates/system-notification');
-        return generateCompetitorTemplate(notification, unsubscribeUrl);
+        return generateCompetitorTemplate(notification as any, unsubscribeUrl);
 
       case 'citation_issue':
         // Reuse system notification template for citation issues
         const { generateSystemNotificationTemplate: generateCitationTemplate } = await import('./templates/system-notification');
-        return generateCitationTemplate(notification, unsubscribeUrl);
+        return generateCitationTemplate(notification as any, unsubscribeUrl);
 
       case 'scheduled_report':
         // Reuse weekly report template for scheduled reports
         const { generateWeeklyReportTemplate: generateScheduledTemplate } = await import('./templates/weekly-report');
-        return generateScheduledTemplate(notification, unsubscribeUrl);
+        return generateScheduledTemplate(notification as any, unsubscribeUrl);
     }
   }
 
