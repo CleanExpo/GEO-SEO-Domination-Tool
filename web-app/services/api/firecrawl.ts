@@ -113,6 +113,9 @@ export class FirecrawlService {
         throw new Error((crawlResponse as any).error || 'Failed to start crawl')
       }
 
+      // At this point we know it's a successful response with an id
+      const crawlId = (crawlResponse as any).id
+
       // Poll for crawl status
       let status = 'scraping'
       const results: ScrapedData[] = []
@@ -122,7 +125,7 @@ export class FirecrawlService {
       while (status === 'scraping' && pollCount < maxPolls) {
         await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds
 
-        const statusResponse = await this.app.checkCrawlStatus(crawlResponse.id)
+        const statusResponse = await this.app.checkCrawlStatus(crawlId)
 
         // Check if status response is an error
         if ('success' in statusResponse && !statusResponse.success) {
