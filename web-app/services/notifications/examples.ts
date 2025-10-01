@@ -285,6 +285,10 @@ export async function sendBatchNotifications(db: any) {
  */
 export async function onAuditComplete(db: any, auditId: number) {
   try {
+    // Get audit and company details for logging
+    const audit = await db.get('SELECT * FROM audits WHERE id = ?', [auditId]);
+    const company = await db.get('SELECT * FROM companies WHERE id = ?', [audit.company_id]);
+
     // Send notification
     const result = await sendAuditComplete(db, auditId);
 
@@ -297,8 +301,8 @@ export async function onAuditComplete(db: any, auditId: number) {
         [
           'audit_complete',
           'medium',
-          result.recipientEmail,
-          result.subject,
+          company.email,
+          `SEO Audit Complete for ${company.name}`,
           'sent',
           result.messageId,
           process.env.EMAIL_PROVIDER,
