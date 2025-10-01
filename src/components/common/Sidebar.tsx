@@ -11,9 +11,12 @@ const navigation = [
   { name: 'Citations', path: '/citations', icon: '📝', section: 'main' },
   { name: 'AI Strategy', path: '/ai-strategy', icon: '🤖', section: 'main' },
   { name: 'Campaigns', path: '/campaigns', icon: '🎯', section: 'main' },
+  { name: 'Reports', path: '/reports', icon: '📈', section: 'main' },
+  { name: 'Integrations', path: '/integrations', icon: '🔌', section: 'integrations' },
+  { name: 'Webhooks', path: '/webhooks', icon: '📡', section: 'integrations' },
+  { name: 'Status Monitor', path: '/integration-status', icon: '💚', section: 'integrations' },
   { name: 'API Keys', path: '/api-keys', icon: '🔑', section: 'settings' },
   { name: 'Configuration', path: '/project-config', icon: '⚙️', section: 'settings' },
-  { name: 'Reports', path: '/reports', icon: '📈', section: 'main' },
 ]
 
 export default function Sidebar() {
@@ -54,6 +57,27 @@ export default function Sidebar() {
               key={item.path}
               to={item.path}
               end={item.path === '/'}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                )
+              }
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className="font-medium">{item.name}</span>
+            </NavLink>
+          ))}
+        </div>
+
+        <div className="mb-4">
+          <p className="text-xs text-muted-foreground px-4 mb-2 uppercase tracking-wider">Integrations</p>
+          {navigation.filter(item => item.section === 'integrations').map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',

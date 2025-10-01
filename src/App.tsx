@@ -11,6 +11,9 @@ import Campaigns from '@/pages/Campaigns'
 import ProjectHub from '@/pages/ProjectHub'
 import ApiKeyManager from '@/pages/ApiKeyManager'
 import ProjectConfig from '@/pages/ProjectConfig'
+import IntegrationsHub from '@/pages/IntegrationsHub'
+import WebhookManager from '@/pages/WebhookManager'
+import IntegrationStatus from '@/pages/IntegrationStatus'
 import Layout from '@/components/common/Layout'
 
 function App() {
@@ -27,6 +30,9 @@ function App() {
           <Route path="/ai-strategy" element={<AIStrategy />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/project-hub" element={<ProjectHub />} />
+          <Route path="/integrations" element={<IntegrationsHub />} />
+          <Route path="/webhooks" element={<WebhookManager />} />
+          <Route path="/integration-status" element={<IntegrationStatus />} />
           <Route path="/api-keys" element={<ApiKeyManager />} />
           <Route path="/project-config" element={<ProjectConfig />} />
           <Route path="/reports" element={<Reports />} />
