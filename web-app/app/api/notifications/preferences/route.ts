@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { NotificationPreferences } from '@/../../src/services/notifications/notification-types';
-import { createEmailService } from '@/../../src/services/notifications/email-service';
+import { NotificationPreferences } from '@/services/notifications/notification-types';
+import { createEmailService } from '@/services/notifications/email-service';
 import { getDatabase } from '@/lib/db';
 
 /**
