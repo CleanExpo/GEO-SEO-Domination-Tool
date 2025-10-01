@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import type { ScheduledTask } from 'node-cron';
 import { AuditRunner } from './jobs/audit-runner';
 import { RankingTracker } from './jobs/ranking-tracker';
 import { ReportGenerator } from './jobs/report-generator';
@@ -6,7 +7,7 @@ import { ReportGenerator } from './jobs/report-generator';
 interface Job {
   name: string;
   schedule: string;
-  task: cron.ScheduledTask;
+  task: ScheduledTask;
   handler: () => Promise<void>;
   enabled: boolean;
 }
