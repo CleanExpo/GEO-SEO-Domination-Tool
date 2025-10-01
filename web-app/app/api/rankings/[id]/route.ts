@@ -4,13 +4,14 @@ import { supabase } from '@/lib/supabase';
 // GET /api/rankings/[id] - Get a single ranking
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { data, error } = await supabase
       .from('rankings')
       .select('*, keywords(*)')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) {
@@ -29,13 +30,14 @@ export async function GET(
 // DELETE /api/rankings/[id] - Delete a ranking
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { error } = await supabase
       .from('rankings')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
