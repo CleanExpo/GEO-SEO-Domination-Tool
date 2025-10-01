@@ -65,7 +65,7 @@ export default function ProjectGenerator() {
         { key: 'testing', name: 'Testing Setup', description: 'Vitest and React Testing Library', category: 'quality', required: false },
         { key: 'ci_cd', name: 'CI/CD Pipeline', description: 'GitHub Actions workflow', category: 'devops', required: false, requiresIntegration: 'github' },
       ],
-      integrations: ['shadcn', 'semrush-mcp', 'github-mcp', 'supabase', 'github', 'vercel', 'openai', 'anthropic', 'firecrawl'],
+      integrations: ['shadcn', 'semrush-mcp', 'github-mcp', 'vercel-mcp', 'supabase', 'github', 'vercel', 'openai', 'anthropic', 'firecrawl'],
     },
     {
       id: 'nextjs-app',
@@ -85,7 +85,7 @@ export default function ProjectGenerator() {
         { key: 'seo', name: 'SEO Optimization', description: 'Metadata and sitemap', category: 'seo', required: false },
         { key: 'analytics', name: 'Analytics', description: 'Vercel Analytics', category: 'tracking', required: false },
       ],
-      integrations: ['shadcn', 'semrush-mcp', 'github-mcp', 'supabase', 'github', 'vercel', 'stripe', 'openai', 'firecrawl'],
+      integrations: ['shadcn', 'semrush-mcp', 'github-mcp', 'vercel-mcp', 'supabase', 'github', 'vercel', 'stripe', 'openai', 'firecrawl'],
     },
     {
       id: 'fastapi-python',
@@ -112,6 +112,7 @@ export default function ProjectGenerator() {
     { id: 'shadcn', name: 'shadcn/ui', icon: '✨', description: 'Beautiful UI components' },
     { id: 'semrush-mcp', name: 'Semrush MCP', icon: '📊', description: 'SEO data via AI agents' },
     { id: 'github-mcp', name: 'GitHub MCP', icon: '🐙', description: 'Repository automation via AI' },
+    { id: 'vercel-mcp', name: 'Vercel MCP', icon: '▲', description: 'Deployment automation via AI' },
     { id: 'supabase', name: 'Supabase', icon: '⚡', description: 'Database, Auth & Storage' },
     { id: 'github', name: 'GitHub', icon: '🐙', description: 'Version control & CI/CD' },
     { id: 'vercel', name: 'Vercel', icon: '▲', description: 'Deployment platform' },

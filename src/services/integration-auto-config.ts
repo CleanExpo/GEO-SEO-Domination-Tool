@@ -93,6 +93,8 @@ export class IntegrationAutoConfig {
         return await this.configureSemrushMCP(creds, result)
       case 'github-mcp':
         return await this.configureGitHubMCP(creds, result)
+      case 'vercel-mcp':
+        return await this.configureVercelMCP(creds, result)
       default:
         result.errors.push(`Unknown integration: ${integrationName}`)
         return result
@@ -772,6 +774,225 @@ and authenticate using your GitHub PAT.
 `
       await fs.writeFile(readmePath, readmeContent)
       result.configFilesCreated.push('GITHUB_MCP_SETUP.md')
+
+      result.success = true
+    } catch (error) {
+      result.errors.push(error instanceof Error ? error.message : String(error))
+    }
+
+    return result
+  }
+
+  // Configure Vercel MCP
+  private async configureVercelMCP(
+    creds: Record<string, string>,
+    result: AutoConfigResult
+  ): Promise<AutoConfigResult> {
+    try {
+      const teamSlug = creds.teamSlug
+      const projectSlug = creds.projectSlug
+
+      // Update .vscode/mcp.json to include Vercel MCP
+      const vscodeDir = path.join(this.projectPath, '.vscode')
+      await fs.ensureDir(vscodeDir)
+
+      const mcpConfigPath = path.join(vscodeDir, 'mcp.json')
+      let mcpConfig: any = {
+        $schema: 'https://modelcontextprotocol.io/schema/mcp.json',
+        inputs: [],
+        mcpServers: {},
+      }
+
+      // Read existing config if it exists
+      if (await fs.pathExists(mcpConfigPath)) {
+        mcpConfig = await fs.readJSON(mcpConfigPath)
+      }
+
+      // Add Vercel MCP server
+      if (!mcpConfig.mcpServers) mcpConfig.mcpServers = {}
+
+      // Use project-specific URL if provided
+      const vercelUrl =
+        teamSlug && projectSlug
+          ? `https://mcp.vercel.com/${teamSlug}/${projectSlug}`
+          : 'https://mcp.vercel.com'
+
+      mcpConfig.mcpServers.vercel = {
+        url: vercelUrl,
+        description: 'Vercel MCP server for project and deployment management',
+        capabilities: [
+          'Search and navigate Vercel documentation',
+          'Manage projects and deployments',
+          'Analyze deployment logs',
+          'OAuth authentication required for project management',
+        ],
+      }
+
+      await fs.writeJSON(mcpConfigPath, mcpConfig, { spaces: 2 })
+      result.configFilesCreated.push('.vscode/mcp.json')
+
+      // Create Vercel MCP config file
+      const configPath = path.join(this.projectPath, 'vercel-mcp.config.ts')
+      const configContent = `import { createVercelMCPService } from './services/vercel-mcp'
+
+const vercelMCP = createVercelMCPService(
+  ${teamSlug ? `'${teamSlug}'` : 'undefined'},
+  ${projectSlug ? `'${projectSlug}'` : 'undefined'}
+)
+
+export default vercelMCP
+
+/**
+ * Vercel MCP is now configured!
+ *
+ * Use AI prompts like:
+ * - "List all my Vercel projects"
+ * - "Deploy my project to production"
+ * - "Show me deployment logs for the latest build"
+ * - "Search Vercel docs for edge functions"
+ *
+ * Endpoint: ${vercelUrl}
+ * Authentication: OAuth (automatic)
+ */
+`
+      await fs.writeFile(configPath, configContent)
+      result.configFilesCreated.push('vercel-mcp.config.ts')
+
+      // Create README for Vercel MCP setup
+      const readmePath = path.join(this.projectPath, 'VERCEL_MCP_SETUP.md')
+      const readmeContent = `# Vercel MCP Setup
+
+## What is Vercel MCP?
+
+The Vercel MCP (Model Context Protocol) server connects AI agents to Vercel for project management, deployments, and documentation search.
+
+## Already Configured
+
+✅ VS Code MCP configuration created (.vscode/mcp.json)
+✅ OAuth authentication ready (automatic)
+${teamSlug && projectSlug ? `✅ Project-specific endpoint configured (${teamSlug}/${projectSlug})` : '✅ General endpoint configured'}
+✅ Service wrapper ready (vercel-mcp.config.ts)
+
+## Available Tools
+
+### Public (No Auth Required)
+- **search_documentation** - Search Vercel docs
+- **get_documentation_page** - Get specific doc page
+- **list_documentation_categories** - List doc categories
+
+### Authenticated (OAuth Required)
+- **Projects** - list, get, create, update, delete
+- **Deployments** - list, get, create, cancel
+- **Logs** - get deployment logs, analyze logs
+- **Environment Variables** - list, get, create, update, delete
+- **Domains** - list, get, add, remove, verify
+
+## Usage in AI Agents
+
+### Claude Code
+\`\`\`bash
+# Already added to local config
+# Just start using it with prompts!
+\`\`\`
+
+### VS Code
+1. Open VS Code in this project
+2. MCP server auto-connects with OAuth
+3. Use AI features with Vercel access
+
+### Cursor
+Add to .cursor/mcp.json:
+\`\`\`json
+{
+  "mcpServers": {
+    "vercel": {
+      "url": "${vercelUrl}"
+    }
+  }
+}
+\`\`\`
+
+## Example Prompts
+
+**Documentation Search (No Auth):**
+- "Search Vercel docs for 'edge functions'"
+- "How do I set up environment variables?"
+- "Show me documentation about ISR"
+
+**Project Management:**
+- "List all my Vercel projects"
+- "Get environment variables for production"
+- "Create a new project called 'awesome-app'"
+
+**Deployment Automation:**
+- "Deploy my project to production"
+- "Show me failed deployments from the last week"
+- "Get build logs for deployment xyz123"
+
+**Log Analysis:**
+- "Analyze errors in production logs"
+- "Find all 500 errors in the last 24 hours"
+- "Show me runtime logs for my API"
+
+## Project-Specific Access
+
+${teamSlug && projectSlug ? `You're using project-specific access with automatic context:
+- Team: ${teamSlug}
+- Project: ${projectSlug}
+
+This provides better performance and automatic context for all tools.` : `To use project-specific access (recommended):
+
+1. Find your team and project slugs:
+   - Team: Vercel Dashboard → Team Settings → General
+   - Project: Vercel Dashboard → Project Settings → General
+
+2. Update the endpoint in .vscode/mcp.json:
+   \`\`\`json
+   {
+     "mcpServers": {
+       "vercel": {
+         "url": "https://mcp.vercel.com/<team-slug>/<project-slug>"
+       }
+     }
+   }
+   \`\`\`
+
+Benefits:
+- Automatic project and team context
+- Improved tool performance
+- Better error handling
+- No manual parameter input needed`}
+
+## Security Best Practices
+
+- OAuth authentication is automatic and secure
+- Enable human confirmation for destructive operations
+- Review AI agent permissions before granting access
+- Be aware of prompt injection risks
+- Familiarize with confused deputy attacks
+
+## Supported AI Clients
+
+- Claude Code ✅
+- Claude.ai and Claude Desktop ✅
+- ChatGPT (Pro/Plus) ✅
+- Cursor ✅
+- VS Code with Copilot ✅
+- Devin ✅
+- Raycast ✅
+- Goose ✅
+- Windsurf ✅
+- Gemini Code Assist ✅
+- Gemini CLI ✅
+
+## Learn More
+
+- [Vercel MCP Documentation](https://vercel.com/docs/mcp)
+- [MCP Tools Reference](https://vercel.com/docs/mcp/tools)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+`
+      await fs.writeFile(readmePath, readmeContent)
+      result.configFilesCreated.push('VERCEL_MCP_SETUP.md')
 
       result.success = true
     } catch (error) {
