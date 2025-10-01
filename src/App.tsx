@@ -16,6 +16,7 @@ import WebhookManager from '@/pages/WebhookManager'
 import IntegrationStatus from '@/pages/IntegrationStatus'
 import ProjectGenerator from '@/pages/ProjectGenerator'
 import WebsiteScraper from '@/pages/WebsiteScraper'
+import SchemaGenerator from '@/pages/SchemaGenerator'
 import Layout from '@/components/common/Layout'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/profile" element={<CompanyProfile />} />
           <Route path="/audit" element={<WebsiteAudit />} />
           <Route path="/scraper" element={<WebsiteScraper />} />
+          <Route path="/schema-generator" element={<SchemaGenerator />} />
           <Route path="/ranking" element={<LocalRanking />} />
           <Route path="/competitors" element={<CompetitorAnalysis />} />
           <Route path="/citations" element={<Citations />} />
