@@ -347,7 +347,7 @@ export class GitHubMCPService {
           'List all discussions in owner/repo',
           'Create a discussion in "Ideas" category',
           'Get my GitHub notifications',
-          'List repositories I've starred',
+          'List repositories I have starred',
           'Show me user profile for username',
         ],
       },
