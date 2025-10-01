@@ -15,28 +15,7 @@ interface Project {
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: '1',
-      name: 'Website Redesign',
-      description: 'Complete website redesign with modern UI/UX',
-      status: 'active',
-      progress: 65,
-      dueDate: '2025-11-30',
-      team: ['You', 'Designer', 'Developer'],
-      tasks: { total: 20, completed: 13 },
-    },
-    {
-      id: '2',
-      name: 'SEO Audit Tool',
-      description: 'Build automated SEO auditing system',
-      status: 'active',
-      progress: 40,
-      dueDate: '2025-12-15',
-      team: ['You', 'Developer'],
-      tasks: { total: 15, completed: 6 },
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   const getStatusColor = (status: Project['status']) => {
     const colors = {
@@ -117,74 +96,92 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projects.map((project) => (
-          <div
-            key={project.id}
-            className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">{project.description}</p>
-              </div>
-              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(project.status)}`}>
-                {project.status}
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {/* Progress */}
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">Progress</span>
-                  <span className="font-semibold text-gray-900">{project.progress}%</span>
+      {/* Projects Grid or Empty State */}
+      {projects.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {projects.map((project) => (
+            <div
+              key={project.id}
+              className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{project.description}</p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-emerald-600 h-2 rounded-full transition-all"
-                    style={{ width: `${project.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Tasks */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Tasks</span>
-                <span className="font-semibold text-gray-900">
-                  {project.tasks.completed} / {project.tasks.total}
+                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(project.status)}`}>
+                  {project.status}
                 </span>
               </div>
 
-              {/* Due Date */}
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="h-4 w-4" />
-                <span>Due: {new Date(project.dueDate).toLocaleDateString()}</span>
-              </div>
-
-              {/* Team */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-600">Team</span>
-                </div>
-                <div className="flex -space-x-2">
-                  {project.team.map((member, index) => (
+              <div className="space-y-4">
+                {/* Progress */}
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Progress</span>
+                    <span className="font-semibold text-gray-900">{project.progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      key={index}
-                      className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-semibold border-2 border-white"
-                      title={member}
-                    >
-                      {member.charAt(0)}
-                    </div>
-                  ))}
+                      className="bg-emerald-600 h-2 rounded-full transition-all"
+                      style={{ width: `${project.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tasks */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Tasks</span>
+                  <span className="font-semibold text-gray-900">
+                    {project.tasks.completed} / {project.tasks.total}
+                  </span>
+                </div>
+
+                {/* Due Date */}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  <span>Due: {new Date(project.dueDate).toLocaleDateString()}</span>
+                </div>
+
+                {/* Team */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">Team</span>
+                  </div>
+                  <div className="flex -space-x-2">
+                    {project.team.map((member, index) => (
+                      <div
+                        key={index}
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-semibold border-2 border-white"
+                        title={member}
+                      >
+                        {member.charAt(0)}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center max-w-md">
+            <div className="flex justify-center mb-4">
+              <FolderKanban className="h-16 w-16 text-gray-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No projects yet</h3>
+            <p className="text-gray-600 mb-6">
+              Get started by creating your first project to track progress and manage tasks.
+            </p>
+            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+              <Plus className="h-5 w-5" />
+              Create Project
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

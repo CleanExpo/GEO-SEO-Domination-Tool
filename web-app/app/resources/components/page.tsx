@@ -14,53 +14,7 @@ interface Component {
 }
 
 export default function ComponentsPage() {
-  const [components, setComponents] = useState<Component[]>([
-    {
-      id: '1',
-      name: 'SEO Meta Tags',
-      description: 'Reusable component for managing SEO meta tags with Open Graph and Twitter Card support',
-      category: 'SEO',
-      framework: 'React',
-      code: `import Head from 'next/head';
-
-export function SEOMetaTags({ title, description, image, url }) {
-  return (
-    <Head>
-      <title>{title}</title>
-      <meta name="description" content={description} />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:image" content={image} />
-      <meta property="og:url" content={url} />
-      <meta name="twitter:card" content="summary_large_image" />
-    </Head>
-  );
-}`,
-    },
-    {
-      id: '2',
-      name: 'Schema.org JSON-LD',
-      description: 'Component for adding structured data markup to improve search visibility',
-      category: 'SEO',
-      framework: 'React',
-      code: `export function StructuredData({ data }) {
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  );
-}
-
-// Usage:
-<StructuredData data={{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Your Company",
-  "url": "https://example.com"
-}} />`,
-    },
-  ]);
+  const [components, setComponents] = useState<Component[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -143,46 +97,62 @@ export function SEOMetaTags({ title, description, image, url }) {
       </div>
 
       {/* Components List */}
-      <div className="space-y-6">
-        {filteredComponents.map((component) => (
-          <div
-            key={component.id}
-            className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Wrench className="h-5 w-5 text-emerald-600" />
-                  <h3 className="text-xl font-semibold text-gray-900">{component.name}</h3>
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                    {component.category}
-                  </span>
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {component.framework}
-                  </span>
+      {filteredComponents.length > 0 ? (
+        <div className="space-y-6">
+          {filteredComponents.map((component) => (
+            <div
+              key={component.id}
+              className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Wrench className="h-5 w-5 text-emerald-600" />
+                    <h3 className="text-xl font-semibold text-gray-900">{component.name}</h3>
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                      {component.category}
+                    </span>
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {component.framework}
+                    </span>
+                  </div>
+                  <p className="text-gray-600">{component.description}</p>
                 </div>
-                <p className="text-gray-600">{component.description}</p>
               </div>
-            </div>
 
-            {/* Code Block */}
-            <div className="relative">
-              <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                <pre className="text-sm text-gray-100">
-                  <code>{component.code}</code>
-                </pre>
+              {/* Code Block */}
+              <div className="relative">
+                <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                  <pre className="text-sm text-gray-100">
+                    <code>{component.code}</code>
+                  </pre>
+                </div>
+                <button
+                  onClick={() => copyCode(component.code)}
+                  className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded transition-colors"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </button>
               </div>
-              <button
-                onClick={() => copyCode(component.code)}
-                className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded transition-colors"
-              >
-                <Copy className="h-4 w-4" />
-                Copy
-              </button>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 max-w-md w-full text-center">
+            <Wrench className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No components yet</h3>
+            <p className="text-gray-600 mb-6">
+              Build your reusable code library by adding your first component or snippet.
+            </p>
+            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+              <Plus className="h-5 w-5" />
+              Add Your First Component
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

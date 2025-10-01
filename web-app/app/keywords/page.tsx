@@ -15,38 +15,7 @@ interface Keyword {
 }
 
 export default function KeywordsPage() {
-  const [keywords, setKeywords] = useState<Keyword[]>([
-    {
-      id: '1',
-      keyword: 'local seo services',
-      position: 3,
-      previousPosition: 5,
-      searchVolume: 8200,
-      difficulty: 65,
-      url: '/services/local-seo',
-      company: 'Acme Corp',
-    },
-    {
-      id: '2',
-      keyword: 'seo consultant near me',
-      position: 7,
-      previousPosition: 7,
-      searchVolume: 5400,
-      difficulty: 58,
-      url: '/consulting',
-      company: 'Acme Corp',
-    },
-    {
-      id: '3',
-      keyword: 'technical seo audit',
-      position: 12,
-      previousPosition: 8,
-      searchVolume: 3100,
-      difficulty: 72,
-      url: '/services/technical-seo',
-      company: 'TechStart Inc',
-    },
-  ]);
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -68,7 +37,7 @@ export default function KeywordsPage() {
     kw.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const avgPosition = Math.round(keywords.reduce((sum, kw) => sum + kw.position, 0) / keywords.length);
+  const avgPosition = keywords.length > 0 ? Math.round(keywords.reduce((sum, kw) => sum + kw.position, 0) / keywords.length) : 0;
   const totalVolume = keywords.reduce((sum, kw) => sum + kw.searchVolume, 0);
 
   return (
@@ -152,70 +121,100 @@ export default function KeywordsPage() {
 
       {/* Keywords Table */}
       <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Keyword
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Position
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Change
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Search Volume
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Difficulty
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Company
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredKeywords.map((keyword) => {
-                const change = getPositionChange(keyword.position, keyword.previousPosition);
-                const ChangeIcon = change.icon;
-                return (
-                  <tr key={keyword.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{keyword.keyword}</span>
-                        <span className="text-sm text-gray-500">{keyword.url}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-gray-900">#{keyword.position}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`flex items-center gap-1 ${change.color}`}>
-                        <ChangeIcon className="h-4 w-4" />
-                        <span className="font-medium">{change.value}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-gray-900">{keyword.searchVolume.toLocaleString()}/mo</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(keyword.difficulty)}`}>
-                        {keyword.difficulty}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-gray-900">{keyword.company}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {filteredKeywords.length === 0 && keywords.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Target className="h-16 w-16 text-gray-300" />
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No keywords tracked</h3>
+                <p className="text-gray-600 mb-6">
+                  Start tracking your keyword rankings to monitor your SEO performance over time.
+                </p>
+                <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+                  <Plus className="h-5 w-5" />
+                  Add Your First Keywords
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : filteredKeywords.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Search className="h-16 w-16 text-gray-300" />
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No keywords found</h3>
+                <p className="text-gray-600">
+                  Try adjusting your search terms to find what you're looking for.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Keyword
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Position
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Change
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Search Volume
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Difficulty
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Company
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredKeywords.map((keyword) => {
+                  const change = getPositionChange(keyword.position, keyword.previousPosition);
+                  const ChangeIcon = change.icon;
+                  return (
+                    <tr key={keyword.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-900">{keyword.keyword}</span>
+                          <span className="text-sm text-gray-500">{keyword.url}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold text-gray-900">#{keyword.position}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`flex items-center gap-1 ${change.color}`}>
+                          <ChangeIcon className="h-4 w-4" />
+                          <span className="font-medium">{change.value}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-gray-900">{keyword.searchVolume.toLocaleString()}/mo</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(keyword.difficulty)}`}>
+                          {keyword.difficulty}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-gray-900">{keyword.company}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

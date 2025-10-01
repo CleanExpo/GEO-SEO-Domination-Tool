@@ -16,30 +16,7 @@ interface GithubProject {
 }
 
 export default function GithubProjectsPage() {
-  const [projects, setProjects] = useState<GithubProject[]>([
-    {
-      id: '1',
-      name: 'seo-automation-tool',
-      description: 'Automated SEO analysis and reporting tool',
-      url: 'https://github.com/example/seo-automation-tool',
-      stars: 145,
-      forks: 32,
-      openPRs: 3,
-      language: 'TypeScript',
-      lastUpdated: '2025-10-01',
-    },
-    {
-      id: '2',
-      name: 'keyword-tracker',
-      description: 'Real-time keyword ranking tracker',
-      url: 'https://github.com/example/keyword-tracker',
-      stars: 89,
-      forks: 21,
-      openPRs: 1,
-      language: 'Python',
-      lastUpdated: '2025-09-28',
-    },
-  ]);
+  const [projects, setProjects] = useState<GithubProject[]>([]);
 
   return (
     <div className="p-8">
@@ -110,52 +87,70 @@ export default function GithubProjectsPage() {
         </div>
       </div>
 
-      {/* Projects List */}
-      <div className="space-y-4">
-        {projects.map((project) => (
-          <div
-            key={project.id}
-            className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Github className="h-5 w-5 text-gray-700" />
-                  <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {project.language}
-                  </span>
+      {/* Projects List or Empty State */}
+      {projects.length > 0 ? (
+        <div className="space-y-4">
+          {projects.map((project) => (
+            <div
+              key={project.id}
+              className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Github className="h-5 w-5 text-gray-700" />
+                    <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {project.language}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 mb-4">{project.description}</p>
+                  <div className="flex items-center gap-6 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Star className="h-4 w-4" />
+                      <span>{project.stars}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <GitFork className="h-4 w-4" />
+                      <span>{project.forks}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <GitPullRequest className="h-4 w-4" />
+                      <span>{project.openPRs} open</span>
+                    </div>
+                    <span>Updated {new Date(project.lastUpdated).toLocaleDateString()}</span>
+                  </div>
                 </div>
-                <p className="text-gray-600 mb-4">{project.description}</p>
-                <div className="flex items-center gap-6 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4" />
-                    <span>{project.stars}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <GitFork className="h-4 w-4" />
-                    <span>{project.forks}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <GitPullRequest className="h-4 w-4" />
-                    <span>{project.openPRs} open</span>
-                  </div>
-                  <span>Updated {new Date(project.lastUpdated).toLocaleDateString()}</span>
-                </div>
+                <a
+                  href={project.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                >
+                  <span className="text-sm font-medium">View on GitHub</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </div>
-              <a
-                href={project.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-              >
-                <span className="text-sm font-medium">View on GitHub</span>
-                <ExternalLink className="h-4 w-4" />
-              </a>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center max-w-md">
+            <div className="flex justify-center mb-4">
+              <Github className="h-16 w-16 text-gray-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No repositories imported</h3>
+            <p className="text-gray-600 mb-6">
+              Connect your GitHub account to import and sync repositories with your projects.
+            </p>
+            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+              <Plus className="h-5 w-5" />
+              Import Repository
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

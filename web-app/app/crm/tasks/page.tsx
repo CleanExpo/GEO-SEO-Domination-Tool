@@ -15,37 +15,7 @@ interface Task {
 }
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Follow up with Acme Corp',
-      description: 'Send proposal for enterprise SEO package',
-      dueDate: '2025-10-05',
-      priority: 'high',
-      status: 'todo',
-      assignedTo: 'You',
-      relatedTo: 'Enterprise SEO Package',
-    },
-    {
-      id: '2',
-      title: 'Schedule demo call',
-      description: 'Demo local SEO features for TechStart',
-      dueDate: '2025-10-08',
-      priority: 'medium',
-      status: 'in_progress',
-      assignedTo: 'You',
-      relatedTo: 'Local SEO Service',
-    },
-    {
-      id: '3',
-      title: 'Update keyword report',
-      description: 'Monthly keyword performance report for client',
-      dueDate: '2025-10-10',
-      priority: 'low',
-      status: 'todo',
-      assignedTo: 'You',
-    },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const getPriorityColor = (priority: Task['priority']) => {
     const colors = {
@@ -136,62 +106,78 @@ export default function TasksPage() {
       <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50">
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">All Tasks</h2>
-          <div className="space-y-4">
-            {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start gap-4">
-                  <button
-                    onClick={() => toggleTaskStatus(task.id)}
-                    className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      task.status === 'completed'
-                        ? 'bg-emerald-600 border-emerald-600'
-                        : 'border-gray-300 hover:border-emerald-600'
-                    }`}
-                  >
-                    {task.status === 'completed' && (
-                      <CheckSquare className="h-4 w-4 text-white" />
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className={`text-lg font-semibold ${
-                          task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'
-                        }`}>
-                          {task.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                        {task.relatedTo && (
-                          <p className="text-sm text-emerald-600 mt-1">Related: {task.relatedTo}</p>
-                        )}
+          {tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="p-4 bg-gray-50 rounded-full mb-4">
+                <CheckSquare className="h-16 w-16 text-gray-300" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No tasks yet</h3>
+              <p className="text-gray-600 text-center max-w-md mb-6">
+                Stay organized by creating tasks for follow-ups and important actions
+              </p>
+              <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                <Plus className="h-5 w-5" />
+                Add Your First Task
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start gap-4">
+                    <button
+                      onClick={() => toggleTaskStatus(task.id)}
+                      className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        task.status === 'completed'
+                          ? 'bg-emerald-600 border-emerald-600'
+                          : 'border-gray-300 hover:border-emerald-600'
+                      }`}
+                    >
+                      {task.status === 'completed' && (
+                        <CheckSquare className="h-4 w-4 text-white" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className={`text-lg font-semibold ${
+                            task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'
+                          }`}>
+                            {task.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                          {task.relatedTo && (
+                            <p className="text-sm text-emerald-600 mt-1">Related: {task.relatedTo}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
+                            {task.priority}
+                          </span>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>
+                            {task.status.replace('_', ' ')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex gap-2 ml-4">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                          {task.priority}
-                        </span>
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>
-                          {task.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>{task.assignedTo}</span>
+                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span>{task.assignedTo}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

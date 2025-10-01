@@ -14,33 +14,7 @@ interface Note {
 }
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      title: 'Client Meeting Notes - Acme Corp',
-      content: 'Discussed Q4 SEO strategy. Focus on local search optimization and content marketing. Need to create 10 blog posts by end of month.',
-      tags: ['meeting', 'seo-strategy', 'acme-corp'],
-      createdAt: '2025-10-01',
-      updatedAt: '2025-10-01',
-      project: 'Website Redesign',
-    },
-    {
-      id: '2',
-      title: 'Technical SEO Checklist',
-      content: 'Key items to review: XML sitemap, robots.txt, page speed optimization, mobile responsiveness, structured data implementation.',
-      tags: ['technical-seo', 'checklist'],
-      createdAt: '2025-09-28',
-      updatedAt: '2025-09-30',
-    },
-    {
-      id: '3',
-      title: 'Content Ideas for Blog',
-      content: '1. How to improve local SEO rankings\n2. Best practices for on-page optimization\n3. Link building strategies for 2025\n4. Voice search optimization tips',
-      tags: ['content', 'blog-ideas'],
-      createdAt: '2025-09-25',
-      updatedAt: '2025-09-25',
-    },
-  ]);
+  const [notes, setNotes] = useState<Note[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -149,56 +123,74 @@ export default function NotesPage() {
         </div>
       </div>
 
-      {/* Notes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredNotes.map((note) => (
-          <div
-            key={note.id}
-            className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{note.title}</h3>
-              <div className="flex items-center gap-2">
-                <button className="p-1 text-gray-400 hover:text-emerald-600 transition-colors">
-                  <Edit className="h-4 w-4" />
-                </button>
-                <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+      {/* Notes Grid or Empty State */}
+      {filteredNotes.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredNotes.map((note) => (
+            <div
+              key={note.id}
+              className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{note.title}</h3>
+                <div className="flex items-center gap-2">
+                  <button className="p-1 text-gray-400 hover:text-emerald-600 transition-colors">
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <p className="text-sm text-gray-600 mb-4 line-clamp-4">{note.content}</p>
+              <p className="text-sm text-gray-600 mb-4 line-clamp-4">{note.content}</p>
 
-            {note.project && (
-              <div className="mb-3 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded inline-block">
-                {note.project}
-              </div>
-            )}
-
-            <div className="flex items-center flex-wrap gap-2 mb-3">
-              {note.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-200">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span>Created {new Date(note.createdAt).toLocaleDateString()}</span>
-              </div>
-              {note.updatedAt !== note.createdAt && (
-                <span>Updated {new Date(note.updatedAt).toLocaleDateString()}</span>
+              {note.project && (
+                <div className="mb-3 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded inline-block">
+                  {note.project}
+                </div>
               )}
+
+              <div className="flex items-center flex-wrap gap-2 mb-3">
+                {note.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-200">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>Created {new Date(note.createdAt).toLocaleDateString()}</span>
+                </div>
+                {note.updatedAt !== note.createdAt && (
+                  <span>Updated {new Date(note.updatedAt).toLocaleDateString()}</span>
+                )}
+              </div>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center max-w-md">
+            <div className="flex justify-center mb-4">
+              <FileText className="h-16 w-16 text-gray-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No notes yet</h3>
+            <p className="text-gray-600 mb-6">
+              Start documenting your ideas, meetings, and project information by creating your first note.
+            </p>
+            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+              <Plus className="h-5 w-5" />
+              Create Note
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
