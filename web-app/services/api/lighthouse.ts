@@ -1,7 +1,14 @@
 import axios from 'axios'
-import type { LighthouseScores } from '@/types'
 
 const PSI_API_BASE = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
+
+export interface LighthouseScores {
+  performance: number
+  accessibility: number
+  best_practices: number
+  seo: number
+  pwa?: number
+}
 
 export class LighthouseService {
   private apiKey: string
