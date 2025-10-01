@@ -63,4 +63,4 @@ See `docs/AI_SEARCH_SEO_INTEGRATION.md` for comprehensive AI Search strategies a
 ## 🔗 Links
 
 - **GitHub:** https://github.com/CleanExpo/GEO-SEO-Domination-Tool
-- **Live Demo:** https://geo-seo-domination-tool-9w13v2aw3-unite-group.vercel.app
+- **Live Demo:** https://geo-seo-domination-tool-r49goy85k-unite-group.vercel.app
