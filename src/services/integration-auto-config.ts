@@ -418,8 +418,12 @@ export default stripe
     try {
       const shadcnSetup = createShadcnSetup()
 
+      // Detect framework from package.json
+      const framework = await this.detectFramework()
+
       const setupResult = await shadcnSetup.setupShadcn({
         projectPath: this.projectPath,
+        framework: framework as 'vite' | 'nextjs',
         baseColor: (creds.baseColor as any) || 'neutral',
         cssVariables: true,
         components: creds.components ? creds.components.split(',') : ['button', 'card', 'input', 'label'],
@@ -471,6 +475,29 @@ export default firecrawl
     }
 
     return result
+  }
+
+  // Detect framework from package.json
+  private async detectFramework(): Promise<'vite' | 'nextjs' | 'unknown'> {
+    try {
+      const packageJsonPath = path.join(this.projectPath, 'package.json')
+      if (await fs.pathExists(packageJsonPath)) {
+        const packageJson = await fs.readJSON(packageJsonPath)
+
+        // Check dependencies
+        const deps = { ...packageJson.dependencies, ...packageJson.devDependencies }
+
+        if (deps['next']) {
+          return 'nextjs'
+        } else if (deps['vite']) {
+          return 'vite'
+        }
+      }
+
+      return 'unknown'
+    } catch (error) {
+      return 'unknown'
+    }
   }
 
   // Fetch credentials from connected integrations in database

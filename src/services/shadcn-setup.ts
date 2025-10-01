@@ -7,6 +7,7 @@ const execAsync = promisify(exec)
 
 export interface ShadcnSetupConfig {
   projectPath: string
+  framework?: 'vite' | 'nextjs'
   baseColor?: 'neutral' | 'slate' | 'stone' | 'gray' | 'zinc'
   cssVariables?: boolean
   components?: string[]
@@ -20,7 +21,7 @@ export interface ShadcnSetupResult {
 }
 
 export class ShadcnSetup {
-  // Setup shadcn/ui for a React + Vite project
+  // Setup shadcn/ui for React projects (Vite or Next.js)
   async setupShadcn(config: ShadcnSetupConfig): Promise<ShadcnSetupResult> {
     const result: ShadcnSetupResult = {
       success: false,
@@ -30,27 +31,14 @@ export class ShadcnSetup {
     }
 
     try {
-      // Step 1: Update package.json dependencies
-      await this.installDependencies(config.projectPath, result)
+      const framework = config.framework || 'vite'
 
-      // Step 2: Update tsconfig files
-      await this.updateTsConfig(config.projectPath, result)
-
-      // Step 3: Update vite.config.ts
-      await this.updateViteConfig(config.projectPath, result)
-
-      // Step 4: Update src/index.css
-      await this.updateIndexCSS(config.projectPath, result)
-
-      // Step 5: Create components.json
-      await this.createComponentsJson(config, result)
-
-      // Step 6: Create lib/utils.ts
-      await this.createUtilsFile(config.projectPath, result)
-
-      // Step 7: Install initial components
-      if (config.components && config.components.length > 0) {
-        await this.installComponents(config.projectPath, config.components, result)
+      if (framework === 'nextjs') {
+        // Next.js setup - uses shadcn CLI directly
+        await this.setupNextJs(config, result)
+      } else {
+        // Vite setup - manual configuration
+        await this.setupVite(config, result)
       }
 
       result.success = true
@@ -59,6 +47,52 @@ export class ShadcnSetup {
     }
 
     return result
+  }
+
+  // Setup shadcn/ui for Next.js
+  private async setupNextJs(config: ShadcnSetupConfig, result: ShadcnSetupResult): Promise<void> {
+    try {
+      // Run shadcn init command for Next.js
+      const { stdout } = await execAsync(
+        `npx shadcn@latest init --yes --defaults`,
+        { cwd: config.projectPath }
+      )
+
+      result.filesCreated.push('components.json', 'lib/utils.ts', 'tailwind.config.ts', 'components/')
+
+      // Install initial components
+      if (config.components && config.components.length > 0) {
+        await this.installComponents(config.projectPath, config.components, result)
+      }
+    } catch (error) {
+      result.errors.push(`Next.js shadcn setup failed: ${error}`)
+    }
+  }
+
+  // Setup shadcn/ui for Vite
+  private async setupVite(config: ShadcnSetupConfig, result: ShadcnSetupResult): Promise<void> {
+    // Step 1: Update package.json dependencies
+    await this.installDependencies(config.projectPath, result)
+
+    // Step 2: Update tsconfig files
+    await this.updateTsConfig(config.projectPath, result)
+
+    // Step 3: Update vite.config.ts
+    await this.updateViteConfig(config.projectPath, result)
+
+    // Step 4: Update src/index.css
+    await this.updateIndexCSS(config.projectPath, result)
+
+    // Step 5: Create components.json
+    await this.createComponentsJson(config, result)
+
+    // Step 6: Create lib/utils.ts
+    await this.createUtilsFile(config.projectPath, result)
+
+    // Step 7: Install initial components
+    if (config.components && config.components.length > 0) {
+      await this.installComponents(config.projectPath, config.components, result)
+    }
   }
 
   // Install required dependencies

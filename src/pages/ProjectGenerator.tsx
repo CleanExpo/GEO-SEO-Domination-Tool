@@ -55,6 +55,7 @@ export default function ProjectGenerator() {
       color: '#61DAFB',
       techStack: ['React 19', 'Vite', 'TypeScript', 'TailwindCSS'],
       features: [
+        { key: 'shadcn', name: 'shadcn/ui Components', description: 'Beautiful UI components with Radix UI', category: 'ui', required: false },
         { key: 'auth', name: 'Authentication', description: 'User authentication system', category: 'auth', required: false, requiresIntegration: 'supabase' },
         { key: 'database', name: 'Database Integration', description: 'Database ORM and queries', category: 'data', required: false, requiresIntegration: 'supabase' },
         { key: 'api', name: 'API Routes', description: 'Backend API endpoints', category: 'backend', required: false },
@@ -64,7 +65,7 @@ export default function ProjectGenerator() {
         { key: 'testing', name: 'Testing Setup', description: 'Vitest and React Testing Library', category: 'quality', required: false },
         { key: 'ci_cd', name: 'CI/CD Pipeline', description: 'GitHub Actions workflow', category: 'devops', required: false, requiresIntegration: 'github' },
       ],
-      integrations: ['supabase', 'github', 'vercel', 'openai', 'anthropic'],
+      integrations: ['shadcn', 'supabase', 'github', 'vercel', 'openai', 'anthropic', 'firecrawl'],
     },
     {
       id: 'nextjs-app',
@@ -76,6 +77,7 @@ export default function ProjectGenerator() {
       color: '#000000',
       techStack: ['Next.js 15', 'React Server Components', 'TypeScript', 'TailwindCSS'],
       features: [
+        { key: 'shadcn', name: 'shadcn/ui Components', description: 'Beautiful UI components with Radix UI', category: 'ui', required: false },
         { key: 'auth', name: 'Authentication', description: 'NextAuth.js setup', category: 'auth', required: false },
         { key: 'database', name: 'Database + ORM', description: 'Prisma or Drizzle ORM', category: 'data', required: false },
         { key: 'api', name: 'API Routes', description: 'App Router API routes', category: 'backend', required: false },
@@ -83,7 +85,7 @@ export default function ProjectGenerator() {
         { key: 'seo', name: 'SEO Optimization', description: 'Metadata and sitemap', category: 'seo', required: false },
         { key: 'analytics', name: 'Analytics', description: 'Vercel Analytics', category: 'tracking', required: false },
       ],
-      integrations: ['supabase', 'github', 'vercel', 'stripe', 'openai'],
+      integrations: ['shadcn', 'supabase', 'github', 'vercel', 'stripe', 'openai', 'firecrawl'],
     },
     {
       id: 'fastapi-python',
@@ -107,12 +109,14 @@ export default function ProjectGenerator() {
   ]
 
   const availableIntegrations = [
+    { id: 'shadcn', name: 'shadcn/ui', icon: '✨', description: 'Beautiful UI components' },
     { id: 'supabase', name: 'Supabase', icon: '⚡', description: 'Database, Auth & Storage' },
     { id: 'github', name: 'GitHub', icon: '🐙', description: 'Version control & CI/CD' },
     { id: 'vercel', name: 'Vercel', icon: '▲', description: 'Deployment platform' },
     { id: 'openai', name: 'OpenAI', icon: '🧠', description: 'GPT models' },
     { id: 'anthropic', name: 'Anthropic', icon: '🤖', description: 'Claude AI' },
     { id: 'stripe', name: 'Stripe', icon: '💳', description: 'Payment processing' },
+    { id: 'firecrawl', name: 'Firecrawl', icon: '🕷️', description: 'Web scraping API' },
   ]
 
   const handleTemplateSelect = (template: ProjectTemplate) => {
