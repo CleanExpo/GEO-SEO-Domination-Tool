@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Calendar, User, AlertCircle } from 'lucide-react';
 
 interface Task {
@@ -16,6 +16,36 @@ interface Task {
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/crm/tasks');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+
+      const data = await response.json();
+      setTasks(data.tasks || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching tasks:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddTask = () => {
+    console.log('Add task clicked');
+  };
 
   const getPriorityColor = (priority: Task['priority']) => {
     const colors = {
@@ -35,20 +65,53 @@ export default function TasksPage() {
     return colors[status];
   };
 
-  const toggleTaskStatus = (taskId: string) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
-        const newStatus = task.status === 'completed' ? 'todo' :
-                         task.status === 'todo' ? 'in_progress' : 'completed';
-        return { ...task, status: newStatus };
+  const toggleTaskStatus = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const newStatus = task.status === 'completed' ? 'todo' :
+                     task.status === 'todo' ? 'in_progress' : 'completed';
+
+    // Optimistic update
+    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+
+    try {
+      const response = await fetch(`/api/crm/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task');
       }
-      return task;
-    }));
+    } catch (err) {
+      // Revert on error
+      setTasks(tasks.map(t => t.id === taskId ? task : t));
+      console.error('Error updating task:', err);
+    }
   };
 
   const todoTasks = tasks.filter(t => t.status === 'todo').length;
   const inProgressTasks = tasks.filter(t => t.status === 'in_progress').length;
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading tasks</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchTasks}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -58,7 +121,10 @@ export default function TasksPage() {
             <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
             <p className="text-gray-600 mt-1">Manage your to-dos and follow-ups</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddTask}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Add Task
           </button>
@@ -106,7 +172,12 @@ export default function TasksPage() {
       <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50">
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">All Tasks</h2>
-          {tasks.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+              <p className="text-gray-600">Loading tasks...</p>
+            </div>
+          ) : tasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="p-4 bg-gray-50 rounded-full mb-4">
                 <CheckSquare className="h-16 w-16 text-gray-300" />
@@ -115,7 +186,10 @@ export default function TasksPage() {
               <p className="text-gray-600 text-center max-w-md mb-6">
                 Stay organized by creating tasks for follow-ups and important actions
               </p>
-              <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+              <button
+                onClick={handleAddTask}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
                 <Plus className="h-5 w-5" />
                 Add Your First Task
               </button>

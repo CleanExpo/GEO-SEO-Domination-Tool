@@ -1,131 +1,138 @@
 -- CRM System Database Schema
+-- Compatible with both SQLite and PostgreSQL
 
 -- Contacts Table
 CREATE TABLE IF NOT EXISTS crm_contacts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  phone VARCHAR(50),
-  company VARCHAR(255),
-  location VARCHAR(255),
-  status VARCHAR(50) DEFAULT 'lead', -- 'active', 'inactive', 'lead'
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  company TEXT,
+  location TEXT,
+  status TEXT DEFAULT 'lead', -- 'active', 'inactive', 'lead'
   notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Deals Table
 CREATE TABLE IF NOT EXISTS crm_deals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
-  contact_id UUID REFERENCES crm_contacts(id) ON DELETE CASCADE,
-  company VARCHAR(255),
-  value DECIMAL(10, 2) NOT NULL,
-  stage VARCHAR(50) DEFAULT 'prospect', -- 'prospect', 'qualification', 'proposal', 'negotiation', 'closed'
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  contact_id INTEGER NOT NULL,
+  company TEXT,
+  value REAL NOT NULL,
+  stage TEXT DEFAULT 'prospect', -- 'prospect', 'qualification', 'proposal', 'negotiation', 'closed'
   probability INTEGER DEFAULT 0, -- 0-100
   close_date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE CASCADE
 );
 
 -- Tasks Table
 CREATE TABLE IF NOT EXISTS crm_tasks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
   description TEXT,
   due_date DATE,
-  priority VARCHAR(50) DEFAULT 'medium', -- 'low', 'medium', 'high'
-  status VARCHAR(50) DEFAULT 'todo', -- 'todo', 'in_progress', 'completed'
-  assigned_to VARCHAR(255),
-  contact_id UUID REFERENCES crm_contacts(id) ON DELETE SET NULL,
-  deal_id UUID REFERENCES crm_deals(id) ON DELETE SET NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  priority TEXT DEFAULT 'medium', -- 'low', 'medium', 'high'
+  status TEXT DEFAULT 'todo', -- 'todo', 'in_progress', 'completed'
+  assigned_to TEXT,
+  contact_id INTEGER,
+  deal_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE SET NULL,
+  FOREIGN KEY (deal_id) REFERENCES crm_deals(id) ON DELETE SET NULL
 );
 
 -- Calendar Events Table
 CREATE TABLE IF NOT EXISTS crm_calendar_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
   event_date DATE NOT NULL,
-  event_time TIME NOT NULL,
-  duration VARCHAR(50),
-  type VARCHAR(50) DEFAULT 'meeting', -- 'meeting', 'call', 'demo', 'follow-up'
-  location VARCHAR(255),
+  event_time TEXT NOT NULL,
+  duration TEXT,
+  type TEXT DEFAULT 'meeting', -- 'meeting', 'call', 'demo', 'follow-up'
+  location TEXT,
   notes TEXT,
-  contact_id UUID REFERENCES crm_contacts(id) ON DELETE SET NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  contact_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE SET NULL
 );
 
 -- Event Attendees Table (many-to-many relationship)
 CREATE TABLE IF NOT EXISTS crm_event_attendees (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID REFERENCES crm_calendar_events(id) ON DELETE CASCADE,
-  attendee_name VARCHAR(255) NOT NULL,
-  attendee_email VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id INTEGER NOT NULL,
+  attendee_name TEXT NOT NULL,
+  attendee_email TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (event_id) REFERENCES crm_calendar_events(id) ON DELETE CASCADE
 );
 
 -- Projects Table
 CREATE TABLE IF NOT EXISTS crm_projects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
   description TEXT,
-  status VARCHAR(50) DEFAULT 'planning', -- 'planning', 'active', 'completed', 'on-hold'
+  status TEXT DEFAULT 'planning', -- 'planning', 'active', 'completed', 'on-hold'
   progress INTEGER DEFAULT 0, -- 0-100
   due_date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Project Team Members (many-to-many relationship)
 CREATE TABLE IF NOT EXISTS crm_project_members (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID REFERENCES crm_projects(id) ON DELETE CASCADE,
-  member_name VARCHAR(255) NOT NULL,
-  role VARCHAR(100),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id INTEGER NOT NULL,
+  member_name TEXT NOT NULL,
+  role TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES crm_projects(id) ON DELETE CASCADE
 );
 
 -- GitHub Projects Table
 CREATE TABLE IF NOT EXISTS crm_github_projects (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
   description TEXT,
-  url VARCHAR(500) UNIQUE NOT NULL,
+  url TEXT UNIQUE NOT NULL,
   stars INTEGER DEFAULT 0,
   forks INTEGER DEFAULT 0,
   open_prs INTEGER DEFAULT 0,
-  language VARCHAR(100),
+  language TEXT,
   last_updated DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Prompts Library Table
 CREATE TABLE IF NOT EXISTS crm_prompts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
   content TEXT NOT NULL,
-  category VARCHAR(100),
-  tags TEXT[], -- Array of tags
-  favorite BOOLEAN DEFAULT false,
+  category TEXT,
+  tags TEXT, -- JSON array stored as text
+  favorite BOOLEAN DEFAULT 0,
   usage_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Support Tickets Table
 CREATE TABLE IF NOT EXISTS crm_support_tickets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  subject VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  subject TEXT NOT NULL,
   message TEXT NOT NULL,
-  status VARCHAR(50) DEFAULT 'open', -- 'open', 'in_progress', 'resolved', 'closed'
-  priority VARCHAR(50) DEFAULT 'medium', -- 'low', 'medium', 'high'
-  assigned_to VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  status TEXT DEFAULT 'open', -- 'open', 'in_progress', 'resolved', 'closed'
+  priority TEXT DEFAULT 'medium', -- 'low', 'medium', 'high'
+  assigned_to TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for better query performance

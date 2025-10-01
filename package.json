@@ -12,7 +12,14 @@
     "build:win": "npm run build -- --win",
     "lint": "eslint .",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
+    "db:test": "node scripts/test-db-connection.js",
+    "db:init": "node scripts/init-database.js",
+    "db:init:verify": "node scripts/init-database.js --verify",
+    "db:migrate": "node scripts/migrate.js up",
+    "db:migrate:down": "node scripts/migrate.js down",
+    "db:migrate:status": "node scripts/migrate.js status",
+    "db:migrate:create": "node scripts/migrate.js create"
   },
   "build": {
     "appId": "com.geoseodomination.app",
@@ -43,6 +50,7 @@
     "electron-builder": "^26.0.12",
     "express": "^5.1.0",
     "node-cron": "^4.2.1",
+    "pg": "^8.13.1",
     "postcss": "^8.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -58,6 +66,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.6.1",
+    "@types/pg": "^8.11.10",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.3",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Wrench, Plus, Search, Copy, Code, Download } from 'lucide-react';
 
 interface Component {
@@ -15,8 +15,37 @@ interface Component {
 
 export default function ComponentsPage() {
   const [components, setComponents] = useState<Component[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchComponents();
+  }, []);
+
+  const fetchComponents = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/resources/components');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch components');
+      }
+
+      const data = await response.json();
+      setComponents(data.components || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching components:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddComponent = () => {
+    console.log('Add component clicked');
+  };
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -30,6 +59,23 @@ export default function ComponentsPage() {
 
   const categories = Array.from(new Set(components.map(c => c.category)));
 
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading components</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchComponents}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -38,7 +84,10 @@ export default function ComponentsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Components Library</h1>
             <p className="text-gray-600 mt-1">Reusable code components and snippets</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddComponent}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Add Component
           </button>
@@ -97,7 +146,12 @@ export default function ComponentsPage() {
       </div>
 
       {/* Components List */}
-      {filteredComponents.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Loading components...</p>
+        </div>
+      ) : filteredComponents.length > 0 ? (
         <div className="space-y-6">
           {filteredComponents.map((component) => (
             <div
@@ -146,7 +200,10 @@ export default function ComponentsPage() {
             <p className="text-gray-600 mb-6">
               Build your reusable code library by adding your first component or snippet.
             </p>
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+            <button
+              onClick={handleAddComponent}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+            >
               <Plus className="h-5 w-5" />
               Add Your First Component
             </button>

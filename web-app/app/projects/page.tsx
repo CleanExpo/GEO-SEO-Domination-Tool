@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FolderKanban, Plus, Calendar, Users, TrendingUp } from 'lucide-react';
 
 interface Project {
@@ -16,6 +16,36 @@ interface Project {
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/projects');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching projects:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddProject = () => {
+    console.log('Add project clicked');
+  };
 
   const getStatusColor = (status: Project['status']) => {
     const colors = {
@@ -27,6 +57,23 @@ export default function ProjectsPage() {
     return colors[status];
   };
 
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading projects</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchProjects}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -35,7 +82,10 @@ export default function ProjectsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
             <p className="text-gray-600 mt-1">Manage and track your project portfolio</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddProject}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             New Project
           </button>
@@ -97,7 +147,12 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects Grid or Empty State */}
-      {projects.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Loading projects...</p>
+        </div>
+      ) : projects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {projects.map((project) => (
             <div
@@ -175,7 +230,10 @@ export default function ProjectsPage() {
             <p className="text-gray-600 mb-6">
               Get started by creating your first project to track progress and manage tasks.
             </p>
-            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+            <button
+              onClick={handleAddProject}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+            >
               <Plus className="h-5 w-5" />
               Create Project
             </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Plus, Search, Mail, Phone, Building2, MapPin } from 'lucide-react';
 
 interface Contact {
@@ -16,12 +16,61 @@ interface Contact {
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/crm/contacts');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch contacts');
+      }
+
+      const data = await response.json();
+      setContacts(data.contacts || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching contacts:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddContact = async () => {
+    // TODO: Implement add contact modal/form
+    // For now, this is a placeholder that could be connected to a modal
+    console.log('Add contact clicked');
+  };
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading contacts</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchContacts}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -31,7 +80,10 @@ export default function ContactsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
             <p className="text-gray-600 mt-1">Manage your contacts and leads</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddContact}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Add Contact
           </button>
@@ -95,14 +147,22 @@ export default function ContactsPage() {
 
       {/* Contacts List */}
       <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50">
-        {filteredContacts.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+            <p className="text-gray-600">Loading contacts...</p>
+          </div>
+        ) : filteredContacts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
             <Users className="h-16 w-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No contacts yet</h3>
             <p className="text-gray-600 text-center mb-6">
               Get started by adding your first contact
             </p>
-            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+            <button
+              onClick={handleAddContact}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
               <Plus className="h-5 w-5" />
               Add Your First Contact
             </button>

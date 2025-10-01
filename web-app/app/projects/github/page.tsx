@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Github, Plus, Star, GitFork, GitPullRequest, ExternalLink } from 'lucide-react';
 
 interface GithubProject {
@@ -17,6 +17,53 @@ interface GithubProject {
 
 export default function GithubProjectsPage() {
   const [projects, setProjects] = useState<GithubProject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/projects/github');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch GitHub projects');
+      }
+
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching GitHub projects:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImportRepo = () => {
+    console.log('Import repository clicked');
+  };
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading GitHub projects</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchProjects}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -26,7 +73,10 @@ export default function GithubProjectsPage() {
             <h1 className="text-3xl font-bold text-gray-900">GitHub Projects</h1>
             <p className="text-gray-600 mt-1">Import and sync GitHub repositories</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleImportRepo}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Import Repository
           </button>
@@ -88,7 +138,12 @@ export default function GithubProjectsPage() {
       </div>
 
       {/* Projects List or Empty State */}
-      {projects.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Loading repositories...</p>
+        </div>
+      ) : projects.length > 0 ? (
         <div className="space-y-4">
           {projects.map((project) => (
             <div
@@ -144,7 +199,10 @@ export default function GithubProjectsPage() {
             <p className="text-gray-600 mb-6">
               Connect your GitHub account to import and sync repositories with your projects.
             </p>
-            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+            <button
+              onClick={handleImportRepo}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+            >
               <Plus className="h-5 w-5" />
               Import Repository
             </button>

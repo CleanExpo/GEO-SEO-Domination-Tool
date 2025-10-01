@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Plus, Search, Tag, Calendar, Edit, Trash2 } from 'lucide-react';
 
 interface Note {
@@ -15,6 +15,36 @@ interface Note {
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  const fetchNotes = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/projects/notes');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch notes');
+      }
+
+      const data = await response.json();
+      setNotes(data.notes || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching notes:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddNote = () => {
+    console.log('Add note clicked');
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -28,6 +58,23 @@ export default function NotesPage() {
     return matchesSearch && matchesTag;
   });
 
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading notes</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchNotes}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -36,7 +83,10 @@ export default function NotesPage() {
             <h1 className="text-3xl font-bold text-gray-900">Notes & Docs</h1>
             <p className="text-gray-600 mt-1">Organize your project documentation and notes</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddNote}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             New Note
           </button>
@@ -124,7 +174,12 @@ export default function NotesPage() {
       </div>
 
       {/* Notes Grid or Empty State */}
-      {filteredNotes.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Loading notes...</p>
+        </div>
+      ) : filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map((note) => (
             <div
@@ -184,7 +239,10 @@ export default function NotesPage() {
             <p className="text-gray-600 mb-6">
               Start documenting your ideas, meetings, and project information by creating your first note.
             </p>
-            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+            <button
+              onClick={handleAddNote}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+            >
               <Plus className="h-5 w-5" />
               Create Note
             </button>

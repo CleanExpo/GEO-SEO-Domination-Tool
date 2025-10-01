@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Plus, Play, Clock, Award, Search } from 'lucide-react';
 
 interface Tutorial {
@@ -16,9 +16,38 @@ interface Tutorial {
 
 export default function TutorialsPage() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTutorials();
+  }, []);
+
+  const fetchTutorials = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/resources/tutorials');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tutorials');
+      }
+
+      const data = await response.json();
+      setTutorials(data.tutorials || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching tutorials:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddTutorial = () => {
+    console.log('Add tutorial clicked');
+  };
 
   const getDifficultyColor = (difficulty: Tutorial['difficulty']) => {
     const colors = {
@@ -38,6 +67,23 @@ export default function TutorialsPage() {
 
   const categories = Array.from(new Set(tutorials.map(t => t.category)));
 
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading tutorials</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchTutorials}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -46,7 +92,10 @@ export default function TutorialsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Tutorials</h1>
             <p className="text-gray-600 mt-1">Learn SEO strategies and best practices</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddTutorial}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Add Tutorial
           </button>
@@ -165,7 +214,12 @@ export default function TutorialsPage() {
       )}
 
       {/* Tutorials Grid */}
-      {filteredTutorials.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Loading tutorials...</p>
+        </div>
+      ) : filteredTutorials.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredTutorials.map((tutorial) => (
             <div
@@ -222,7 +276,10 @@ export default function TutorialsPage() {
             <p className="text-gray-600 mb-6">
               Start your learning journey by adding your first SEO tutorial.
             </p>
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+            <button
+              onClick={handleAddTutorial}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+            >
               <Plus className="h-5 w-5" />
               Add Your First Tutorial
             </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageSquare, Plus, Copy, Star, Search } from 'lucide-react';
 
 interface Prompt {
@@ -15,21 +15,87 @@ interface Prompt {
 
 export default function PromptsPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchPrompts();
+  }, []);
+
+  const fetchPrompts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/resources/prompts');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch prompts');
+      }
+
+      const data = await response.json();
+      setPrompts(data.prompts || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching prompts:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddPrompt = () => {
+    console.log('Add prompt clicked');
+  };
 
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
   };
 
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = async (id: string) => {
+    const prompt = prompts.find(p => p.id === id);
+    if (!prompt) return;
+
+    // Optimistic update
     setPrompts(prompts.map(p => p.id === id ? { ...p, favorite: !p.favorite } : p));
+
+    try {
+      const response = await fetch(`/api/resources/prompts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favorite: !prompt.favorite }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update prompt');
+      }
+    } catch (err) {
+      // Revert on error
+      setPrompts(prompts.map(p => p.id === id ? prompt : p));
+      console.error('Error updating prompt:', err);
+    }
   };
 
   const filteredPrompts = prompts.filter(prompt =>
     prompt.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     prompt.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-800 font-semibold mb-2">Error loading prompts</p>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchPrompts}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -39,7 +105,10 @@ export default function PromptsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Prompts Library</h1>
             <p className="text-gray-600 mt-1">Your collection of AI prompts and templates</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={handleAddPrompt}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Add Prompt
           </button>
@@ -61,7 +130,12 @@ export default function PromptsPage() {
       </div>
 
       {/* Prompts Grid */}
-      {filteredPrompts.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Loading prompts...</p>
+        </div>
+      ) : filteredPrompts.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">
           {filteredPrompts.map((prompt) => (
             <div
@@ -127,7 +201,10 @@ export default function PromptsPage() {
             <p className="text-gray-600 mb-6">
               Start building your prompts library by adding your first AI prompt template.
             </p>
-            <button className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+            <button
+              onClick={handleAddPrompt}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+            >
               <Plus className="h-5 w-5" />
               Add Your First Prompt
             </button>
