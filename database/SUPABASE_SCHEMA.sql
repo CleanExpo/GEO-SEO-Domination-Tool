@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS citations (
   company_id UUID NOT NULL,
   platform TEXT NOT NULL,
   url TEXT NOT NULL,
-  nap_accurate BOOLEAN DEFAULT 0,
+  nap_accurate BOOLEAN DEFAULT false,
   last_checked TIMESTAMPTZ DEFAULT NOW(),
   status TEXT CHECK(status IN ('active', 'pending', 'inactive')),
   FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS content_gaps (
   topic TEXT NOT NULL,
   keyword TEXT NOT NULL,
   search_volume INTEGER,
-  competitor_has_content BOOLEAN DEFAULT 0,
+  competitor_has_content BOOLEAN DEFAULT false,
   priority TEXT CHECK(priority IN ('low', 'medium', 'high')),
   status TEXT CHECK(status IN ('identified', 'in_progress', 'completed')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS scheduled_audits (
   frequency TEXT CHECK(frequency IN ('daily', 'weekly', 'monthly')),
   last_run TIMESTAMPTZ,
   next_run TIMESTAMPTZ,
-  enabled BOOLEAN DEFAULT 1,
+  enabled BOOLEAN DEFAULT true,
   FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
 
@@ -281,7 +281,7 @@ CREATE TABLE IF NOT EXISTS crm_prompts (
   content TEXT NOT NULL,
   category TEXT,
   tags TEXT, -- JSON array stored as text
-  favorite BOOLEAN DEFAULT 0,
+  favorite BOOLEAN DEFAULT false,
   usage_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -361,7 +361,7 @@ CREATE TABLE IF NOT EXISTS hub_api_keys (
 
   -- Metadata
   environment TEXT CHECK(environment IN ('development', 'staging', 'production')),
-  is_active BOOLEAN DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
   expires_at TIMESTAMPTZ,
 
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -379,7 +379,7 @@ CREATE TABLE IF NOT EXISTS hub_project_configs (
   config_type TEXT, -- 'string', 'number', 'boolean', 'json', 'secret'
   description TEXT,
 
-  is_required BOOLEAN DEFAULT 0,
+  is_required BOOLEAN DEFAULT false,
   default_value TEXT,
 
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -397,8 +397,8 @@ CREATE TABLE IF NOT EXISTS hub_project_features (
   feature_slug TEXT NOT NULL,
   description TEXT,
 
-  is_enabled BOOLEAN DEFAULT 1,
-  requires_config BOOLEAN DEFAULT 0,
+  is_enabled BOOLEAN DEFAULT true,
+  requires_config BOOLEAN DEFAULT false,
   config_schema TEXT, -- JSON schema for feature config
 
   icon TEXT,
@@ -415,8 +415,8 @@ CREATE TABLE IF NOT EXISTS hub_project_dependencies (
   dependency_name TEXT NOT NULL,
   version TEXT,
 
-  is_required BOOLEAN DEFAULT 1,
-  is_configured BOOLEAN DEFAULT 0,
+  is_required BOOLEAN DEFAULT true,
+  is_configured BOOLEAN DEFAULT false,
 
   FOREIGN KEY (project_id) REFERENCES hub_projects(id) ON DELETE CASCADE
 );
@@ -515,7 +515,7 @@ CREATE TABLE IF NOT EXISTS crm_components (
   category TEXT, -- 'ui', 'form', 'navigation', 'layout', etc.
   tags TEXT, -- JSON array stored as text
   demo_url TEXT,
-  favorite BOOLEAN DEFAULT 0,
+  favorite BOOLEAN DEFAULT false,
   usage_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -532,7 +532,7 @@ CREATE TABLE IF NOT EXISTS crm_ai_tools (
   features TEXT, -- JSON array stored as text
   tags TEXT, -- JSON array stored as text
   rating REAL, -- 0.0-5.0
-  favorite BOOLEAN DEFAULT 0,
+  favorite BOOLEAN DEFAULT false,
   usage_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -550,7 +550,7 @@ CREATE TABLE IF NOT EXISTS crm_tutorials (
   tags TEXT, -- JSON array stored as text
   video_url TEXT,
   resources TEXT, -- JSON array stored as text
-  favorite BOOLEAN DEFAULT 0,
+  favorite BOOLEAN DEFAULT false,
   views INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -632,10 +632,10 @@ CREATE TABLE IF NOT EXISTS ai_search_visibility (
   campaign_id UUID,
   ai_platform TEXT NOT NULL, -- Perplexity, ChatGPT, etc.
   query TEXT NOT NULL,
-  brand_mentioned BOOLEAN DEFAULT 0,
+  brand_mentioned BOOLEAN DEFAULT false,
   position_in_response INTEGER, -- Position where brand is mentioned
   context_sentiment TEXT CHECK(context_sentiment IN ('positive', 'neutral', 'negative')),
-  citation_included BOOLEAN DEFAULT 0,
+  citation_included BOOLEAN DEFAULT false,
   citation_url TEXT,
   full_response TEXT,
   checked_at TIMESTAMPTZ DEFAULT NOW(),
@@ -745,16 +745,16 @@ CREATE TABLE IF NOT EXISTS integration_registry (
   oauth_scopes TEXT, -- JSON array
 
   -- Capabilities
-  supports_webhooks BOOLEAN DEFAULT 0,
-  supports_realtime BOOLEAN DEFAULT 0,
-  supports_file_storage BOOLEAN DEFAULT 0,
+  supports_webhooks BOOLEAN DEFAULT false,
+  supports_realtime BOOLEAN DEFAULT false,
+  supports_file_storage BOOLEAN DEFAULT false,
 
   -- Documentation
   docs_url TEXT,
   setup_guide_url TEXT,
   api_reference_url TEXT,
 
-  is_active BOOLEAN DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -808,7 +808,7 @@ CREATE TABLE IF NOT EXISTS integration_webhooks (
   subscribed_events TEXT, -- JSON array
 
   -- Status
-  is_active BOOLEAN DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
   last_triggered TIMESTAMPTZ,
   total_triggers INTEGER DEFAULT 0,
 
@@ -895,7 +895,7 @@ CREATE TABLE IF NOT EXISTS integration_sdk_versions (
   install_command TEXT,
   docs_url TEXT,
 
-  is_recommended BOOLEAN DEFAULT 0,
+  is_recommended BOOLEAN DEFAULT false,
 
   FOREIGN KEY (integration_id) REFERENCES integration_registry(id) ON DELETE CASCADE
 );
@@ -927,7 +927,7 @@ CREATE TABLE IF NOT EXISTS oauth_states (
 
   created_at TIMESTAMPTZ DEFAULT NOW(),
   expires_at TIMESTAMPTZ NOT NULL,
-  used BOOLEAN DEFAULT 0,
+  used BOOLEAN DEFAULT false,
 
   FOREIGN KEY (integration_id) REFERENCES integration_registry(id),
   FOREIGN KEY (project_id) REFERENCES hub_projects(id)
@@ -979,7 +979,7 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT, -- Optional: link to user authentication system
   email TEXT NOT NULL UNIQUE,
-  enabled BOOLEAN DEFAULT 1,
+  enabled BOOLEAN DEFAULT true,
   channels TEXT NOT NULL, -- JSON: {email: true, sms: false, push: false, inApp: true}
   types TEXT NOT NULL, -- JSON: {weekly_report: true, ranking_alert: true, ...}
   frequency TEXT NOT NULL, -- JSON: {weekly_report: 'weekly', ranking_alert: 'immediate', ...}
@@ -1017,7 +1017,7 @@ CREATE TABLE IF NOT EXISTS notification_templates (
   subject_template TEXT NOT NULL,
   body_template TEXT NOT NULL, -- HTML template with placeholders
   text_template TEXT, -- Plain text version
-  is_active BOOLEAN DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
@@ -1032,7 +1032,7 @@ CREATE TABLE IF NOT EXISTS notification_subscriptions (
   entity_id UUID NOT NULL, -- ID of the entity being subscribed to
   entity_type TEXT NOT NULL, -- 'keyword', 'company', 'competitor', etc.
   notification_types TEXT NOT NULL, -- JSON array of notification types
-  enabled BOOLEAN DEFAULT 1,
+  enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -1298,7 +1298,7 @@ CREATE TABLE IF NOT EXISTS project_templates (
   documentation_url TEXT,
   demo_url TEXT,
 
-  is_active BOOLEAN DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -1324,15 +1324,15 @@ CREATE TABLE IF NOT EXISTS generated_projects (
   generation_progress INTEGER DEFAULT 0, -- 0-100
 
   -- Setup Steps Status
-  folder_created BOOLEAN DEFAULT 0,
-  files_generated BOOLEAN DEFAULT 0,
-  dependencies_installed BOOLEAN DEFAULT 0,
-  env_configured BOOLEAN DEFAULT 0,
-  integrations_setup BOOLEAN DEFAULT 0,
-  database_migrated BOOLEAN DEFAULT 0,
-  git_initialized BOOLEAN DEFAULT 0,
-  ide_opened BOOLEAN DEFAULT 0,
-  all_ready BOOLEAN DEFAULT 0,
+  folder_created BOOLEAN DEFAULT false,
+  files_generated BOOLEAN DEFAULT false,
+  dependencies_installed BOOLEAN DEFAULT false,
+  env_configured BOOLEAN DEFAULT false,
+  integrations_setup BOOLEAN DEFAULT false,
+  database_migrated BOOLEAN DEFAULT false,
+  git_initialized BOOLEAN DEFAULT false,
+  ide_opened BOOLEAN DEFAULT false,
+  all_ready BOOLEAN DEFAULT false,
 
   -- IDE Integration
   ide_preference TEXT CHECK(ide_preference IN ('vscode', 'cursor', 'webstorm', 'none')),
@@ -1361,7 +1361,7 @@ CREATE TABLE IF NOT EXISTS template_features (
 
   -- Feature Type
   category TEXT, -- 'authentication', 'database', 'ai', 'payment', etc.
-  is_required BOOLEAN DEFAULT 0,
+  is_required BOOLEAN DEFAULT false,
 
   -- Dependencies
   requires_integration TEXT, -- JSON array of integration names
@@ -1373,7 +1373,7 @@ CREATE TABLE IF NOT EXISTS template_features (
   env_variables_needed TEXT, -- JSON array
 
   -- Configuration
-  default_enabled BOOLEAN DEFAULT 0,
+  default_enabled BOOLEAN DEFAULT false,
   config_schema TEXT, -- JSON schema for feature config
 
   FOREIGN KEY (template_id) REFERENCES project_templates(id) ON DELETE CASCADE,
@@ -1413,7 +1413,7 @@ CREATE TABLE IF NOT EXISTS template_variables (
   default_value TEXT,
 
   -- Validation
-  is_required BOOLEAN DEFAULT 0,
+  is_required BOOLEAN DEFAULT false,
   validation_pattern TEXT, -- Regex for validation
 
   -- For select types
@@ -1433,10 +1433,10 @@ CREATE TABLE IF NOT EXISTS integration_auto_config (
   status TEXT CHECK(status IN ('pending', 'configuring', 'completed', 'failed')) DEFAULT 'pending',
 
   -- Auto-Setup Actions
-  env_vars_added BOOLEAN DEFAULT 0,
-  config_files_created BOOLEAN DEFAULT 0,
-  dependencies_installed BOOLEAN DEFAULT 0,
-  initialization_run BOOLEAN DEFAULT 0,
+  env_vars_added BOOLEAN DEFAULT false,
+  config_files_created BOOLEAN DEFAULT false,
+  dependencies_installed BOOLEAN DEFAULT false,
+  initialization_run BOOLEAN DEFAULT false,
 
   -- Configuration Data
   credentials_fetched TEXT, -- JSON with API keys, etc.
@@ -1486,8 +1486,8 @@ CREATE TABLE IF NOT EXISTS template_dependencies (
 
   dependency_type TEXT CHECK(dependency_type IN ('npm', 'pip', 'gem', 'system')),
 
-  is_dev_dependency BOOLEAN DEFAULT 0,
-  is_required BOOLEAN DEFAULT 1,
+  is_dev_dependency BOOLEAN DEFAULT false,
+  is_required BOOLEAN DEFAULT true,
 
   FOREIGN KEY (template_id) REFERENCES project_templates(id) ON DELETE CASCADE
 );
