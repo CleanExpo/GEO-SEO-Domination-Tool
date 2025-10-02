@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 7**
+**Total Agents: 8**
 - 1 Orchestrator (Orchestra)
-- 6 Specialized Workers (Site Builder, Navigation, UI, SEMrush, Deployment, Database)
+- 7 Specialized Workers (Site Builder, Navigation, UI, SEMrush, Deployment, Database, Performance)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -182,6 +182,46 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
+### 8. Performance Monitor
+**File:** `performance_monitor.json`
+**Role:** Performance analysis and optimization
+**Purpose:** Monitors performance metrics, identifies bottlenecks, implements optimizations
+
+**When to Use:**
+- Auditing application performance
+- Optimizing Core Web Vitals
+- Reducing bundle size
+- Implementing performance monitoring
+- Setting performance budgets
+- Optimizing images and fonts
+- Analyzing and fixing slow API calls
+
+**Example:**
+```bash
+# Full performance audit and optimization
+claude-code --agent performance_monitor --input '{
+  "projectPath": "./web-app",
+  "targetUrl": "https://geo-seo-domination-tool.vercel.app",
+  "runLocal": true,
+  "analyzeBundle": true,
+  "implementMonitoring": true,
+  "optimizeImages": true,
+  "performanceBudget": {
+    "maxBundleSize": 500,
+    "maxImageSize": 200,
+    "maxApiResponseTime": 500
+  }
+}'
+
+# Quick Lighthouse audit only
+claude-code --agent performance_monitor --input '{
+  "projectPath": "./web-app",
+  "targetUrl": "https://your-site.vercel.app",
+  "analyzeBundle": false,
+  "implementMonitoring": false
+}'
+```
+
 ## 🔄 Typical Workflow
 
 ### Building a New Feature (Full Stack)
@@ -241,6 +281,14 @@ claude-code --agent database_schema_manager --input '{
 claude-code --agent vercel_deployment_manager --input '{
   "projectPath": "./web-app",
   "environment": "production"
+}'
+```
+
+**Step 8: Monitor & Optimize Performance**
+```bash
+claude-code --agent performance_monitor --input '{
+  "projectPath": "./web-app",
+  "targetUrl": "https://your-production-url.vercel.app"
 }'
 ```
 
