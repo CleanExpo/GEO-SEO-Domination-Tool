@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 8**
+**Total Agents: 9**
 - 1 Orchestrator (Orchestra)
-- 7 Specialized Workers (Site Builder, Navigation, UI, SEMrush, Deployment, Database, Performance)
+- 8 Specialized Workers (Site Builder, Site Builder Bootstrap, Navigation, UI, SEMrush, Deployment, Database, Performance)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -46,7 +46,28 @@ claude-code --agent site_builder --input '{
 }'
 ```
 
-### 3. Navigation Bar Connections
+### 3. Site Builder Bootstrap
+**File:** `site_builder_bootstrap.json`
+**Role:** New project scaffolder
+**Purpose:** Creates a brand new Next.js project from scratch with Tailwind and baseline structure
+
+**When to Use:**
+- Starting a completely new Next.js project
+- Bootstrapping a new GEO-SEO application
+- Setting up Tailwind CSS from scratch
+- Creating initial app shell and layout
+- Need a clean slate Next.js + Tailwind setup
+
+**Example:**
+```bash
+# Bootstrap new project
+claude-code --agent site_builder_bootstrap --input '{
+  "workspacePath": "D:/Projects",
+  "projectName": "MyGeoSeoApp"
+}'
+```
+
+### 4. Navigation Bar Connections
 **File:** `navigation_bar_connections.json`
 **Role:** Navigation link validator and implementer
 **Purpose:** Ensures all navigation links work and have proper active states
@@ -68,7 +89,7 @@ claude-code --agent navigation_bar_connections --input '{
 }'
 ```
 
-### 4. UI-shadcn
+### 5. UI-shadcn
 **File:** `ui_shadcn.json`
 **Role:** Design system implementer
 **Purpose:** Adds shadcn/ui components and ensures UI consistency
@@ -94,7 +115,7 @@ claude-code --agent ui_shadcn --input '{
 }'
 ```
 
-### 5. SEMrush Analytical Finder
+### 6. SEMrush Analytical Finder
 **File:** `semrush_analytical_finder.json`
 **Role:** SEO data integration specialist
 **Purpose:** Integrates SEMrush API for keyword research and competitor analysis
@@ -117,7 +138,7 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-### 6. Vercel Deployment Manager
+### 7. Vercel Deployment Manager
 **File:** `vercel_deployment_manager.json`
 **Role:** Production deployment and health monitoring
 **Purpose:** Manages Vercel deployments, validates production health, handles rollbacks
@@ -148,7 +169,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-### 7. Database Schema Manager
+### 8. Database Schema Manager
 **File:** `database_schema_manager.json`
 **Role:** Database schema management and validation
 **Purpose:** Manages Supabase schemas, generates TypeScript types, validates data integrity
@@ -182,7 +203,7 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-### 8. Performance Monitor
+### 9. Performance Monitor
 **File:** `performance_monitor.json`
 **Role:** Performance analysis and optimization
 **Purpose:** Monitors performance metrics, identifies bottlenecks, implements optimizations
@@ -291,6 +312,18 @@ claude-code --agent performance_monitor --input '{
   "targetUrl": "https://your-production-url.vercel.app"
 }'
 ```
+
+### OR Bootstrap New Project:
+
+**Step 1: Create New Project**
+```bash
+claude-code --agent site_builder_bootstrap --input '{
+  "workspacePath": "D:/Projects",
+  "projectName": "MyNewGeoSeoApp"
+}'
+```
+
+**Step 2: Continue with other agents on the new project**
 
 ## 📋 Agent Inputs & Outputs
 
