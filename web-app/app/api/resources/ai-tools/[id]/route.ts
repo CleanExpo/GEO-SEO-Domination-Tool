@@ -23,7 +23,7 @@ export async function GET(
   try {
     const { id } = await params;
     const { data, error } = await supabase
-      .from('crm_ai_tools')
+      .from('resource_ai_tools')
       .select('*')
       .eq('id', id)
       .single();
@@ -73,7 +73,7 @@ export async function PUT(
     }
 
     const { data, error } = await supabase
-      .from('crm_ai_tools')
+      .from('resource_ai_tools')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -113,7 +113,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const { error } = await supabase
-      .from('crm_ai_tools')
+      .from('resource_ai_tools')
       .delete()
       .eq('id', id);
 

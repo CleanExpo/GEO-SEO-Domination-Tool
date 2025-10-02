@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const favorite = searchParams.get('favorite');
 
     let query = supabase
-      .from('crm_ai_tools')
+      .from('resource_ai_tools')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabase
-      .from('crm_ai_tools')
+      .from('resource_ai_tools')
       .insert([insertData])
       .select()
       .single();
