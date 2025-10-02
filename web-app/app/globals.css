@@ -20,6 +20,25 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Ensure placeholder text has proper contrast - dark text on light background */
+input::placeholder,
+textarea::placeholder {
+  color: #4b5563 !important; /* gray-600 for good readability */
+  opacity: 1 !important;
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder {
+  color: #9ca3af !important; /* gray-400 when focused */
+  opacity: 1 !important;
+}
+
+/* Ensure input/textarea text is always dark */
+input,
+textarea {
+  color: #111827 !important; /* gray-900 for maximum readability */
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
