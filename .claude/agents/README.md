@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 9**
+**Total Agents: 10**
 - 1 Orchestrator (Orchestra)
-- 8 Specialized Workers (Site Builder, Site Builder Bootstrap, Navigation, UI, SEMrush, Deployment, Database, Performance)
+- 9 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Navigation, UI, SEMrush, Deployment, Database, Performance)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -67,7 +67,39 @@ claude-code --agent site_builder_bootstrap --input '{
 }'
 ```
 
-### 4. Navigation Bar Connections
+### 4. Full Build Pipeline (Runner)
+**File:** `runner_full_build.json`
+**Role:** Complete end-to-end project builder
+**Purpose:** Runs the full pipeline from project creation to build validation with mock data
+
+**When to Use:**
+- Need a fully functional project in one step
+- Creating demo environments with mock SEMrush data
+- Quick project setup with navigation and UI components
+- End-to-end pipeline testing
+- Onboarding new developers with working template
+
+**Example:**
+```bash
+# Create complete GEO-SEO project in one step
+claude-code --agent runner_full_build --input '{
+  "workspacePath": "D:/Projects",
+  "projectName": "MyGeoSeoApp",
+  "domain": "disasterrecoveryqld.au",
+  "scaffoldRoutes": true
+}'
+```
+
+**What it creates:**
+- Next.js project with Tailwind CSS
+- Navigation map with typed structure
+- Sidebar component with active states
+- StatCard component for metrics
+- All placeholder routes (/seo, /pipeline, /resources, etc.)
+- Mock SEMrush dataset with keywords and rankings
+- Verified production build
+
+### 5. Navigation Bar Connections
 **File:** `navigation_bar_connections.json`
 **Role:** Navigation link validator and implementer
 **Purpose:** Ensures all navigation links work and have proper active states
@@ -89,7 +121,7 @@ claude-code --agent navigation_bar_connections --input '{
 }'
 ```
 
-### 5. UI-shadcn
+### 6. UI-shadcn
 **File:** `ui_shadcn.json`
 **Role:** Design system implementer
 **Purpose:** Adds shadcn/ui components and ensures UI consistency
@@ -115,7 +147,7 @@ claude-code --agent ui_shadcn --input '{
 }'
 ```
 
-### 6. SEMrush Analytical Finder
+### 7. SEMrush Analytical Finder
 **File:** `semrush_analytical_finder.json`
 **Role:** SEO data integration specialist
 **Purpose:** Integrates SEMrush API for keyword research and competitor analysis
@@ -138,7 +170,7 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-### 7. Vercel Deployment Manager
+### 8. Vercel Deployment Manager
 **File:** `vercel_deployment_manager.json`
 **Role:** Production deployment and health monitoring
 **Purpose:** Manages Vercel deployments, validates production health, handles rollbacks
@@ -169,7 +201,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-### 8. Database Schema Manager
+### 9. Database Schema Manager
 **File:** `database_schema_manager.json`
 **Role:** Database schema management and validation
 **Purpose:** Manages Supabase schemas, generates TypeScript types, validates data integrity
@@ -203,7 +235,7 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-### 9. Performance Monitor
+### 10. Performance Monitor
 **File:** `performance_monitor.json`
 **Role:** Performance analysis and optimization
 **Purpose:** Monitors performance metrics, identifies bottlenecks, implements optimizations
@@ -315,15 +347,25 @@ claude-code --agent performance_monitor --input '{
 
 ### OR Bootstrap New Project:
 
-**Step 1: Create New Project**
+**Option A: Site Builder Bootstrap (Minimal)**
 ```bash
+# Create minimal Next.js + Tailwind project
 claude-code --agent site_builder_bootstrap --input '{
   "workspacePath": "D:/Projects",
   "projectName": "MyNewGeoSeoApp"
 }'
 ```
 
-**Step 2: Continue with other agents on the new project**
+**Option B: Full Build Pipeline (Complete)**
+```bash
+# Create complete project with navigation, components, and mock data
+claude-code --agent runner_full_build --input '{
+  "workspacePath": "D:/Projects",
+  "projectName": "MyGeoSeoApp",
+  "domain": "disasterrecoveryqld.au",
+  "scaffoldRoutes": true
+}'
+```
 
 ## 📋 Agent Inputs & Outputs
 
