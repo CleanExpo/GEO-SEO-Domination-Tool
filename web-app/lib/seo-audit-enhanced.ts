@@ -70,46 +70,39 @@ export class EnhancedSEOAuditor {
       const eeatScores = this.calculateEEATScores(basicAudit, firecrawlData);
 
       // Merge all data
-      const result: Omit<SEOAudit, 'id' | 'company_id' | 'created_at'> = {
+      const result = {
         url,
-        audit_date: new Date(),
+        score: this.calculateOverallScore(lighthouseData, eeatScores),
+        issues,
+
+        // Basic fields required by SEOAudit
+        title: basicAudit.title,
+        meta_description: basicAudit.metaDescription,
+        h1_tags: basicAudit.h1Tags,
+        meta_tags: {},
 
         // Lighthouse Scores
         performance_score: lighthouseData?.performance || basicAudit.performanceScore,
         accessibility_score: lighthouseData?.accessibility || basicAudit.accessibilityScore,
-        best_practices_score: lighthouseData?.best_practices || 85,
         seo_score: lighthouseData?.seo || basicAudit.seoScore,
-        pwa_score: lighthouseData?.pwa,
 
-        // E-E-A-T Scores
-        experience_score: eeatScores.experience,
-        expertise_score: eeatScores.expertise,
-        authoritativeness_score: eeatScores.authoritativeness,
-        trustworthiness_score: eeatScores.trustworthiness,
-
-        // Technical SEO
-        page_speed_mobile: lighthouseData?.performance || basicAudit.performanceScore,
-        page_speed_desktop: 90, // Would need desktop run
-        mobile_friendly: basicAudit.mobileFriendly,
-        https_enabled: url.startsWith('https'),
-
-        // Content Analysis
-        title_tag: basicAudit.title,
-        meta_description: basicAudit.metaDescription,
-        h1_tags: basicAudit.h1Tags,
-        word_count: firecrawlData?.wordCount || basicAudit.wordCount,
-
-        // Issues and Recommendations
-        critical_issues: criticalIssues,
-        warnings: warnings,
-        recommendations: this.generateRecommendations(issues, lighthouseData, firecrawlData),
-
-        // Raw Data
-        lighthouse_data: lighthouseData || null,
-        crawl_data: firecrawlData || null,
-
-        updated_at: new Date(),
-      };
+        // Extended data stored as metadata
+        extended_data: {
+          best_practices_score: lighthouseData?.best_practices || 85,
+          pwa_score: lighthouseData?.pwa,
+          eeat_scores: eeatScores,
+          page_speed_mobile: lighthouseData?.performance || basicAudit.performanceScore,
+          page_speed_desktop: 90,
+          mobile_friendly: basicAudit.mobileFriendly,
+          https_enabled: url.startsWith('https'),
+          word_count: firecrawlData?.wordCount || basicAudit.wordCount,
+          critical_issues: criticalIssues,
+          warnings: warnings,
+          recommendations: this.generateRecommendations(issues, lighthouseData, firecrawlData),
+          lighthouse_data: lighthouseData || null,
+          crawl_data: firecrawlData || null,
+        }
+      } as Omit<SEOAudit, 'id' | 'company_id' | 'created_at'>;
 
       return result;
     } catch (error) {
@@ -326,6 +319,31 @@ export class EnhancedSEOAuditor {
       authoritativeness: Math.min(100, authoritativeness),
       trustworthiness: Math.min(100, trustworthiness),
     };
+  }
+
+  private calculateOverallScore(lighthouseData: any, eeatScores: any): number {
+    // Calculate weighted average of all scores
+    const scores = [];
+
+    if (lighthouseData) {
+      if (lighthouseData.performance) scores.push(lighthouseData.performance);
+      if (lighthouseData.accessibility) scores.push(lighthouseData.accessibility);
+      if (lighthouseData.seo) scores.push(lighthouseData.seo);
+      if (lighthouseData.best_practices) scores.push(lighthouseData.best_practices);
+    }
+
+    // Add E-E-A-T scores
+    scores.push(eeatScores.experience);
+    scores.push(eeatScores.expertise);
+    scores.push(eeatScores.authoritativeness);
+    scores.push(eeatScores.trustworthiness);
+
+    // Calculate average
+    const average = scores.length > 0
+      ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+      : 0;
+
+    return Math.round(average);
   }
 
   private generateRecommendations(issues: AuditIssue[], lighthouseData: any, firecrawlData: any) {
