@@ -156,12 +156,6 @@ CREATE TABLE IF NOT EXISTS scheduled_audits (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
-CREATE INDEX IF NOT EXISTS idx_keywords_company ON keywords(company_id);
-CREATE INDEX IF NOT EXISTS idx_audits_company ON audits(company_id);
-CREATE INDEX IF NOT EXISTS idx_competitors_company ON competitors(company_id);
-CREATE INDEX IF NOT EXISTS idx_citations_company ON citations(company_id);
-CREATE INDEX IF NOT EXISTS idx_local_pack_company ON local_pack_tracking(company_id);
 -- CRM System Database Schema
 -- Compatible with both SQLite and PostgreSQL
 
@@ -300,16 +294,6 @@ CREATE TABLE IF NOT EXISTS crm_support_tickets (
 );
 
 -- Indexes for better query performance
-CREATE INDEX idx_contacts_email ON crm_contacts(email);
-CREATE INDEX idx_contacts_status ON crm_contacts(status);
-CREATE INDEX idx_deals_contact_id ON crm_deals(contact_id);
-CREATE INDEX idx_deals_stage ON crm_deals(stage);
-CREATE INDEX idx_tasks_status ON crm_tasks(status);
-CREATE INDEX idx_tasks_due_date ON crm_tasks(due_date);
-CREATE INDEX idx_calendar_events_date ON crm_calendar_events(event_date);
-CREATE INDEX idx_projects_status ON crm_projects(status);
-CREATE INDEX idx_prompts_category ON crm_prompts(category);
-CREATE INDEX idx_prompts_favorite ON crm_prompts(favorite);
 -- Project Hub Dashboard Schema
 -- Centralized management for all tools, builds, and projects
 
@@ -497,11 +481,6 @@ CREATE TABLE IF NOT EXISTS hub_collection_projects (
 );
 
 -- Create indexes
-CREATE INDEX IF NOT EXISTS idx_hub_projects_slug ON hub_projects(slug);
-CREATE INDEX IF NOT EXISTS idx_hub_projects_status ON hub_projects(status);
-CREATE INDEX IF NOT EXISTS idx_hub_api_keys_project ON hub_api_keys(project_id);
-CREATE INDEX IF NOT EXISTS idx_hub_configs_project ON hub_project_configs(project_id);
-CREATE INDEX IF NOT EXISTS idx_hub_activity_project ON hub_activity_log(project_id);
 -- Resources System Database Schema for GEO-SEO Domination Tool
 -- Compatible with both SQLite and PostgreSQL
 
@@ -557,17 +536,8 @@ CREATE TABLE IF NOT EXISTS crm_tutorials (
 );
 
 -- Indexes for better query performance
-CREATE INDEX idx_components_category ON crm_components(category);
-CREATE INDEX idx_components_framework ON crm_components(framework);
-CREATE INDEX idx_components_favorite ON crm_components(favorite);
 
-CREATE INDEX idx_ai_tools_category ON crm_ai_tools(category);
-CREATE INDEX idx_ai_tools_pricing ON crm_ai_tools(pricing);
-CREATE INDEX idx_ai_tools_favorite ON crm_ai_tools(favorite);
 
-CREATE INDEX idx_tutorials_category ON crm_tutorials(category);
-CREATE INDEX idx_tutorials_difficulty ON crm_tutorials(difficulty);
-CREATE INDEX idx_tutorials_favorite ON crm_tutorials(favorite);
 -- AI Search SEO Strategy Database Schema
 
 -- SEO Strategies Template Table
@@ -714,11 +684,6 @@ CREATE TABLE IF NOT EXISTS strategy_implementation_notes (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_ai_visibility_platform ON ai_search_visibility(ai_platform, company_id);
-CREATE INDEX IF NOT EXISTS idx_ai_visibility_query ON ai_search_visibility(query);
-CREATE INDEX IF NOT EXISTS idx_campaigns_company ON ai_search_campaigns(company_id);
-CREATE INDEX IF NOT EXISTS idx_campaign_strategies ON campaign_strategies(campaign_id, strategy_id);
-CREATE INDEX IF NOT EXISTS idx_perplexity_opt ON perplexity_optimization(company_id, url);
 -- Integrations & Third-Party Connectors Schema
 
 -- Available Integrations Registry
@@ -934,13 +899,6 @@ CREATE TABLE IF NOT EXISTS oauth_states (
 );
 
 -- Create indexes
-CREATE INDEX IF NOT EXISTS idx_connections_project ON integration_connections(project_id);
-CREATE INDEX IF NOT EXISTS idx_connections_status ON integration_connections(status);
-CREATE INDEX IF NOT EXISTS idx_webhooks_connection ON integration_webhooks(connection_id);
-CREATE INDEX IF NOT EXISTS idx_webhook_events_webhook ON webhook_events(webhook_id);
-CREATE INDEX IF NOT EXISTS idx_sync_jobs_connection ON integration_sync_jobs(connection_id);
-CREATE INDEX IF NOT EXISTS idx_metrics_connection ON integration_metrics(connection_id);
-CREATE INDEX IF NOT EXISTS idx_oauth_state_token ON oauth_states(state_token);
 -- Notification System Database Schema
 -- Add these tables to your existing database
 
@@ -1038,28 +996,10 @@ CREATE TABLE IF NOT EXISTS notification_subscriptions (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_notification_queue_status ON notification_queue(status);
-CREATE INDEX IF NOT EXISTS idx_notification_queue_scheduled ON notification_queue(scheduled_for);
-CREATE INDEX IF NOT EXISTS idx_notification_queue_recipient ON notification_queue(recipient_email);
-CREATE INDEX IF NOT EXISTS idx_notification_queue_priority ON notification_queue(priority);
-CREATE INDEX IF NOT EXISTS idx_notification_queue_created ON notification_queue(created_at);
 
-CREATE INDEX IF NOT EXISTS idx_notification_preferences_email ON notification_preferences(email);
-CREATE INDEX IF NOT EXISTS idx_notification_preferences_enabled ON notification_preferences(enabled);
-CREATE INDEX IF NOT EXISTS idx_notification_preferences_token ON notification_preferences(unsubscribe_token);
 
-CREATE INDEX IF NOT EXISTS idx_notification_history_recipient ON notification_history(recipient_email);
-CREATE INDEX IF NOT EXISTS idx_notification_history_type ON notification_history(notification_type);
-CREATE INDEX IF NOT EXISTS idx_notification_history_sent ON notification_history(sent_at);
-CREATE INDEX IF NOT EXISTS idx_notification_history_status ON notification_history(status);
 
-CREATE INDEX IF NOT EXISTS idx_notification_templates_company ON notification_templates(company_id);
-CREATE INDEX IF NOT EXISTS idx_notification_templates_type ON notification_templates(notification_type);
-CREATE INDEX IF NOT EXISTS idx_notification_templates_active ON notification_templates(is_active);
 
-CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_email ON notification_subscriptions(email);
-CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_entity ON notification_subscriptions(entity_type, entity_id);
-CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_enabled ON notification_subscriptions(enabled);
 -- Job Scheduler Database Schema
 -- Tables for managing scheduled jobs and their executions
 
@@ -1077,9 +1017,6 @@ CREATE TABLE IF NOT EXISTS job_executions (
 );
 
 -- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_job_executions_job_name ON job_executions(job_name);
-CREATE INDEX IF NOT EXISTS idx_job_executions_start_time ON job_executions(start_time DESC);
-CREATE INDEX IF NOT EXISTS idx_job_executions_status ON job_executions(status);
 
 -- Job Schedules table - stores custom job schedules
 CREATE TABLE IF NOT EXISTS job_schedules (
@@ -1094,8 +1031,6 @@ CREATE TABLE IF NOT EXISTS job_schedules (
 );
 
 -- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_job_schedules_job_name ON job_schedules(job_name);
-CREATE INDEX IF NOT EXISTS idx_job_schedules_enabled ON job_schedules(enabled);
 
 -- Rankings table - stores keyword ranking history
 CREATE TABLE IF NOT EXISTS rankings (
@@ -1109,8 +1044,6 @@ CREATE TABLE IF NOT EXISTS rankings (
 );
 
 -- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_rankings_keyword_id ON rankings(keyword_id);
-CREATE INDEX IF NOT EXISTS idx_rankings_checked_at ON rankings(checked_at DESC);
 
 -- Reports table - stores generated reports
 CREATE TABLE IF NOT EXISTS reports (
@@ -1129,9 +1062,6 @@ CREATE TABLE IF NOT EXISTS reports (
 );
 
 -- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_reports_company_id ON reports(company_id);
-CREATE INDEX IF NOT EXISTS idx_reports_report_type ON reports(report_type);
-CREATE INDEX IF NOT EXISTS idx_reports_report_date ON reports(report_date DESC);
 
 -- Job Alerts table - stores alerts for job failures or significant events
 CREATE TABLE IF NOT EXISTS job_alerts (
@@ -1146,9 +1076,6 @@ CREATE TABLE IF NOT EXISTS job_alerts (
 );
 
 -- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_job_alerts_job_name ON job_alerts(job_name);
-CREATE INDEX IF NOT EXISTS idx_job_alerts_resolved ON job_alerts(resolved);
-CREATE INDEX IF NOT EXISTS idx_job_alerts_created_at ON job_alerts(created_at DESC);
 
 -- Add metadata column to companies table if it doesn't exist
 -- This stores settings like scheduled_audits, weekly_reports, etc.
@@ -1510,14 +1437,6 @@ CREATE TABLE IF NOT EXISTS ide_configs (
 );
 
 -- Create indexes
-CREATE INDEX IF NOT EXISTS idx_templates_category ON project_templates(category);
-CREATE INDEX IF NOT EXISTS idx_templates_active ON project_templates(is_active);
-CREATE INDEX IF NOT EXISTS idx_generated_status ON generated_projects(status);
-CREATE INDEX IF NOT EXISTS idx_generated_hub_project ON generated_projects(hub_project_id);
-CREATE INDEX IF NOT EXISTS idx_features_template ON template_features(template_id);
-CREATE INDEX IF NOT EXISTS idx_steps_project ON generation_steps(generated_project_id);
-CREATE INDEX IF NOT EXISTS idx_snippets_language ON code_snippets(language);
-CREATE INDEX IF NOT EXISTS idx_snippets_framework ON code_snippets(framework);
 
 -- Add user_id to all tables for RLS
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
@@ -1552,3 +1471,87 @@ CREATE POLICY "Users can view own data" ON companies FOR SELECT USING (auth.uid(
 CREATE POLICY "Users can insert own data" ON companies FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own data" ON companies FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own data" ON companies FOR DELETE USING (auth.uid() = user_id);
+
+-- All indexes created after tables
+CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
+CREATE INDEX IF NOT EXISTS idx_keywords_company ON keywords(company_id);
+CREATE INDEX IF NOT EXISTS idx_audits_company ON audits(company_id);
+CREATE INDEX IF NOT EXISTS idx_competitors_company ON competitors(company_id);
+CREATE INDEX IF NOT EXISTS idx_citations_company ON citations(company_id);
+CREATE INDEX IF NOT EXISTS idx_local_pack_company ON local_pack_tracking(company_id);
+CREATE INDEX idx_contacts_email ON crm_contacts(email);
+CREATE INDEX idx_contacts_status ON crm_contacts(status);
+CREATE INDEX idx_deals_contact_id ON crm_deals(contact_id);
+CREATE INDEX idx_deals_stage ON crm_deals(stage);
+CREATE INDEX idx_tasks_status ON crm_tasks(status);
+CREATE INDEX idx_tasks_due_date ON crm_tasks(due_date);
+CREATE INDEX idx_calendar_events_date ON crm_calendar_events(event_date);
+CREATE INDEX idx_projects_status ON crm_projects(status);
+CREATE INDEX idx_prompts_category ON crm_prompts(category);
+CREATE INDEX idx_prompts_favorite ON crm_prompts(favorite);
+CREATE INDEX IF NOT EXISTS idx_hub_projects_slug ON hub_projects(slug);
+CREATE INDEX IF NOT EXISTS idx_hub_projects_status ON hub_projects(status);
+CREATE INDEX IF NOT EXISTS idx_hub_api_keys_project ON hub_api_keys(project_id);
+CREATE INDEX IF NOT EXISTS idx_hub_configs_project ON hub_project_configs(project_id);
+CREATE INDEX IF NOT EXISTS idx_hub_activity_project ON hub_activity_log(project_id);
+CREATE INDEX idx_components_category ON crm_components(category);
+CREATE INDEX idx_components_framework ON crm_components(framework);
+CREATE INDEX idx_components_favorite ON crm_components(favorite);
+CREATE INDEX idx_ai_tools_category ON crm_ai_tools(category);
+CREATE INDEX idx_ai_tools_pricing ON crm_ai_tools(pricing);
+CREATE INDEX idx_ai_tools_favorite ON crm_ai_tools(favorite);
+CREATE INDEX idx_tutorials_category ON crm_tutorials(category);
+CREATE INDEX idx_tutorials_difficulty ON crm_tutorials(difficulty);
+CREATE INDEX idx_tutorials_favorite ON crm_tutorials(favorite);
+CREATE INDEX IF NOT EXISTS idx_ai_visibility_platform ON ai_search_visibility(ai_platform, company_id);
+CREATE INDEX IF NOT EXISTS idx_ai_visibility_query ON ai_search_visibility(query);
+CREATE INDEX IF NOT EXISTS idx_campaigns_company ON ai_search_campaigns(company_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_strategies ON campaign_strategies(campaign_id, strategy_id);
+CREATE INDEX IF NOT EXISTS idx_perplexity_opt ON perplexity_optimization(company_id, url);
+CREATE INDEX IF NOT EXISTS idx_connections_project ON integration_connections(project_id);
+CREATE INDEX IF NOT EXISTS idx_connections_status ON integration_connections(status);
+CREATE INDEX IF NOT EXISTS idx_webhooks_connection ON integration_webhooks(connection_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_webhook ON webhook_events(webhook_id);
+CREATE INDEX IF NOT EXISTS idx_sync_jobs_connection ON integration_sync_jobs(connection_id);
+CREATE INDEX IF NOT EXISTS idx_metrics_connection ON integration_metrics(connection_id);
+CREATE INDEX IF NOT EXISTS idx_oauth_state_token ON oauth_states(state_token);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_status ON notification_queue(status);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_scheduled ON notification_queue(scheduled_for);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_recipient ON notification_queue(recipient_email);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_priority ON notification_queue(priority);
+CREATE INDEX IF NOT EXISTS idx_notification_queue_created ON notification_queue(created_at);
+CREATE INDEX IF NOT EXISTS idx_notification_preferences_email ON notification_preferences(email);
+CREATE INDEX IF NOT EXISTS idx_notification_preferences_enabled ON notification_preferences(enabled);
+CREATE INDEX IF NOT EXISTS idx_notification_preferences_token ON notification_preferences(unsubscribe_token);
+CREATE INDEX IF NOT EXISTS idx_notification_history_recipient ON notification_history(recipient_email);
+CREATE INDEX IF NOT EXISTS idx_notification_history_type ON notification_history(notification_type);
+CREATE INDEX IF NOT EXISTS idx_notification_history_sent ON notification_history(sent_at);
+CREATE INDEX IF NOT EXISTS idx_notification_history_status ON notification_history(status);
+CREATE INDEX IF NOT EXISTS idx_notification_templates_company ON notification_templates(company_id);
+CREATE INDEX IF NOT EXISTS idx_notification_templates_type ON notification_templates(notification_type);
+CREATE INDEX IF NOT EXISTS idx_notification_templates_active ON notification_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_email ON notification_subscriptions(email);
+CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_entity ON notification_subscriptions(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_enabled ON notification_subscriptions(enabled);
+CREATE INDEX IF NOT EXISTS idx_job_executions_job_name ON job_executions(job_name);
+CREATE INDEX IF NOT EXISTS idx_job_executions_start_time ON job_executions(start_time DESC);
+CREATE INDEX IF NOT EXISTS idx_job_executions_status ON job_executions(status);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_job_name ON job_schedules(job_name);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_enabled ON job_schedules(enabled);
+CREATE INDEX IF NOT EXISTS idx_rankings_keyword_id ON rankings(keyword_id);
+CREATE INDEX IF NOT EXISTS idx_rankings_checked_at ON rankings(checked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_company_id ON reports(company_id);
+CREATE INDEX IF NOT EXISTS idx_reports_report_type ON reports(report_type);
+CREATE INDEX IF NOT EXISTS idx_reports_report_date ON reports(report_date DESC);
+CREATE INDEX IF NOT EXISTS idx_job_alerts_job_name ON job_alerts(job_name);
+CREATE INDEX IF NOT EXISTS idx_job_alerts_resolved ON job_alerts(resolved);
+CREATE INDEX IF NOT EXISTS idx_job_alerts_created_at ON job_alerts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_templates_category ON project_templates(category);
+CREATE INDEX IF NOT EXISTS idx_templates_active ON project_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_generated_status ON generated_projects(status);
+CREATE INDEX IF NOT EXISTS idx_generated_hub_project ON generated_projects(hub_project_id);
+CREATE INDEX IF NOT EXISTS idx_features_template ON template_features(template_id);
+CREATE INDEX IF NOT EXISTS idx_steps_project ON generation_steps(generated_project_id);
+CREATE INDEX IF NOT EXISTS idx_snippets_language ON code_snippets(language);
+CREATE INDEX IF NOT EXISTS idx_snippets_framework ON code_snippets(framework);
+
