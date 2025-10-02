@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 11**
+**Total Agents: 12**
 - 1 Orchestrator (Orchestra)
-- 10 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Evaluator & Fixer, Navigation, UI, SEMrush, Deployment, Database, Performance)
+- 11 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Evaluator & Fixer, DevOps Deployer, Navigation, UI, SEMrush, Deployment, Database, Performance)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -135,7 +135,43 @@ claude-code --agent evaluator_fixer --input '{
 - Missing Tailwind directives → Adds to globals.css
 - Generates .qa-report.txt with detailed results
 
-### 6. Navigation Bar Connections
+### 6. DevOps Deployer
+**File:** `devops_deployer.json`
+**Role:** Vercel preview deployment automation
+**Purpose:** Runs preflight checks, builds locally, and deploys to Vercel preview with URL capture
+
+**When to Use:**
+- Automated preview deployments in CI/CD
+- Quick testing of feature branches
+- Sharing work-in-progress with stakeholders
+- Pre-production validation
+- Integration testing with real URLs
+
+**Example:**
+```bash
+# Deploy to Vercel preview
+claude-code --agent devops_deployer --input '{
+  "projectPath": "./web-app",
+  "vercelProjectName": "geo-seo-app",
+  "vercelToken": "${{ secrets.VERCEL_TOKEN }}"
+}'
+```
+
+**What it does:**
+- Verifies Node.js, npm, and Vercel CLI installed
+- Sets VERCEL_TOKEN for non-interactive auth
+- Creates .vercel/project.json if needed
+- Builds project locally first
+- Deploys to Vercel preview environment
+- Captures and returns preview URL
+
+**Security:**
+- Never stores secrets in code
+- Uses environment variables for tokens
+- Supports GitHub Actions integration
+- Follows Vercel security best practices
+
+### 7. Navigation Bar Connections
 **File:** `navigation_bar_connections.json`
 **Role:** Navigation link validator and implementer
 **Purpose:** Ensures all navigation links work and have proper active states
@@ -157,7 +193,7 @@ claude-code --agent navigation_bar_connections --input '{
 }'
 ```
 
-### 7. UI-shadcn
+### 8. UI-shadcn
 **File:** `ui_shadcn.json`
 **Role:** Design system implementer
 **Purpose:** Adds shadcn/ui components and ensures UI consistency
@@ -183,7 +219,7 @@ claude-code --agent ui_shadcn --input '{
 }'
 ```
 
-### 8. SEMrush Analytical Finder
+### 9. SEMrush Analytical Finder
 **File:** `semrush_analytical_finder.json`
 **Role:** SEO data integration specialist
 **Purpose:** Integrates SEMrush API for keyword research and competitor analysis
@@ -206,7 +242,7 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-### 9. Vercel Deployment Manager
+### 10. Vercel Deployment Manager
 **File:** `vercel_deployment_manager.json`
 **Role:** Production deployment and health monitoring
 **Purpose:** Manages Vercel deployments, validates production health, handles rollbacks
@@ -237,7 +273,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-### 10. Database Schema Manager
+### 11. Database Schema Manager
 **File:** `database_schema_manager.json`
 **Role:** Database schema management and validation
 **Purpose:** Manages Supabase schemas, generates TypeScript types, validates data integrity
@@ -271,7 +307,7 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-### 11. Performance Monitor
+### 12. Performance Monitor
 **File:** `performance_monitor.json`
 **Role:** Performance analysis and optimization
 **Purpose:** Monitors performance metrics, identifies bottlenecks, implements optimizations
@@ -365,7 +401,14 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-**Step 7: Deploy to Production**
+**Step 7: Deploy Preview for Testing**
+```bash
+claude-code --agent devops_deployer --input '{
+  "projectPath": "./web-app"
+}'
+```
+
+**Step 8: Deploy to Production**
 ```bash
 claude-code --agent vercel_deployment_manager --input '{
   "projectPath": "./web-app",
@@ -373,7 +416,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-**Step 8: Validate & Fix Issues**
+**Step 9: Validate & Fix Issues**
 ```bash
 claude-code --agent evaluator_fixer --input '{
   "projectPath": "./web-app",
@@ -381,7 +424,7 @@ claude-code --agent evaluator_fixer --input '{
 }'
 ```
 
-**Step 9: Monitor & Optimize Performance**
+**Step 10: Monitor & Optimize Performance**
 ```bash
 claude-code --agent performance_monitor --input '{
   "projectPath": "./web-app",
