@@ -13,11 +13,11 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     services: {
       database: { status: 'unknown', message: '' },
-      lighthouse: { status: 'unknown', configured: false },
-      firecrawl: { status: 'unknown', configured: false },
-      anthropic: { status: 'unknown', configured: false },
-      semrush: { status: 'unknown', configured: false },
-      perplexity: { status: 'unknown', configured: false },
+      lighthouse: { status: 'unknown', configured: false, description: '' },
+      firecrawl: { status: 'unknown', configured: false, description: '' },
+      anthropic: { status: 'unknown', configured: false, description: '' },
+      semrush: { status: 'unknown', configured: false, description: '' },
+      perplexity: { status: 'unknown', configured: false, description: '' },
     },
     environment: {
       nodeEnv: process.env.NODE_ENV,
