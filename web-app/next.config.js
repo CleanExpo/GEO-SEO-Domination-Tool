@@ -10,9 +10,6 @@ const nextConfig = {
   poweredByHeader: false, // Remove X-Powered-By header for security
   reactStrictMode: true, // Enable React strict mode
 
-  // Performance optimizations
-  swcMinify: true, // Use SWC for minification (faster than Terser)
-
   // Configure image optimization
   images: {
     domains: [],
