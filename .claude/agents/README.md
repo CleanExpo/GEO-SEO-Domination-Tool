@@ -4,6 +4,10 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
+**Total Agents: 6**
+- 1 Orchestrator (Orchestra)
+- 5 Specialized Workers (Site Builder, Navigation, UI, SEMrush, Deployment)
+
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
 **Role:** Master coordinator for all worker agents
@@ -113,6 +117,37 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
+### 6. Vercel Deployment Manager
+**File:** `vercel_deployment_manager.json`
+**Role:** Production deployment and health monitoring
+**Purpose:** Manages Vercel deployments, validates production health, handles rollbacks
+
+**When to Use:**
+- Deploying to production or preview
+- Validating deployment succeeded
+- Checking environment variables are configured
+- Monitoring deployment health
+- Rolling back failed deployments
+- Troubleshooting deployment issues
+
+**Example:**
+```bash
+# Deploy to production with validation
+claude-code --agent vercel_deployment_manager --input '{
+  "projectPath": "./web-app",
+  "environment": "production",
+  "validateEndpoints": ["/", "/api/health/check", "/companies"],
+  "autoRollback": true
+}'
+
+# Deploy preview for testing
+claude-code --agent vercel_deployment_manager --input '{
+  "projectPath": "./web-app",
+  "environment": "preview",
+  "autoRollback": false
+}'
+```
+
 ## 🔄 Typical Workflow
 
 ### Building a New Feature (Full Stack)
@@ -156,6 +191,14 @@ claude-code --agent ui_shadcn --input '{
 claude-code --agent semrush_analytical_finder --input '{
   "projectPath": "./web-app",
   "domain": "yourdomain.com"
+}'
+```
+
+**Step 6: Deploy to Production**
+```bash
+claude-code --agent vercel_deployment_manager --input '{
+  "projectPath": "./web-app",
+  "environment": "production"
 }'
 ```
 
