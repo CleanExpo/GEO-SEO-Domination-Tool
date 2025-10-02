@@ -21,7 +21,7 @@ export async function GET(
   try {
     const { id } = await params;
     const { data, error } = await supabase
-      .from('crm_calendar_events')
+      .from('crm_events')
       .select('*, crm_contacts(name, email)')
       .eq('id', id)
       .single();
@@ -50,7 +50,7 @@ export async function PUT(
     const validatedData = calendarEventUpdateSchema.parse(body);
 
     const { data, error } = await supabase
-      .from('crm_calendar_events')
+      .from('crm_events')
       .update({ ...validatedData, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
@@ -83,7 +83,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const { error } = await supabase
-      .from('crm_calendar_events')
+      .from('crm_events')
       .delete()
       .eq('id', id);
 

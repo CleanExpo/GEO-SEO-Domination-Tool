@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('end_date');
 
     let query = supabase
-      .from('crm_calendar_events')
+      .from('crm_events')
       .select('*, crm_contacts(name, email)')
       .order('event_date', { ascending: true })
       .order('event_time', { ascending: true });
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const validatedData = calendarEventSchema.parse(body);
 
     const { data, error } = await supabase
-      .from('crm_calendar_events')
+      .from('crm_events')
       .insert([validatedData])
       .select()
       .single();

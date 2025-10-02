@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { SEOAuditor } from '@/lib/seo-audit';
+import { EnhancedSEOAuditor } from '@/lib/seo-audit-enhanced';
 
 // GET /api/seo-audits - List all SEO audits
 export async function GET(request: NextRequest) {
@@ -42,9 +42,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Run the SEO audit
-    const auditor = new SEOAuditor();
-    const auditResults = await auditor.auditWebsite(url);
+    // Run the enhanced SEO audit with Lighthouse and Firecrawl
+    const auditor = new EnhancedSEOAuditor();
+    const auditResults = await auditor.auditWebsite(url, {
+      includeLighthouse: true,
+      includeFirecrawl: true,
+      strategy: 'mobile',
+    });
 
     // Save to database
     const { data, error } = await supabase
