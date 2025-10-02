@@ -155,3 +155,6 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
+
+// Explicitly set runtime to edge for middleware
+export const runtime = 'edge'

@@ -1,3 +1,34 @@
+// Supabase Database type
+export interface Database {
+  public: {
+    Tables: {
+      companies: {
+        Row: Company;
+        Insert: Omit<Company, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Company, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      seo_audits: {
+        Row: SEOAudit;
+        Insert: Omit<SEOAudit, 'id' | 'created_at'>;
+        Update: Partial<Omit<SEOAudit, 'id' | 'created_at'>>;
+      };
+      keywords: {
+        Row: Keyword;
+        Insert: Omit<Keyword, 'id' | 'created_at'>;
+        Update: Partial<Omit<Keyword, 'id' | 'created_at'>>;
+      };
+      rankings: {
+        Row: Ranking;
+        Insert: Omit<Ranking, 'id' | 'created_at'>;
+        Update: Partial<Omit<Ranking, 'id' | 'created_at'>>;
+      };
+    };
+    Views: {};
+    Functions: {};
+    Enums: {};
+  };
+}
+
 export interface Company {
   id: string;
   name: string;
