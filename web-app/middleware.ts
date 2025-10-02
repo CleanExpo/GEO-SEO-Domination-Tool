@@ -33,9 +33,19 @@ export async function middleware(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
+    user = authUser
+  } catch (error) {
+    // If Supabase auth fails, log the error but don't block the request
+    // This prevents 401 errors when Supabase is misconfigured
+    console.error('Supabase auth error:', error)
+    // Allow the request to continue - protected routes will redirect to login
+  }
 
   // Protected routes - redirect to login if not authenticated
   const protectedPaths = [
