@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const dealSchema = z.object({
@@ -15,6 +15,7 @@ const dealSchema = z.object({
 // GET /api/crm/deals - List all deals
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const stage = searchParams.get('stage');
     const contactId = searchParams.get('contact_id');
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
 // POST /api/crm/deals - Create a new deal
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = dealSchema.parse(body);
 

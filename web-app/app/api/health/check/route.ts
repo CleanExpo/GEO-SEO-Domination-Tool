@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { apiServices } from '@/lib/services/api-service-manager';
 import { envValidator } from '@/lib/config/env-validator';
 
@@ -32,6 +32,7 @@ export async function GET() {
 
   // Check database connection
   try {
+    const supabase = await createClient();
     const { data, error } = await supabase.from('companies').select('id').limit(1);
     if (error) {
       healthCheck.services.database.status = 'error';

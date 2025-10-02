@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const projectSchema = z.object({
@@ -13,6 +13,7 @@ const projectSchema = z.object({
 // GET /api/projects - List all projects
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
 // POST /api/projects - Create a new project
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = projectSchema.parse(body);
 

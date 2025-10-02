@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const githubProjectUpdateSchema = z.object({
@@ -19,6 +19,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const { data, error } = await supabase
       .from('crm_github_projects')
@@ -45,6 +46,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const body = await request.json();
     const validatedData = githubProjectUpdateSchema.parse(body);
@@ -98,6 +100,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const { error } = await supabase
       .from('crm_github_projects')

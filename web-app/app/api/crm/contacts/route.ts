@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const contactSchema = z.object({
@@ -15,6 +15,7 @@ const contactSchema = z.object({
 // GET /api/crm/contacts - List all contacts
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
 // POST /api/crm/contacts - Create a new contact
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = contactSchema.parse(body);
 

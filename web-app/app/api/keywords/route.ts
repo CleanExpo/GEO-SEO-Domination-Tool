@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { SEMrushClient } from '@/lib/api-clients';
 import { z } from 'zod';
 
@@ -11,6 +11,7 @@ const keywordSchema = z.object({
 // GET /api/keywords - List all keywords
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const searchParams = request.nextUrl.searchParams;
     const companyId = searchParams.get('company_id');
 
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
 // POST /api/keywords - Create a new keyword with research data
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = keywordSchema.parse(body);
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const companySchema = z.object({
@@ -12,6 +12,7 @@ const companySchema = z.object({
 // GET /api/companies - List all companies
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('companies')
       .select('*')
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
 // POST /api/companies - Create a new company
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = companySchema.parse(body);
 

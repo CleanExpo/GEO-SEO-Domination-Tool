@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { EnhancedSEOAuditor } from '@/lib/seo-audit-enhanced';
 
 // GET /api/seo-audits - List all SEO audits
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const searchParams = request.nextUrl.searchParams;
     const companyId = searchParams.get('company_id');
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
 // POST /api/seo-audits - Create a new SEO audit
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { company_id, url } = body;
 

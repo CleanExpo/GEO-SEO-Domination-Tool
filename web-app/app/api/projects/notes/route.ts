@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const projectNoteSchema = z.object({
@@ -13,6 +13,7 @@ const projectNoteSchema = z.object({
 // GET /api/projects/notes - List all project notes or filter by project_id
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('project_id');
     const category = searchParams.get('category');
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
 // POST /api/projects/notes - Create a new project note
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = projectNoteSchema.parse(body);
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const githubProjectSchema = z.object({
@@ -16,6 +16,7 @@ const githubProjectSchema = z.object({
 // GET /api/projects/github - List all GitHub projects
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const language = searchParams.get('language');
     const sortBy = searchParams.get('sortBy') || 'created_at';
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
 // POST /api/projects/github - Create a new GitHub project or sync from GitHub API
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = githubProjectSchema.parse(body);
 

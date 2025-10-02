@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const aiToolSchema = z.object({
@@ -17,6 +17,7 @@ const aiToolSchema = z.object({
 // GET /api/resources/ai-tools - List all AI tools
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const pricing = searchParams.get('pricing');
@@ -64,6 +65,7 @@ export async function GET(request: NextRequest) {
 // POST /api/resources/ai-tools - Create a new AI tool
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = aiToolSchema.parse(body);
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const componentSchema = z.object({
@@ -16,6 +16,7 @@ const componentSchema = z.object({
 // GET /api/resources/components - List all components
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const framework = searchParams.get('framework');
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
 // POST /api/resources/components - Create a new component
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = componentSchema.parse(body);
 

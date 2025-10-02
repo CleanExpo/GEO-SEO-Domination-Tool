@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const calendarEventSchema = z.object({
@@ -16,6 +16,7 @@ const calendarEventSchema = z.object({
 // GET /api/crm/calendar - List all calendar events
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const contactId = searchParams.get('contact_id');
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest) {
 // POST /api/crm/calendar - Create a new calendar event
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const validatedData = calendarEventSchema.parse(body);
 
