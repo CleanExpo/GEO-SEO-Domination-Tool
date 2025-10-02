@@ -28,7 +28,10 @@ class EnvironmentValidator {
 
   private constructor() {
     this.config = this.loadAndValidate();
-    this.logStatus();
+    // Only log in development, not during build
+    if (process.env.NODE_ENV !== 'production' && typeof window === 'undefined') {
+      this.logStatus();
+    }
   }
 
   public static getInstance(): EnvironmentValidator {

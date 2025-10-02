@@ -44,15 +44,24 @@ export class APIServiceManager {
   }
 
   private initializeServices(): void {
+    // Only initialize in server-side runtime
+    if (typeof window !== 'undefined') {
+      return; // Skip initialization in browser
+    }
+
     // Initialize Lighthouse (Google PageSpeed Insights)
     if (this.config.googleApiKey) {
       try {
         this.lighthouse = new LighthouseService(this.config.googleApiKey);
-        console.log('✓ Lighthouse service initialized');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✓ Lighthouse service initialized');
+        }
       } catch (error) {
-        console.warn('⚠ Failed to initialize Lighthouse service:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('⚠ Failed to initialize Lighthouse service:', error);
+        }
       }
-    } else {
+    } else if (process.env.NODE_ENV !== 'production') {
       console.warn('⚠ GOOGLE_API_KEY not set - Lighthouse features disabled');
     }
 
@@ -60,11 +69,15 @@ export class APIServiceManager {
     if (this.config.firecrawlApiKey) {
       try {
         this.firecrawl = new FirecrawlService({ apiKey: this.config.firecrawlApiKey });
-        console.log('✓ Firecrawl service initialized');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✓ Firecrawl service initialized');
+        }
       } catch (error) {
-        console.warn('⚠ Failed to initialize Firecrawl service:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('⚠ Failed to initialize Firecrawl service:', error);
+        }
       }
-    } else {
+    } else if (process.env.NODE_ENV !== 'production') {
       console.warn('⚠ FIRECRAWL_API_KEY not set - Advanced scraping disabled');
     }
 
@@ -74,11 +87,15 @@ export class APIServiceManager {
         this.anthropic = new Anthropic({
           apiKey: this.config.anthropicApiKey,
         });
-        console.log('✓ Anthropic Claude service initialized');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✓ Anthropic Claude service initialized');
+        }
       } catch (error) {
-        console.warn('⚠ Failed to initialize Anthropic service:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('⚠ Failed to initialize Anthropic service:', error);
+        }
       }
-    } else {
+    } else if (process.env.NODE_ENV !== 'production') {
       console.warn('⚠ ANTHROPIC_API_KEY not set - AI analysis features disabled');
     }
   }
