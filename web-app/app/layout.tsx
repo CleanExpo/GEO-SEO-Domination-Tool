@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,12 +20,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 min-h-screen antialiased`}>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1">
-            {children}
-          </main>
-        </div>
+        <ErrorBoundary>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+          <Toaster />
+        </ErrorBoundary>
       </body>
     </html>
   );
