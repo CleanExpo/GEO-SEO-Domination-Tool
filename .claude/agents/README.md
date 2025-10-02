@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 6**
+**Total Agents: 7**
 - 1 Orchestrator (Orchestra)
-- 5 Specialized Workers (Site Builder, Navigation, UI, SEMrush, Deployment)
+- 6 Specialized Workers (Site Builder, Navigation, UI, SEMrush, Deployment, Database)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -148,6 +148,40 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
+### 7. Database Schema Manager
+**File:** `database_schema_manager.json`
+**Role:** Database schema management and validation
+**Purpose:** Manages Supabase schemas, generates TypeScript types, validates data integrity
+
+**When to Use:**
+- Validating database schema structure
+- Generating TypeScript types from database
+- Adding missing indexes for performance
+- Creating ERD documentation
+- Checking foreign key relationships
+- Implementing RLS policies
+- Creating database migrations
+
+**Example:**
+```bash
+# Validate schema and generate types
+claude-code --agent database_schema_manager --input '{
+  "projectPath": "./",
+  "schemaFile": "web-app/supabase-schema.sql",
+  "generateTypes": true,
+  "validateIntegrity": true,
+  "addIndexes": true,
+  "generateERD": true
+}'
+
+# Quick schema validation only
+claude-code --agent database_schema_manager --input '{
+  "projectPath": "./",
+  "generateTypes": false,
+  "validateIntegrity": true
+}'
+```
+
 ## 🔄 Typical Workflow
 
 ### Building a New Feature (Full Stack)
@@ -194,7 +228,15 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-**Step 6: Deploy to Production**
+**Step 6: Validate Database Schema**
+```bash
+claude-code --agent database_schema_manager --input '{
+  "projectPath": "./",
+  "generateTypes": true
+}'
+```
+
+**Step 7: Deploy to Production**
 ```bash
 claude-code --agent vercel_deployment_manager --input '{
   "projectPath": "./web-app",
