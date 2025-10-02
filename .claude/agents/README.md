@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 12**
+**Total Agents: 13**
 - 1 Orchestrator (Orchestra)
-- 11 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Evaluator & Fixer, DevOps Deployer, Navigation, UI, SEMrush, Deployment, Database, Performance)
+- 12 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Evaluator & Fixer, DevOps Deployer, SEO Crawl & Ingest, Navigation, UI, SEMrush, Deployment, Database, Performance)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -171,7 +171,48 @@ claude-code --agent devops_deployer --input '{
 - Supports GitHub Actions integration
 - Follows Vercel security best practices
 
-### 7. Navigation Bar Connections
+### 7. SEO Crawl & Ingest
+**File:** `seo_crawl_ingest.json`
+**Role:** Website crawler and content indexer
+**Purpose:** Crawls website pages, extracts SEO metadata (title, H1, description), creates content index
+
+**When to Use:**
+- Content audits - analyze all page titles and H1s
+- Meta description coverage analysis
+- Site structure discovery
+- Competitor content analysis
+- Sitemap generation
+- SEO gap identification
+
+**Example:**
+```bash
+# Crawl website and extract SEO metadata
+claude-code --agent seo_crawl_ingest --input '{
+  "projectPath": "./web-app",
+  "startUrls": ["https://disasterrecoveryqld.au"],
+  "allowedHost": "disasterrecoveryqld.au",
+  "maxPages": 50
+}'
+```
+
+**What it extracts:**
+- Page titles from `<title>` tags
+- First H1 heading content
+- Meta description content
+- All internal links for crawling
+
+**Outputs:**
+- `data/content/index.json` - Structured content data
+- `data/content/sitemap.txt` - List of all crawled URLs
+
+**Use Cases:**
+- Compare titles with SEMrush keyword data
+- Find pages with missing meta descriptions
+- Identify duplicate titles or H1s
+- Build content gap analysis vs competitors
+- Create URL inventory for indexing
+
+### 8. Navigation Bar Connections
 **File:** `navigation_bar_connections.json`
 **Role:** Navigation link validator and implementer
 **Purpose:** Ensures all navigation links work and have proper active states
@@ -193,7 +234,7 @@ claude-code --agent navigation_bar_connections --input '{
 }'
 ```
 
-### 8. UI-shadcn
+### 9. UI-shadcn
 **File:** `ui_shadcn.json`
 **Role:** Design system implementer
 **Purpose:** Adds shadcn/ui components and ensures UI consistency
@@ -219,7 +260,7 @@ claude-code --agent ui_shadcn --input '{
 }'
 ```
 
-### 9. SEMrush Analytical Finder
+### 10. SEMrush Analytical Finder
 **File:** `semrush_analytical_finder.json`
 **Role:** SEO data integration specialist
 **Purpose:** Integrates SEMrush API for keyword research and competitor analysis
@@ -242,7 +283,7 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-### 10. Vercel Deployment Manager
+### 11. Vercel Deployment Manager
 **File:** `vercel_deployment_manager.json`
 **Role:** Production deployment and health monitoring
 **Purpose:** Manages Vercel deployments, validates production health, handles rollbacks
@@ -273,7 +314,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-### 11. Database Schema Manager
+### 12. Database Schema Manager
 **File:** `database_schema_manager.json`
 **Role:** Database schema management and validation
 **Purpose:** Manages Supabase schemas, generates TypeScript types, validates data integrity
@@ -307,7 +348,7 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-### 12. Performance Monitor
+### 13. Performance Monitor
 **File:** `performance_monitor.json`
 **Role:** Performance analysis and optimization
 **Purpose:** Monitors performance metrics, identifies bottlenecks, implements optimizations
@@ -385,7 +426,17 @@ claude-code --agent ui_shadcn --input '{
 }'
 ```
 
-**Step 5: Add SEO Data**
+**Step 5: Crawl Site Content**
+```bash
+claude-code --agent seo_crawl_ingest --input '{
+  "projectPath": "./web-app",
+  "startUrls": ["https://yourdomain.com"],
+  "allowedHost": "yourdomain.com",
+  "maxPages": 50
+}'
+```
+
+**Step 6: Add SEO Data**
 ```bash
 claude-code --agent semrush_analytical_finder --input '{
   "projectPath": "./web-app",
@@ -393,7 +444,7 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-**Step 6: Validate Database Schema**
+**Step 7: Validate Database Schema**
 ```bash
 claude-code --agent database_schema_manager --input '{
   "projectPath": "./",
@@ -401,14 +452,14 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-**Step 7: Deploy Preview for Testing**
+**Step 8: Deploy Preview for Testing**
 ```bash
 claude-code --agent devops_deployer --input '{
   "projectPath": "./web-app"
 }'
 ```
 
-**Step 8: Deploy to Production**
+**Step 9: Deploy to Production**
 ```bash
 claude-code --agent vercel_deployment_manager --input '{
   "projectPath": "./web-app",
@@ -416,7 +467,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-**Step 9: Validate & Fix Issues**
+**Step 10: Validate & Fix Issues**
 ```bash
 claude-code --agent evaluator_fixer --input '{
   "projectPath": "./web-app",
@@ -424,7 +475,7 @@ claude-code --agent evaluator_fixer --input '{
 }'
 ```
 
-**Step 10: Monitor & Optimize Performance**
+**Step 11: Monitor & Optimize Performance**
 ```bash
 claude-code --agent performance_monitor --input '{
   "projectPath": "./web-app",
