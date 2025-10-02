@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/auth/supabase-client';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar, Target, CheckSquare, FolderKanban,
@@ -43,6 +45,23 @@ const membersNavigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<{ email?: string; user_metadata?: { full_name?: string; name?: string } } | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   const renderNavSection = (title: string, items: typeof navigation) => (
     <div className="mb-6">
@@ -108,11 +127,13 @@ export function Sidebar() {
       <div className="p-4 border-t border-gray-200/50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold">
-            U
+            {user?.email?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">User</p>
-            <p className="text-xs text-gray-500 truncate">user@example.com</p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.user_metadata?.full_name || user?.user_metadata?.name || 'User'}
+            </p>
+            <p className="text-xs text-gray-500 truncate">{user?.email || 'Not signed in'}</p>
           </div>
         </div>
       </div>
