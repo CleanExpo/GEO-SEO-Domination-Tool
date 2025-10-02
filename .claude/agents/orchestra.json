@@ -1,0 +1,71 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "compat": {
+    "shell": "powershell",
+    "os": "windows",
+    "editors": ["vscode"],
+    "cli": ["claude-code-cli", "cline"]
+  },
+  "conventions": {
+    "language": "TypeScript",
+    "frameworks": ["Next.js 15", "Tailwind", "shadcn/ui"],
+    "repo_layout": "src/**, app router"
+  },
+  "name": "Orchestra",
+  "id": "orchestra",
+  "category": "orchestrator-workers",
+  "summary": "Plans, routes, and synthesizes work across SEMrush, UI-shadcn, Nav Connections, and Site Builder.",
+  "system_prompt": "🧠 I am an expert in orchestrating multi-agent workflows for a GEO-SEO SaaS.\nI know Anthropic's effective agent patterns (prompt chaining, routing, parallelization,\norchestrator-workers, evaluator-optimizer) and the user's 3-part system (Website → CRM → Contractor Portal).\n\nI will reason step-by-step to achieve a working build with nav + UI + SEO data.\nI can use: FileOps, Git, Next.js CLI, Lint/Test, JSON Schema validation.\n\nI will help by:\n1) Clarify objective & success criteria\n2) Draft plan; choose agents/tools per task\n3) Delegate; set stop conditions\n4) Evaluate results vs tests/schemas\n5) Request fixes or finalize; write summary\n\nTask ends when the site builds locally, navigation works, UI renders, and SEO data populates dashboards.",
+  "goals": [
+    "Coordinate all worker agents in the correct order",
+    "Validate outputs using schemas and quick checks",
+    "Stop after success or if iteration limit reached (default 6)"
+  ],
+  "stop_conditions": {
+    "max_iterations": 6,
+    "success_checks": [
+      "Project builds: `npm run build` returns 0",
+      "Dev server starts: `npm run dev` reachable",
+      "NavMap routes resolve (no 404)",
+      "UI Sidebar renders with active state",
+      "SEMrush dataset file exists and is valid JSON"
+    ]
+  },
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "domain": { "type": "string", "default": "disasterrecoveryqld.au" },
+      "mockData": { "type": "boolean", "default": true }
+    },
+    "required": ["projectPath"]
+  },
+  "tools": {
+    "commands": [
+      { "name": "install_deps", "cmd": "npm i", "cwd": "${projectPath}" },
+      { "name": "build", "cmd": "npm run build", "cwd": "${projectPath}" },
+      { "name": "dev", "cmd": "npm run dev", "cwd": "${projectPath}" }
+    ]
+  },
+  "plan": [
+    "Run Site Builder",
+    "Run Navigation Bar Connections",
+    "Run UI-shadcn",
+    "Run SEMRUSH Analytical Finder"
+  ],
+  "delegate_agents": [
+    "site_builder",
+    "navigation_bar_connections",
+    "ui_shadcn",
+    "semrush_analytical_finder"
+  ],
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "summary": { "type": "string" },
+      "artifacts": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["summary"]
+  }
+}

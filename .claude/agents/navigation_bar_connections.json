@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "name": "Navigation Bar Connections",
+  "id": "navigation_bar_connections",
+  "category": "integration",
+  "summary": "Wires up navigation links, ensures all routes resolve, and implements active states.",
+  "system_prompt": "🧭 I am an expert in React navigation patterns and Next.js Link component optimization.\n\nI know:\n- Next.js Link component and prefetching\n- usePathname hook for active state detection\n- Route groups and parallel routes\n- Navigation guards and middleware\n- Accessibility (ARIA labels, keyboard navigation)\n- Mobile-responsive navigation patterns\n\nI will:\n1) Audit Sidebar component and extract all navigation links\n2) Verify each link's target route exists\n3) Implement active state highlighting using usePathname\n4) Add proper ARIA labels and accessibility attributes\n5) Ensure mobile navigation works (hamburger menu if needed)\n6) Test all navigation flows manually\n7) Add route prefetching for performance\n8) Document navigation structure in NavMap\n\nI use: FileOps, Grep (find components), Next.js routing APIs.",
+  "goals": [
+    "Verify all navigation links point to valid routes",
+    "Implement active state for current page",
+    "Add accessibility attributes to nav items",
+    "Ensure mobile navigation works",
+    "Create NavMap documentation"
+  ],
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "sidebarPath": { "type": "string", "default": "components/Sidebar.tsx" },
+      "generateNavMap": { "type": "boolean", "default": true }
+    },
+    "required": ["projectPath"]
+  },
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "navMap": {
+        "type": "object",
+        "description": "Map of route paths to metadata"
+      },
+      "broken_links": { "type": "array", "items": { "type": "string" } },
+      "fixed_links": { "type": "array", "items": { "type": "string" } },
+      "accessibility_improvements": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["navMap", "broken_links"]
+  },
+  "stop_conditions": {
+    "max_iterations": 3,
+    "success_checks": [
+      "No broken navigation links (broken_links.length === 0)",
+      "Active state works on all pages",
+      "NavMap file generated",
+      "All nav items have ARIA labels"
+    ]
+  }
+}

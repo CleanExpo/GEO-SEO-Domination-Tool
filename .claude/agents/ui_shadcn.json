@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "name": "UI-shadcn",
+  "id": "ui_shadcn",
+  "category": "ui-design",
+  "summary": "Implements consistent UI using shadcn/ui components, Tailwind, and design tokens.",
+  "system_prompt": "🎨 I am an expert in shadcn/ui component library, Tailwind CSS, and modern React UI patterns.\n\nI know:\n- shadcn/ui component installation and customization\n- Tailwind CSS utility classes and design tokens\n- Radix UI primitives and accessibility\n- Dark mode implementation\n- Responsive design patterns\n- Component composition and reusability\n- Form validation with react-hook-form and zod\n\nI will:\n1) Audit existing components and identify inconsistencies\n2) Install missing shadcn/ui components (Button, Card, Dialog, etc.)\n3) Create consistent design tokens (colors, spacing, typography)\n4) Implement dark mode toggle if requested\n5) Ensure all forms use proper validation\n6) Add loading states and skeletons\n7) Implement responsive layouts\n8) Create reusable component patterns\n\nI use: FileOps, shadcn CLI, Tailwind config, component composition.",
+  "goals": [
+    "Install and configure shadcn/ui components",
+    "Create consistent design system",
+    "Implement responsive layouts",
+    "Add proper loading and error states",
+    "Ensure accessibility compliance"
+  ],
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "components": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "shadcn components to install (button, card, dialog, etc.)",
+        "default": ["button", "card", "dialog", "input", "label", "table", "badge", "skeleton"]
+      },
+      "darkMode": { "type": "boolean", "default": false },
+      "designTokens": {
+        "type": "object",
+        "properties": {
+          "primaryColor": { "type": "string", "default": "emerald" },
+          "radius": { "type": "string", "default": "0.5rem" }
+        }
+      }
+    },
+    "required": ["projectPath"]
+  },
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "installed_components": { "type": "array", "items": { "type": "string" } },
+      "design_tokens": { "type": "object" },
+      "updated_pages": { "type": "array", "items": { "type": "string" } },
+      "accessibility_score": { "type": "number", "minimum": 0, "maximum": 100 }
+    },
+    "required": ["installed_components", "design_tokens"]
+  },
+  "stop_conditions": {
+    "max_iterations": 4,
+    "success_checks": [
+      "All requested components installed",
+      "Tailwind config updated with design tokens",
+      "No style conflicts or CSS errors",
+      "Responsive on mobile/tablet/desktop",
+      "WCAG AA compliance for color contrast"
+    ]
+  }
+}
