@@ -1,0 +1,213 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "compat": {
+    "shell": "powershell",
+    "os": "windows",
+    "editors": ["vscode"],
+    "cli": ["claude-code-cli", "cline"]
+  },
+  "conventions": {
+    "language": "TypeScript",
+    "frameworks": ["Next.js 15", "Tailwind", "shadcn/ui"],
+    "repo_layout": "src/**, app router"
+  },
+  "name": "Evaluator & Fixer",
+  "id": "evaluator_fixer",
+  "category": "qa",
+  "summary": "Runs build + schema + route checks and applies quick fixes (missing routes, Tailwind content paths).",
+  "system_prompt": "🔎 I evaluate recent outputs from worker agents and apply minimal, deterministic fixes. I check build success, required files, basic schema shape, and nav route existence. Task ends when checks pass or a clear failure report is produced.",
+  "goals": [
+    "Verify build passes and required files exist",
+    "Validate SEO dataset JSON shape (lightweight)",
+    "Ensure Tailwind content paths are correct",
+    "Create placeholder routes for missing links if requested"
+  ],
+  "stop_conditions": {
+    "max_iterations": 2,
+    "success_checks": [
+      "`npm run build` exits 0",
+      "src/ui/nav.ts exists",
+      "If dataset expected: data/seo/${domain}/dataset.json parses",
+      "All top-level links in nav map resolve to a route"
+    ]
+  },
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "domain": { "type": "string", "default": "disasterrecoveryqld.au" },
+      "autoScaffoldMissingRoutes": { "type": "boolean", "default": true }
+    },
+    "required": ["projectPath"]
+  },
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "checksPassed": { "type": "boolean" },
+      "reportPath": { "type": "string" },
+      "issuesFixed": { "type": "array", "items": { "type": "string" } },
+      "remainingIssues": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["checksPassed"]
+  },
+  "tools": {
+    "commands": [
+      {
+        "name": "ensure_tailwind_content",
+        "description": "Patch Tailwind content paths if needed",
+        "cmd": "pwsh -NoProfile -Command \"$f='${projectPath}\\tailwind.config.js'; if (Test-Path $f) { (Get-Content $f -Raw) -replace 'content:\\s*\\[.*?\\]', 'content: [\\'./src/**/*.{ts,tsx}\\']' | Set-Content $f -Encoding UTF8 }\""
+      },
+      {
+        "name": "check_build",
+        "description": "Run production build",
+        "cmd": "pwsh -NoProfile -Command \"Set-Location '${projectPath}'; npm run build\""
+      },
+      {
+        "name": "validate_dataset",
+        "description": "If dataset exists, ensure it parses and has basic fields",
+        "cmd": "pwsh -NoProfile -Command \"$p='${projectPath}\\data\\seo\\${domain}\\dataset.json'; if (Test-Path $p) { $d = Get-Content $p -Raw | ConvertFrom-Json; if (-not $d.keywords -or -not ($d.keywords | ForEach-Object { $_.term })) { throw 'Dataset missing keywords[].term'; } }\""
+      },
+      {
+        "name": "read_nav_and_scaffold",
+        "description": "Read nav.ts and scaffold any missing routes",
+        "cmd": "pwsh -NoProfile -Command \"$nav='${projectPath}\\src\\ui\\nav.ts'; if (Test-Path $nav) { $text = Get-Content $nav -Raw; $paths = [System.Text.RegularExpressions.Regex]::Matches($text, 'href:\\s*\\\"([^\\\"]+)\\\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique; $app='${projectPath}\\src\\app'; $created=@(); foreach($r in $paths){ if ($r -notmatch '^/') { continue } $dir = $r.Trim('/'); if ($dir -eq '') { $rdir = $app } else { $rdir = Join-Path $app $dir } if (-not (Test-Path $rdir)) { if (${autoScaffoldMissingRoutes}) { New-Item -Force -ItemType Directory $rdir | Out-Null } } $page = Join-Path $rdir 'page.tsx'; if (-not (Test-Path $page)) { if (${autoScaffoldMissingRoutes}) { Set-Content -Encoding UTF8 -Path $page -Value \"export default function Page(){ return (<div className='p-8'>${r}</div>); }\"; $created += $r } } } if ($created.Count -gt 0) { \"Created routes: \" + ($created -join ', ') | Set-Content ('${projectPath}\\.eval-created-routes.txt') } }\""
+      },
+      {
+        "name": "write_report",
+        "description": "Write a simple QA report",
+        "cmd": "pwsh -NoProfile -Command \"$report='${projectPath}\\.qa-report.txt'; $ok='OK'; if (Test-Path '${projectPath}\\.eval-created-routes.txt') { $created = Get-Content '${projectPath}\\.eval-created-routes.txt' -Raw } else { $created='' } $lines = @('Evaluator & Fixer Report', (Get-Date).ToString('o'), 'Tailwind content patched if needed', 'Build attempted', 'Dataset parsed if present', 'Routes scaffolded (if any):', $created); $lines | Set-Content -Encoding UTF8 -Path $report; Write-Output $report\""
+      }
+    ]
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Configuration Check",
+      "tasks": [
+        "Verify Tailwind content paths are correct",
+        "Patch if needed to scan src/**/*.{ts,tsx}",
+        "Check globals.css has Tailwind directives"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Build Validation (First Pass)",
+      "tasks": [
+        "Run npm run build",
+        "Capture build errors if any",
+        "Identify missing files or configuration issues"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Dataset Validation",
+      "tasks": [
+        "Check if SEO dataset exists at expected path",
+        "Parse JSON to validate structure",
+        "Verify keywords array has term field",
+        "Check rankings and competitors fields"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Route Resolution",
+      "tasks": [
+        "Read nav.ts if it exists",
+        "Extract all href paths from navigation",
+        "Check if corresponding page.tsx exists for each route",
+        "Auto-scaffold missing routes if enabled"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Build Validation (Second Pass)",
+      "tasks": [
+        "Run npm run build again after fixes",
+        "Generate QA report with results",
+        "Return checksPassed status"
+      ]
+    }
+  ],
+  "plan": [
+    "Run ensure_tailwind_content",
+    "Run check_build (may fail initially)",
+    "Run validate_dataset",
+    "Run read_nav_and_scaffold (if nav.ts exists)",
+    "Run check_build again",
+    "Run write_report",
+    "Return checksPassed true if build succeeded; else false with report"
+  ],
+  "validation_checks": {
+    "build": {
+      "command": "npm run build",
+      "expected_exit_code": 0,
+      "retry_after_fixes": true
+    },
+    "tailwind_config": {
+      "file": "tailwind.config.js",
+      "required_content": "content: ['./src/**/*.{ts,tsx}']",
+      "auto_fix": true
+    },
+    "navigation": {
+      "file": "src/ui/nav.ts",
+      "required": false,
+      "action_if_present": "validate_routes"
+    },
+    "dataset": {
+      "file": "data/seo/${domain}/dataset.json",
+      "required": false,
+      "schema": {
+        "domain": "string",
+        "keywords": "array",
+        "keywords[].term": "string"
+      }
+    }
+  },
+  "auto_fixes": [
+    {
+      "issue": "Tailwind content paths incorrect",
+      "fix": "Update tailwind.config.js to scan src/**",
+      "deterministic": true
+    },
+    {
+      "issue": "Navigation routes missing page.tsx",
+      "fix": "Create placeholder page.tsx for each route",
+      "deterministic": true,
+      "requires": "autoScaffoldMissingRoutes=true"
+    },
+    {
+      "issue": "Missing globals.css Tailwind directives",
+      "fix": "Add @tailwind base/components/utilities",
+      "deterministic": true
+    }
+  ],
+  "report_format": {
+    "file": ".qa-report.txt",
+    "sections": [
+      "Timestamp",
+      "Configuration Fixes Applied",
+      "Build Status",
+      "Dataset Validation",
+      "Routes Scaffolded",
+      "Remaining Issues (if any)"
+    ]
+  },
+  "best_practices": [
+    "Run after any agent that modifies project structure",
+    "Use as final validation in orchestrator workflows",
+    "Enable autoScaffoldMissingRoutes for quick fixes",
+    "Review .qa-report.txt for detailed results",
+    "Run twice - once to identify issues, once to verify fixes",
+    "Keep fixes minimal and deterministic",
+    "Don't modify business logic, only fix configuration"
+  ],
+  "use_cases": [
+    "Post-deployment validation",
+    "After running Site Builder or Full Build Pipeline",
+    "Continuous integration quality checks",
+    "Debugging build failures",
+    "Route consistency validation",
+    "Configuration drift detection"
+  ]
+}

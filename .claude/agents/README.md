@@ -4,9 +4,9 @@ This directory contains specialized AI agents for building and maintaining the G
 
 ## 🎯 Agent Overview
 
-**Total Agents: 10**
+**Total Agents: 11**
 - 1 Orchestrator (Orchestra)
-- 9 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Navigation, UI, SEMrush, Deployment, Database, Performance)
+- 10 Specialized Workers (Site Builder, Site Builder Bootstrap, Full Build Pipeline, Evaluator & Fixer, Navigation, UI, SEMrush, Deployment, Database, Performance)
 
 ### 1. Orchestra (Orchestrator)
 **File:** `orchestra.json`
@@ -99,7 +99,43 @@ claude-code --agent runner_full_build --input '{
 - Mock SEMrush dataset with keywords and rankings
 - Verified production build
 
-### 5. Navigation Bar Connections
+### 5. Evaluator & Fixer
+**File:** `evaluator_fixer.json`
+**Role:** Quality assurance and auto-fix agent
+**Purpose:** Validates builds, fixes configuration issues, scaffolds missing routes
+
+**When to Use:**
+- After running any agent that modifies project structure
+- Post-deployment validation
+- Debugging build failures
+- Route consistency validation
+- Configuration drift detection
+- As final step in orchestrator workflows
+
+**Example:**
+```bash
+# Validate and auto-fix project issues
+claude-code --agent evaluator_fixer --input '{
+  "projectPath": "./web-app",
+  "domain": "disasterrecoveryqld.au",
+  "autoScaffoldMissingRoutes": true
+}'
+```
+
+**What it checks:**
+- Build success (npm run build)
+- Tailwind content paths configuration
+- SEO dataset JSON structure
+- Navigation routes existence
+- Missing page.tsx files
+
+**What it fixes:**
+- Tailwind content paths → Updates to scan src/**
+- Missing routes → Creates placeholder page.tsx
+- Missing Tailwind directives → Adds to globals.css
+- Generates .qa-report.txt with detailed results
+
+### 6. Navigation Bar Connections
 **File:** `navigation_bar_connections.json`
 **Role:** Navigation link validator and implementer
 **Purpose:** Ensures all navigation links work and have proper active states
@@ -121,7 +157,7 @@ claude-code --agent navigation_bar_connections --input '{
 }'
 ```
 
-### 6. UI-shadcn
+### 7. UI-shadcn
 **File:** `ui_shadcn.json`
 **Role:** Design system implementer
 **Purpose:** Adds shadcn/ui components and ensures UI consistency
@@ -147,7 +183,7 @@ claude-code --agent ui_shadcn --input '{
 }'
 ```
 
-### 7. SEMrush Analytical Finder
+### 8. SEMrush Analytical Finder
 **File:** `semrush_analytical_finder.json`
 **Role:** SEO data integration specialist
 **Purpose:** Integrates SEMrush API for keyword research and competitor analysis
@@ -170,7 +206,7 @@ claude-code --agent semrush_analytical_finder --input '{
 }'
 ```
 
-### 8. Vercel Deployment Manager
+### 9. Vercel Deployment Manager
 **File:** `vercel_deployment_manager.json`
 **Role:** Production deployment and health monitoring
 **Purpose:** Manages Vercel deployments, validates production health, handles rollbacks
@@ -201,7 +237,7 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-### 9. Database Schema Manager
+### 10. Database Schema Manager
 **File:** `database_schema_manager.json`
 **Role:** Database schema management and validation
 **Purpose:** Manages Supabase schemas, generates TypeScript types, validates data integrity
@@ -235,7 +271,7 @@ claude-code --agent database_schema_manager --input '{
 }'
 ```
 
-### 10. Performance Monitor
+### 11. Performance Monitor
 **File:** `performance_monitor.json`
 **Role:** Performance analysis and optimization
 **Purpose:** Monitors performance metrics, identifies bottlenecks, implements optimizations
@@ -337,7 +373,15 @@ claude-code --agent vercel_deployment_manager --input '{
 }'
 ```
 
-**Step 8: Monitor & Optimize Performance**
+**Step 8: Validate & Fix Issues**
+```bash
+claude-code --agent evaluator_fixer --input '{
+  "projectPath": "./web-app",
+  "autoScaffoldMissingRoutes": true
+}'
+```
+
+**Step 9: Monitor & Optimize Performance**
 ```bash
 claude-code --agent performance_monitor --input '{
   "projectPath": "./web-app",
