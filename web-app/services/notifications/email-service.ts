@@ -70,9 +70,9 @@ export class EmailService {
   }
 
   /**
-   * Send email via configured provider
+   * Send email via configured provider (public method for direct use)
    */
-  private async sendEmail(params: {
+  async sendEmail(params: {
     to: string;
     subject: string;
     html: string;

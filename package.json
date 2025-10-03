@@ -19,7 +19,8 @@
     "db:migrate": "node scripts/migrate.js up",
     "db:migrate:down": "node scripts/migrate.js down",
     "db:migrate:status": "node scripts/migrate.js status",
-    "db:migrate:create": "node scripts/migrate.js create"
+    "db:migrate:create": "node scripts/migrate.js create",
+    "db:seed:tutorials": "node scripts/seed-tutorials.js"
   },
   "build": {
     "appId": "com.geoseodomination.app",

@@ -27,10 +27,15 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
-    // Parse tags from JSON string to array
+    // Transform response to match frontend expectations (camelCase)
     const responseData = {
-      ...data,
+      id: data.id,
+      title: data.title,
+      content: data.content,
       tags: data.tags ? JSON.parse(data.tags) : [],
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      project: data.project_id,
     };
 
     return NextResponse.json({ note: responseData });
@@ -74,10 +79,15 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse tags back to array for response
+    // Transform response to match frontend expectations (camelCase)
     const responseData = {
-      ...data,
+      id: data.id,
+      title: data.title,
+      content: data.content,
       tags: data.tags ? JSON.parse(data.tags) : [],
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      project: data.project_id,
     };
 
     return NextResponse.json({ note: responseData });

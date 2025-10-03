@@ -32,6 +32,7 @@ export { generateWeeklyReportTemplate } from './templates/weekly-report';
 export { generateRankingAlertTemplate } from './templates/ranking-alert';
 export { generateAuditCompleteTemplate } from './templates/audit-complete';
 export { generateSystemNotificationTemplate } from './templates/system-notification';
+export { generateSupportContactTemplate } from './templates/support-contact';
 
 /**
  * Example Usage:

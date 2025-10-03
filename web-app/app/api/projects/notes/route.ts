@@ -39,7 +39,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ notes: data });
+    // Transform data to match frontend expectations (camelCase)
+    const transformedNotes = (data || []).map((note: any) => ({
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      tags: note.tags ? JSON.parse(note.tags) : [],
+      createdAt: note.created_at,
+      updatedAt: note.updated_at,
+      project: note.project_id,
+    }));
+
+    return NextResponse.json({ notes: transformedNotes });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch project notes' },
@@ -85,10 +96,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse tags back to array for response
+    // Transform response to match frontend expectations (camelCase)
     const responseData = {
-      ...data,
+      id: data.id,
+      title: data.title,
+      content: data.content,
       tags: data.tags ? JSON.parse(data.tags) : [],
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      project: data.project_id,
     };
 
     return NextResponse.json({ note: responseData }, { status: 201 });

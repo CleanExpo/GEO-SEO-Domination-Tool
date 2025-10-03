@@ -1,17 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookOpen, Plus, Play, Clock, Award, Search } from 'lucide-react';
+import { BookOpen, Plus, Play, Clock, Award, Search, X, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 
 interface Tutorial {
   id: string;
   title: string;
   description: string;
+  content: string;
   category: string;
-  duration: string;
+  duration: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  completionRate: number;
-  lessons: number;
+  tags: string[];
+  video_url?: string;
+  resources?: string[];
+  favorite: boolean;
+  views: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface TutorialProgress {
+  [tutorialId: string]: {
+    completionRate: number;
+    lastAccessed: string;
+    currentLesson?: number;
+  };
 }
 
 export default function TutorialsPage() {
@@ -20,10 +34,37 @@ export default function TutorialsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
+  const [progress, setProgress] = useState<TutorialProgress>({});
+  const [currentTutorialIndex, setCurrentTutorialIndex] = useState(0);
 
   useEffect(() => {
     fetchTutorials();
+    loadProgress();
   }, []);
+
+  const loadProgress = () => {
+    try {
+      const savedProgress = localStorage.getItem('tutorial-progress');
+      if (savedProgress) {
+        setProgress(JSON.parse(savedProgress));
+      }
+    } catch (error) {
+      console.error('Error loading progress:', error);
+    }
+  };
+
+  const saveProgress = (tutorialId: string, completionRate: number) => {
+    const newProgress = {
+      ...progress,
+      [tutorialId]: {
+        completionRate,
+        lastAccessed: new Date().toISOString(),
+      },
+    };
+    setProgress(newProgress);
+    localStorage.setItem('tutorial-progress', JSON.stringify(newProgress));
+  };
 
   const fetchTutorials = async () => {
     try {
@@ -47,6 +88,50 @@ export default function TutorialsPage() {
 
   const handleAddTutorial = () => {
     console.log('Add tutorial clicked');
+  };
+
+  const openTutorial = async (tutorial: Tutorial) => {
+    setSelectedTutorial(tutorial);
+    const tutorialIndex = filteredTutorials.findIndex(t => t.id === tutorial.id);
+    setCurrentTutorialIndex(tutorialIndex);
+
+    // Increment view count
+    try {
+      await fetch(`/api/resources/tutorials/${tutorial.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ views: tutorial.views + 1 }),
+      });
+    } catch (error) {
+      console.error('Error updating view count:', error);
+    }
+  };
+
+  const closeTutorial = () => {
+    setSelectedTutorial(null);
+  };
+
+  const markAsComplete = () => {
+    if (selectedTutorial) {
+      saveProgress(selectedTutorial.id, 100);
+    }
+  };
+
+  const navigateTutorial = (direction: 'prev' | 'next') => {
+    if (!selectedTutorial) return;
+
+    const newIndex = direction === 'next'
+      ? Math.min(currentTutorialIndex + 1, filteredTutorials.length - 1)
+      : Math.max(currentTutorialIndex - 1, 0);
+
+    if (newIndex !== currentTutorialIndex) {
+      setCurrentTutorialIndex(newIndex);
+      setSelectedTutorial(filteredTutorials[newIndex]);
+    }
+  };
+
+  const getTutorialProgress = (tutorialId: string) => {
+    return progress[tutorialId]?.completionRate || 0;
   };
 
   const getDifficultyColor = (difficulty: Tutorial['difficulty']) => {
@@ -123,7 +208,10 @@ export default function TutorialsPage() {
             <div>
               <p className="text-sm text-gray-600">In Progress</p>
               <p className="text-2xl font-bold text-gray-900">
-                {tutorials.filter(t => t.completionRate > 0 && t.completionRate < 100).length}
+                {tutorials.filter(t => {
+                  const prog = getTutorialProgress(t.id);
+                  return prog > 0 && prog < 100;
+                }).length}
               </p>
             </div>
           </div>
@@ -136,7 +224,7 @@ export default function TutorialsPage() {
             <div>
               <p className="text-sm text-gray-600">Completed</p>
               <p className="text-2xl font-bold text-gray-900">
-                {tutorials.filter(t => t.completionRate === 100).length}
+                {tutorials.filter(t => getTutorialProgress(t.id) === 100).length}
               </p>
             </div>
           </div>
@@ -236,12 +324,13 @@ export default function TutorialsPage() {
               <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  <span>{tutorial.duration}</span>
+                  <span>{tutorial.duration} min</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{tutorial.lessons} lessons</span>
-                </div>
+                {tutorial.category && (
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                    {tutorial.category}
+                  </span>
+                )}
                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(tutorial.difficulty)}`}>
                   {tutorial.difficulty}
                 </span>
@@ -250,20 +339,23 @@ export default function TutorialsPage() {
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm mb-2">
                   <span className="text-gray-600">Progress</span>
-                  <span className="font-semibold text-gray-900">{tutorial.completionRate}%</span>
+                  <span className="font-semibold text-gray-900">{getTutorialProgress(tutorial.id)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-emerald-600 h-2 rounded-full transition-all"
-                    style={{ width: `${tutorial.completionRate}%` }}
+                    style={{ width: `${getTutorialProgress(tutorial.id)}%` }}
                   />
                 </div>
               </div>
 
-              <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+              <button
+                onClick={() => openTutorial(tutorial)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
                 <Play className="h-4 w-4" />
-                {tutorial.completionRate === 0 ? 'Start Tutorial' :
-                 tutorial.completionRate === 100 ? 'Review' : 'Continue'}
+                {getTutorialProgress(tutorial.id) === 0 ? 'Start Tutorial' :
+                 getTutorialProgress(tutorial.id) === 100 ? 'Review' : 'Continue'}
               </button>
             </div>
           ))}
@@ -283,6 +375,150 @@ export default function TutorialsPage() {
               <Plus className="h-5 w-5" />
               Add Your First Tutorial
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tutorial Viewer Modal */}
+      {selectedTutorial && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-900">{selectedTutorial.title}</h2>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(selectedTutorial.difficulty)}`}>
+                    {selectedTutorial.difficulty}
+                  </span>
+                  {selectedTutorial.category && (
+                    <span className="text-sm text-gray-600">{selectedTutorial.category}</span>
+                  )}
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Clock className="h-4 w-4" />
+                    <span>{selectedTutorial.duration} min</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={closeTutorial}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {selectedTutorial.description && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Overview</h3>
+                  <p className="text-gray-700">{selectedTutorial.description}</p>
+                </div>
+              )}
+
+              {selectedTutorial.video_url && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Video Tutorial</h3>
+                  <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                    <iframe
+                      src={selectedTutorial.video_url}
+                      className="w-full h-full rounded-lg"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Tutorial Content</h3>
+                <div className="prose prose-sm max-w-none">
+                  <div
+                    className="text-gray-700 whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: selectedTutorial.content }}
+                  />
+                </div>
+              </div>
+
+              {selectedTutorial.resources && selectedTutorial.resources.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Additional Resources</h3>
+                  <ul className="space-y-2">
+                    {selectedTutorial.resources.map((resource, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <BookOpen className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{resource}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedTutorial.tags && selectedTutorial.tags.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTutorial.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-emerald-100 text-emerald-700 text-sm rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 p-6 bg-gray-50">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-gray-600">Progress</span>
+                    <span className="font-semibold text-gray-900">
+                      {getTutorialProgress(selectedTutorial.id)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-emerald-600 h-2 rounded-full transition-all"
+                      style={{ width: `${getTutorialProgress(selectedTutorial.id)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <button
+                  onClick={() => navigateTutorial('prev')}
+                  disabled={currentTutorialIndex === 0}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Previous
+                </button>
+
+                <button
+                  onClick={markAsComplete}
+                  className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  <CheckCircle className="h-5 w-5" />
+                  {getTutorialProgress(selectedTutorial.id) === 100 ? 'Completed' : 'Mark as Complete'}
+                </button>
+
+                <button
+                  onClick={() => navigateTutorial('next')}
+                  disabled={currentTutorialIndex === filteredTutorials.length - 1}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

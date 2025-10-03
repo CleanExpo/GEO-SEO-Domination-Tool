@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { FileText, Plus, Search, Tag, Calendar, Edit, Trash2 } from 'lucide-react';
+import EditNoteModal from './EditNoteModal';
+import DeleteNoteModal from './DeleteNoteModal';
 
 interface Note {
   id: string;
@@ -17,6 +19,10 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedNoteForEdit, setSelectedNoteForEdit] = useState<Note | null>(null);
+  const [selectedNoteForDelete, setSelectedNoteForDelete] = useState<Note | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     fetchNotes();
@@ -44,6 +50,24 @@ export default function NotesPage() {
 
   const handleAddNote = () => {
     console.log('Add note clicked');
+  };
+
+  const handleEditNote = (note: Note) => {
+    setSelectedNoteForEdit(note);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteNote = (note: Note) => {
+    setSelectedNoteForDelete(note);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    fetchNotes();
+  };
+
+  const handleDeleteSuccess = () => {
+    fetchNotes();
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -189,10 +213,18 @@ export default function NotesPage() {
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{note.title}</h3>
                 <div className="flex items-center gap-2">
-                  <button className="p-1 text-gray-400 hover:text-emerald-600 transition-colors">
+                  <button
+                    onClick={() => handleEditNote(note)}
+                    className="p-1 text-gray-400 hover:text-emerald-600 transition-colors"
+                    title="Edit note"
+                  >
                     <Edit className="h-4 w-4" />
                   </button>
-                  <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
+                  <button
+                    onClick={() => handleDeleteNote(note)}
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete note"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -248,6 +280,31 @@ export default function NotesPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Modals */}
+      {selectedNoteForEdit && (
+        <EditNoteModal
+          note={selectedNoteForEdit}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedNoteForEdit(null);
+          }}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {selectedNoteForDelete && (
+        <DeleteNoteModal
+          note={selectedNoteForDelete}
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedNoteForDelete(null);
+          }}
+          onSuccess={handleDeleteSuccess}
+        />
       )}
     </div>
   );

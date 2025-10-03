@@ -1,7 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { BarChart3, TrendingUp, MapPin, Globe, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BarChart3, TrendingUp, MapPin, Globe, Calendar, Loader2 } from 'lucide-react';
+import { RankingDialog } from '@/components/RankingDialog';
+
+interface Keyword {
+  id: string;
+  keyword: string;
+  company_id: string;
+}
+
+interface Ranking {
+  id: string;
+  keyword_id: string;
+  company_id: string;
+  position: number;
+  url: string | null;
+  checked_at: string;
+  created_at: string;
+  keywords: Keyword;
+}
 
 interface RankingData {
   id: string;
@@ -16,6 +34,57 @@ interface RankingData {
 
 export default function RankingsPage() {
   const [rankings, setRankings] = useState<RankingData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchRankings();
+  }, []);
+
+  const fetchRankings = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/rankings');
+      const data = await res.json();
+
+      // Transform the API data into the format expected by the UI
+      const transformedData = transformRankingsData(data.rankings || []);
+      setRankings(transformedData);
+    } catch (err) {
+      console.error('Failed to fetch rankings:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transformRankingsData = (apiRankings: Ranking[]): RankingData[] => {
+    // Group rankings by keyword_id
+    const grouped = apiRankings.reduce((acc, ranking) => {
+      const key = ranking.keyword_id;
+      if (!acc[key]) {
+        acc[key] = {
+          id: key,
+          keyword: ranking.keywords?.keyword || 'Unknown',
+          company: ranking.company_id,
+          location: 'us', // Default location, can be enhanced later
+          rankings: []
+        };
+      }
+      acc[key].rankings.push({
+        date: ranking.checked_at || ranking.created_at,
+        position: ranking.position
+      });
+      return acc;
+    }, {} as Record<string, RankingData>);
+
+    // Convert to array and sort rankings by date
+    return Object.values(grouped).map(rankingData => ({
+      ...rankingData,
+      rankings: rankingData.rankings.sort((a, b) =>
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      )
+    }));
+  };
 
   const getTrendDirection = (data: RankingData) => {
     const first = data.rankings[0].position;
@@ -99,7 +168,13 @@ export default function RankingsPage() {
 
       {/* Rankings List */}
       <div className="space-y-6">
-        {rankings.length === 0 ? (
+        {loading ? (
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center">
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+            </div>
+          </div>
+        ) : rankings.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center">
             <div className="flex flex-col items-center gap-4">
               <BarChart3 className="h-16 w-16 text-gray-300" />
@@ -108,7 +183,10 @@ export default function RankingsPage() {
                 <p className="text-gray-600 mb-6">
                   Start tracking keyword rankings to visualize your position changes over time.
                 </p>
-                <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+                <button
+                  onClick={() => setIsDialogOpen(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+                >
                   <TrendingUp className="h-5 w-5" />
                   Track Your First Keyword
                 </button>
@@ -193,6 +271,12 @@ export default function RankingsPage() {
           })
         )}
       </div>
+
+      <RankingDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchRankings()}
+      />
     </div>
   );
 }

@@ -135,6 +135,19 @@ CREATE TABLE IF NOT EXISTS crm_support_tickets (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Project Notes Table
+CREATE TABLE IF NOT EXISTS crm_project_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id INTEGER,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category TEXT,
+  tags TEXT, -- JSON array stored as text
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (project_id) REFERENCES crm_projects(id) ON DELETE SET NULL
+);
+
 -- Indexes for better query performance
 CREATE INDEX idx_contacts_email ON crm_contacts(email);
 CREATE INDEX idx_contacts_status ON crm_contacts(status);
@@ -146,3 +159,5 @@ CREATE INDEX idx_calendar_events_date ON crm_calendar_events(event_date);
 CREATE INDEX idx_projects_status ON crm_projects(status);
 CREATE INDEX idx_prompts_category ON crm_prompts(category);
 CREATE INDEX idx_prompts_favorite ON crm_prompts(favorite);
+CREATE INDEX idx_project_notes_project_id ON crm_project_notes(project_id);
+CREATE INDEX idx_project_notes_category ON crm_project_notes(category);

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('rankings')
       .select('*, keywords(*)')
-      .order('date', { ascending: false });
+      .order('checked_at', { ascending: false });
 
     if (companyId) {
       query = query.eq('company_id', companyId);
@@ -91,9 +91,11 @@ export async function POST(request: NextRequest) {
       .from('rankings')
       .insert([
         {
-          ...validatedData,
+          keyword_id: validatedData.keyword_id,
+          company_id: validatedData.company_id,
+          url: validatedData.url,
           position,
-          date: new Date().toISOString().split('T')[0],
+          checked_at: new Date().toISOString(),
         },
       ])
       .select()

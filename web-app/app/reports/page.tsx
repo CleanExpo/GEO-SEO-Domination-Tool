@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Download, Calendar } from 'lucide-react';
+import { FileText, Download, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface Company {
@@ -9,15 +9,34 @@ interface Company {
   name: string;
 }
 
+interface Notification {
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
 export default function ReportsPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [reportType, setReportType] = useState<string>('seo_audit');
   const [generating, setGenerating] = useState(false);
+  const [notification, setNotification] = useState<Notification | null>(null);
 
   useEffect(() => {
     fetchCompanies();
   }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -26,24 +45,165 @@ export default function ReportsPage() {
       setCompanies(data.companies || []);
     } catch (error) {
       console.error('Failed to fetch companies:', error);
+      showNotification('error', 'Failed to load companies');
     }
   };
 
   const generateReport = async () => {
     if (!selectedCompany || !reportType) {
-      alert('Please select a company and report type');
+      showNotification('error', 'Please select a company and report type');
       return;
     }
 
     setGenerating(true);
 
     try {
-      alert(`Report generation for ${reportType} is not yet implemented. This would generate a comprehensive ${reportType.replace('_', ' ')} report.`);
+      // Get company details
+      const companyResponse = await fetch(`/api/companies/${selectedCompany}`);
+      if (!companyResponse.ok) {
+        throw new Error('Failed to fetch company details');
+      }
+      const companyData = await companyResponse.json();
+      const company = companyData.company;
+
+      let data: any[] = [];
+      let filename = '';
+      let headers: string[] = [];
+
+      // Fetch data based on report type
+      switch (reportType) {
+        case 'seo_audit':
+          const auditResponse = await fetch(`/api/seo-audits?company_id=${selectedCompany}`);
+          if (!auditResponse.ok) throw new Error('Failed to fetch SEO audits');
+          const auditData = await auditResponse.json();
+          data = auditData.audits || [];
+          filename = `seo-audit-${company.name}-${new Date().toISOString().split('T')[0]}.csv`;
+          headers = ['ID', 'URL', 'Score', 'Performance', 'Accessibility', 'Best Practices', 'SEO', 'Created At'];
+          break;
+
+        case 'keyword_research':
+          const keywordResponse = await fetch(`/api/keywords?company_id=${selectedCompany}`);
+          if (!keywordResponse.ok) throw new Error('Failed to fetch keywords');
+          const keywordData = await keywordResponse.json();
+          data = keywordData.keywords || [];
+          filename = `keyword-research-${company.name}-${new Date().toISOString().split('T')[0]}.csv`;
+          headers = ['ID', 'Keyword', 'Search Volume', 'CPC', 'Difficulty', 'Created At'];
+          break;
+
+        case 'ranking_report':
+          const rankingResponse = await fetch(`/api/rankings?company_id=${selectedCompany}`);
+          if (!rankingResponse.ok) throw new Error('Failed to fetch rankings');
+          const rankingData = await rankingResponse.json();
+          data = rankingData.rankings || [];
+          filename = `ranking-report-${company.name}-${new Date().toISOString().split('T')[0]}.csv`;
+          headers = ['ID', 'Keyword', 'Position', 'URL', 'Location', 'Search Engine', 'Date'];
+          break;
+
+        case 'competitor_analysis':
+          // Placeholder for future competitor analysis
+          showNotification('info', 'Competitor analysis report is coming soon. This will include competitor keyword overlap, backlink comparison, and ranking gaps.');
+          setGenerating(false);
+          return;
+
+        default:
+          throw new Error('Invalid report type');
+      }
+
+      if (data.length === 0) {
+        showNotification('error', `No data found for ${reportType.replace('_', ' ')} report. Please add some data first.`);
+        setGenerating(false);
+        return;
+      }
+
+      // Convert to CSV
+      const csv = convertToCSV(data, reportType, headers);
+
+      // Download CSV
+      downloadCSV(csv, filename);
+
+      // Show success message
+      showNotification('success', `Report generated successfully! ${data.length} records exported to ${filename}`);
     } catch (error) {
       console.error('Failed to generate report:', error);
+      showNotification('error', `Failed to generate report: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setGenerating(false);
     }
+  };
+
+  const convertToCSV = (data: any[], reportType: string, headers: string[]): string => {
+    // Helper function to escape CSV values
+    const escapeCSV = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      const stringValue = String(value);
+      // Escape double quotes and wrap in quotes if contains comma, quote, or newline
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+
+    // Create CSV header row
+    const headerRow = headers.join(',');
+
+    // Create CSV data rows
+    const rows = data.map((item) => {
+      switch (reportType) {
+        case 'seo_audit':
+          return [
+            escapeCSV(item.id),
+            escapeCSV(item.url),
+            escapeCSV(item.score || 0),
+            escapeCSV(item.performance_score || 0),
+            escapeCSV(item.accessibility_score || 0),
+            escapeCSV(item.best_practices_score || 0),
+            escapeCSV(item.seo_score || 0),
+            escapeCSV(item.created_at),
+          ].join(',');
+
+        case 'keyword_research':
+          return [
+            escapeCSV(item.id),
+            escapeCSV(item.keyword),
+            escapeCSV(item.search_volume || 0),
+            escapeCSV(item.cpc || 0),
+            escapeCSV(item.difficulty || 0),
+            escapeCSV(item.created_at),
+          ].join(',');
+
+        case 'ranking_report':
+          return [
+            escapeCSV(item.id),
+            escapeCSV(item.keywords?.keyword || 'N/A'),
+            escapeCSV(item.position || 0),
+            escapeCSV(item.url),
+            escapeCSV(item.location),
+            escapeCSV(item.search_engine),
+            escapeCSV(item.date),
+          ].join(',');
+
+        default:
+          return '';
+      }
+    });
+
+    return [headerRow, ...rows].join('\n');
+  };
+
+  const downloadCSV = (csv: string, filename: string) => {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   };
 
   const reportTypes = [
@@ -75,6 +235,40 @@ export default function ReportsPage() {
 
   return (
     <div className="p-8 max-w-7xl">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 max-w-md p-4 rounded-xl shadow-lg transform transition-all duration-300 ${
+          notification.type === 'success' ? 'bg-emerald-50 border border-emerald-200' :
+          notification.type === 'error' ? 'bg-red-50 border border-red-200' :
+          'bg-blue-50 border border-blue-200'
+        }`}>
+          <div className="flex items-start gap-3">
+            {notification.type === 'success' ? (
+              <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+            ) : notification.type === 'error' ? (
+              <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            ) : (
+              <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <p className={`text-sm font-medium ${
+                notification.type === 'success' ? 'text-emerald-800' :
+                notification.type === 'error' ? 'text-red-800' :
+                'text-blue-800'
+              }`}>
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XCircle className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports</h1>
