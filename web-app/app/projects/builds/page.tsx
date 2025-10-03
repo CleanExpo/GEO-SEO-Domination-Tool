@@ -5,6 +5,7 @@ async function apiBuilds(action: string, params: any = {}) { const r = await fet
 async function apiLink(action: string, params: any = {}) { const r = await fetch('/api/link', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
 async function apiDeploy(action: string, params: any = {}) { const r = await fetch('/api/deploy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
 async function apiSync(action: string, params: any = {}) { const r = await fetch('/api/sync', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
+async function apiJobs(action: string, params: any = {}) { const r = await fetch('/api/jobs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
 
 export default function BuildsPage() {
   const [builders, setBuilders] = useState<any[]>([]);
@@ -24,11 +25,17 @@ export default function BuildsPage() {
   const [deployService, setDeployService] = useState('');
   const [deployTail, setDeployTail] = useState('200');
 
-  // Conflicts plan
-  type Row = { to: string; status: 'new'|'identical'|'modify'; decision: 'write'|'skip'; diff?: string };
-  const [planRows, setPlanRows] = useState<Row[]>([]);
+  // SSH settings (compose path used by Sync All job)
+  const [sshComposePath, setSshComposePath] = useState('/srv/app/compose.yml');
+  const [remotePath, setRemotePath] = useState('/srv/app');
+
+  // Jobs UI
+  type Job = { id:string; status:string; pct?:number; step?:string; title?:string; updatedAt:number };
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [activeJob, setActiveJob] = useState<string>('');
 
   useEffect(() => { (async () => { setLoading(true); const j = await fetch('/api/builds').then(r=>r.json()); if (j?.ok && j?.result?.builders) setBuilders(j.result.builders); setLoading(false); })(); }, []);
+  useEffect(() => { const t = setInterval(async ()=>{ const r = await fetch('/api/jobs').then(x=>x.json()); setJobs(r?.result?.jobs||[]); }, 2000); return ()=>clearInterval(t); }, []);
 
   async function doInspect(id: string) { setSelected(id); setLog('Inspecting…'); const j = await apiBuilds('inspect_builder', { id }); setLog(JSON.stringify(j, null, 2)); }
   async function doPreview(id: string) { setSelected(id); setLog('Previewing…'); const v:any={}; if(id==='nextjs-api-route') v.ROUTE_NAME=routeName; if(id==='database-schema') v.SCHEMA_NAME=schemaName; const j=await apiBuilds('preview_apply',{id,engine:'eta',variables:v}); setLog(JSON.stringify(j,null,2)); }
@@ -39,23 +46,34 @@ export default function BuildsPage() {
   async function createGithubRepo() { setLog('Creating GitHub repo…'); const j=await apiLink('github_create_repo',{name:ghRepo,description:'Created from CRM',private:ghPrivate}); setLog(JSON.stringify(j,null,2)); }
   async function linkVercelProject() { setLog('Linking Vercel project…'); const repo=`${ghOwner}/${ghRepo}`; const j=await apiLink('vercel_create_project',{name:vzProject,repo}); setLog(JSON.stringify(j,null,2)); }
 
-  // Conflicts & Plan
-  function variablesFor(id: string) { const v:any={}; if(id==='nextjs-api-route') v.ROUTE_NAME=routeName; if(id==='database-schema') v.SCHEMA_NAME=schemaName; return v; }
-  async function previewConflicts() {
-    if (!selected) { setLog('Pick a builder first.'); return; }
-    setLog('Previewing conflicts…');
-    const j = await apiBuilds('preview_conflicts', { id:selected, engine:'eta', variables: variablesFor(selected) });
-    const rows: Row[] = (j?.result?.files||[]).map((f:any)=> ({ to: f.to, status: f.status, decision: f.status==='identical'?'skip':'write', diff: f.diff||'' }));
-    setPlanRows(rows);
-    setLog(JSON.stringify(j,null,2));
-  }
-  function setDecision(i:number, val:'write'|'skip'){ setPlanRows(prev=> prev.map((r,idx)=> idx===i?{...r, decision:val}:r)); }
-  async function applyPlan(){
-    if (!selected) { setLog('Pick a builder first.'); return; }
-    const plan = planRows.map(r=> ({ to: r.to, action: r.decision }));
-    setLog('Applying plan…');
-    const j = await apiBuilds('apply_plan', { id:selected, engine:'eta', variables: variablesFor(selected), plan });
-    setLog(JSON.stringify(j,null,2));
+  // Local deploy flows
+  async function dLocal(action:'config'|'build'|'up'|'down'|'ps'|'logs'){ setLog(`[local] ${action}…`); const params:any={target:'local'}; if(action==='logs'){params.service=deployService;params.tail=deployTail;} const j=await apiDeploy(action,params); setLog(JSON.stringify(j,null,2)); }
+
+  // JOB: Sync All (bundle→scp→unpack→up) with progress
+  async function runSyncAllJob(){
+    // 1) start job
+    const start = await apiJobs('start', { title: 'Sync All (bundle → scp → unpack → up)' });
+    if (!start?.ok) { setLog('Failed to start job'); return; }
+    const id = start.result.id as string; setActiveJob(id);
+    const progress = (pct:number, step:string)=> apiJobs('progress', { id, pct, step });
+    const logLine = (line:string)=> apiJobs('log', { id, line });
+
+    try{
+      await logLine('Step 1/3: Making and uploading bundle…');
+      await progress(10, 'bundling');
+      const sync = await apiSync('sync_all', { remotePath, composePath: sshComposePath });
+      await logLine(JSON.stringify(sync, null, 2));
+      if (!sync?.ok) throw new Error(sync?.error || sync?.stderr || 'sync failed');
+
+      await progress(80, 'compose up');
+      await logLine('Compose up done on remote.');
+      await progress(100, 'done');
+      await apiJobs('complete', { id, result: { remoteBundle: sync?.remoteBundle || null } });
+      setLog('Sync All completed.');
+    }catch(e:any){
+      await apiJobs('fail', { id, error: e?.message || 'unknown error' });
+      setLog('Job failed: ' + (e?.message||'unknown'));
+    }
   }
 
   const hasBuilders = useMemo(()=> (builders?.length ?? 0) > 0,[builders]);
@@ -100,66 +118,9 @@ export default function BuildsPage() {
           </ul>
         </div>
 
-        {/* Conflicts & Dry-Run */}
-        <div className="border rounded p-4 2xl:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="font-medium">Conflicts & Dry-Run</h2>
-            <div className="flex gap-2">
-              <button className="px-3 py-2 border rounded" onClick={previewConflicts} disabled={!selected}>Preview Conflicts</button>
-              <button className="px-3 py-2 border rounded" onClick={applyPlan} disabled={!planRows.length}>Apply Plan</button>
-            </div>
-          </div>
-
-          {!planRows.length && <div className="text-sm text-gray-600 mt-2">Select a builder, set variables, then click <b>Preview Conflicts</b>.</div>}
-
-          {!!planRows.length && (
-            <div className="mt-3 space-y-3">
-              <table className="w-full text-sm border">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left p-2 border">File</th>
-                    <th className="text-left p-2 border">Status</th>
-                    <th className="text-left p-2 border">Decision</th>
-                    <th className="text-left p-2 border">Diff</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {planRows.map((r, i) => (
-                    <tr key={r.to} className="align-top">
-                      <td className="p-2 border font-mono text-xs">{r.to}</td>
-                      <td className="p-2 border">
-                        <span className={r.status==='modify'?'text-amber-600':r.status==='new'?'text-green-600':'text-gray-500'}>{r.status}</span>
-                      </td>
-                      <td className="p-2 border">
-                        <select className="border rounded px-2 py-1" value={r.decision} onChange={(e)=>setDecision(i, e.target.value as any)}>
-                          <option value="write">write</option>
-                          <option value="skip">skip</option>
-                        </select>
-                      </td>
-                      <td className="p-2 border">
-                        {r.diff ? (
-                          <details>
-                            <summary className="cursor-pointer">view diff</summary>
-                            <pre className="bg-black text-green-200 p-2 rounded whitespace-pre-wrap text-[11px] overflow-auto max-h-64">{r.diff}</pre>
-                          </details>
-                        ) : <span className="text-gray-400">—</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          <h3 className="font-medium mt-6">Output</h3>
-          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[200px]">{log || 'Ready.'}</pre>
-        </div>
-      </div>
-
-      {/* Link + Local Deploy (kept) */}
-      <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+        {/* Link + Local Deploy */}
         <div className="border rounded p-4">
-          <h2 className="font-medium mb-2">Link (GitHub ↔ Vercel)</h2>
+          <h2 className="font-medium mb-2">Link & Local Deploy</h2>
           <div className="space-y-2 text-sm">
             <div className="grid grid-cols-2 gap-2">
               <input className="border rounded px-2 py-1" placeholder="GH Owner" value={ghOwner} onChange={e=>setGhOwner(e.target.value)} />
@@ -174,27 +135,45 @@ export default function BuildsPage() {
               <input className="border rounded px-2 py-1" placeholder="Vercel Project" value={vzProject} onChange={e=>setVzProject(e.target.value)} />
               <button className="px-2 py-1 border rounded" onClick={linkVercelProject}>Link to Vercel</button>
             </div>
+            <hr className="my-2" />
+            <div className="flex flex-wrap gap-2">
+              <button className="px-2 py-1 border rounded" onClick={()=>dLocal('config')}>Compose Config</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>dLocal('build')}>Build</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>dLocal('up')}>Up</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>dLocal('down')}>Down</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>dLocal('ps')}>PS</button>
+            </div>
           </div>
         </div>
 
-        <div className="border rounded p-4 2xl:col-span-2">
-          <h2 className="font-medium mb-2">Local Deploy (Compose)</h2>
+        {/* Jobs Panel */}
+        <div className="border rounded p-4">
+          <h2 className="font-medium mb-2">Jobs & Progress</h2>
           <div className="space-y-2 text-sm">
-            <div className="flex flex-wrap gap-2">
-              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('config',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Config</button>
-              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('build',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Build</button>
-              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('up',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Up</button>
-              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('down',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Down</button>
-              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('ps',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>PS</button>
+            <div className="grid grid-cols-1 gap-2">
+              <input className="border rounded px-2 py-1" placeholder="Remote compose path (/srv/app/compose.yml)" value={sshComposePath} onChange={e=>setSshComposePath(e.target.value)} />
+              <input className="border rounded px-2 py-1" placeholder="Remote path (/srv/app)" value={remotePath} onChange={e=>setRemotePath(e.target.value)} />
+              <button className="px-3 py-2 border rounded" onClick={runSyncAllJob}>Run: Sync All (bundle → scp → unpack → up)</button>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="w-24">Logs service</label>
-              <input className="border rounded px-2 py-1 w-full" placeholder="(optional) service name" value={deployService} onChange={e=>setDeployService(e.target.value)} />
-              <label className="w-10">Tail</label>
-              <input className="border rounded px-2 py-1 w-24" value={deployTail} onChange={e=>setDeployTail(e.target.value)} />
-              <button className="px-3 py-2 border rounded" onClick={()=>apiDeploy('logs',{target:'local', service:deployService, tail:deployTail}).then(j=>setLog(JSON.stringify(j,null,2)))}>Logs</button>
+            <hr />
+            <div className="space-y-2 max-h-80 overflow-auto">
+              {jobs.map(j=> (
+                <div key={j.id} className="border rounded p-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="font-mono">{j.id}</div>
+                    <div className="capitalize">{j.status}</div>
+                  </div>
+                  <div className="text-xs text-gray-600">{j.step || '—'}</div>
+                  <div className="h-2 bg-gray-200 rounded mt-1">
+                    <div className="h-2 bg-green-500 rounded" style={{ width: `${j.pct||0}%` }} />
+                  </div>
+                </div>
+              ))}
+              {!jobs.length && <div className="text-xs text-gray-500">No jobs yet.</div>}
             </div>
           </div>
+          <h3 className="font-medium mt-4">Output</h3>
+          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[160px]">{log || 'Ready.'}</pre>
         </div>
       </div>
     </div>
