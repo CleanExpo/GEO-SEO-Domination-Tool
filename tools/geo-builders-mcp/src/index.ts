@@ -13,6 +13,7 @@ import fg from 'fast-glob';
 import yaml from 'js-yaml';
 import { previewApply } from './tools/preview_apply.js';
 import { applyBuilder } from './tools/apply_builder.js';
+import { postInstallCheck } from './tools/post_install_check.js';
 
 interface Call {
   id: string;
@@ -108,6 +109,12 @@ async function handleCall(c: Call): Promise<Resp> {
         strategy: c.params?.strategy,
         engine: c.params?.engine,
       });
+      return { id: c.id, ok: true, result: res };
+    }
+
+    if (c.tool === 'post_install_check') {
+      const checks = Array.isArray(c.params?.checks) ? c.params.checks : ['ts','lint','next-build'];
+      const res = await postInstallCheck(repoRoot, checks);
       return { id: c.id, ok: true, result: res };
     }
 
