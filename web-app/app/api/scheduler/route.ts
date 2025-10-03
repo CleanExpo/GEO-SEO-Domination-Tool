@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRankingScheduler } from '@/services/scheduler/RankingScheduler';
+import { initializeScheduler, isSchedulerInitialized } from '@/services/scheduler/init';
 
 // GET /api/scheduler - Get scheduler status
 export async function GET(request: NextRequest) {
@@ -7,7 +8,10 @@ export async function GET(request: NextRequest) {
     const scheduler = getRankingScheduler();
     const status = scheduler.getStatus();
 
-    return NextResponse.json({ status });
+    return NextResponse.json({
+      status,
+      autoInitialized: isSchedulerInitialized(),
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to get scheduler status' },
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'initialize':
-        await scheduler.initialize();
+        await initializeScheduler();
         return NextResponse.json({
           message: 'Scheduler initialized',
           status: scheduler.getStatus(),
@@ -38,7 +42,7 @@ export async function POST(request: NextRequest) {
 
       case 'reload':
         scheduler.shutdown();
-        await scheduler.initialize();
+        await initializeScheduler();
         return NextResponse.json({
           message: 'Scheduler reloaded',
           status: scheduler.getStatus(),
