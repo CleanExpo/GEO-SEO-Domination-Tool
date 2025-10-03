@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Github, Plus, Star, GitFork, GitPullRequest, ExternalLink } from 'lucide-react';
+import { Github, Plus, Star, GitFork, GitPullRequest, ExternalLink, RefreshCw, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { GitHubImportDialog } from '@/components/GitHubImportDialog';
 
 interface GithubProject {
@@ -12,8 +12,16 @@ interface GithubProject {
   stars: number;
   forks: number;
   openPRs: number;
+  open_prs?: number;
   language: string;
   lastUpdated: string;
+  last_updated?: string;
+  auto_sync?: boolean;
+  sync_status?: 'pending' | 'syncing' | 'success' | 'failed';
+  sync_error?: string;
+  last_synced_at?: string;
+  watchers?: number;
+  open_issues?: number;
 }
 
 export default function GithubProjectsPage() {
@@ -21,6 +29,7 @@ export default function GithubProjectsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [syncingProjects, setSyncingProjects] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchProjects();
@@ -48,6 +57,78 @@ export default function GithubProjectsPage() {
 
   const handleImportRepo = () => {
     setIsDialogOpen(true);
+  };
+
+  const handleSyncRepo = async (projectId: string) => {
+    setSyncingProjects((prev) => new Set(prev).add(projectId));
+
+    try {
+      const response = await fetch('/api/github/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          github_project_id: parseInt(projectId),
+          sync_metadata: true,
+          sync_commits: true,
+          sync_pull_requests: true,
+          sync_issues: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sync repository');
+      }
+
+      // Refresh projects to show updated data
+      await fetchProjects();
+    } catch (err) {
+      console.error('Error syncing repository:', err);
+      alert('Failed to sync repository: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSyncingProjects((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
+    }
+  };
+
+  const getSyncStatusBadge = (project: GithubProject) => {
+    const status = project.sync_status || 'pending';
+    const isSyncing = syncingProjects.has(project.id) || status === 'syncing';
+
+    if (isSyncing) {
+      return (
+        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Syncing...
+        </span>
+      );
+    }
+
+    switch (status) {
+      case 'success':
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Synced
+          </span>
+        );
+      case 'failed':
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            Failed
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Pending
+          </span>
+        );
+    }
   };
 
   if (error) {
@@ -157,12 +238,15 @@ export default function GithubProjectsPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <Github className="h-5 w-5 text-gray-700" />
                     <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {project.language}
-                    </span>
+                    {project.language && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {project.language}
+                      </span>
+                    )}
+                    {getSyncStatusBadge(project)}
                   </div>
                   <p className="text-gray-600 mb-4">{project.description}</p>
-                  <div className="flex items-center gap-6 text-sm text-gray-600">
+                  <div className="flex items-center gap-6 text-sm text-gray-600 mb-3">
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4" />
                       <span>{project.stars}</span>
@@ -173,20 +257,41 @@ export default function GithubProjectsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <GitPullRequest className="h-4 w-4" />
-                      <span>{project.openPRs} open</span>
+                      <span>{project.open_prs ?? project.openPRs} open</span>
                     </div>
-                    <span>Updated {new Date(project.lastUpdated).toLocaleDateString()}</span>
+                    <span>Updated {new Date(project.last_updated || project.lastUpdated).toLocaleDateString()}</span>
                   </div>
+                  {project.last_synced_at && (
+                    <p className="text-xs text-gray-500">
+                      Last synced: {new Date(project.last_synced_at).toLocaleString()}
+                    </p>
+                  )}
+                  {project.sync_error && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Sync error: {project.sync_error}
+                    </p>
+                  )}
                 </div>
-                <a
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                >
-                  <span className="text-sm font-medium">View on GitHub</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => handleSyncRepo(project.id)}
+                    disabled={syncingProjects.has(project.id)}
+                    className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Sync repository data"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${syncingProjects.has(project.id) ? 'animate-spin' : ''}`} />
+                    <span className="text-sm font-medium">Sync</span>
+                  </button>
+                  <a
+                    href={project.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                  >
+                    <span className="text-sm font-medium">View on GitHub</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
           ))}
