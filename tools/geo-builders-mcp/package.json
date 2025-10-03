@@ -15,7 +15,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx || exit 0",
     "preflight:windows": "node scripts/preflight-windows.mjs || exit 0",
-    "fix:build": "powershell -ExecutionPolicy Bypass -File ./scripts/fix-build.ps1"
+    "fix:build": "powershell -ExecutionPolicy Bypass -File ./scripts/fix-build.ps1",
+    "call:list": "node scripts/call-mcp.mjs list_builders {}",
+    "call:inspect": "node scripts/call-mcp.mjs inspect_builder \"{\\\"id\\\":\\\"nextjs-api-route\\\"}\"",
+    "call:preview:health": "node scripts/call-mcp.mjs preview_apply \"{\\\"id\\\":\\\"nextjs-api-route\\\",\\\"engine\\\":\\\"eta\\\",\\\"variables\\\":{\\\"ROUTE_NAME\\\":\\\"health\\\",\\\"ZOD_SCHEMA\\\":\\\"z.object({ ok: z.boolean() })\\\"}}\"",
+    "call:apply:health": "node scripts/call-mcp.mjs apply_builder \"{\\\"id\\\":\\\"nextjs-api-route\\\",\\\"strategy\\\":\\\"safe-merge\\\",\\\"engine\\\":\\\"eta\\\",\\\"variables\\\":{\\\"ROUTE_NAME\\\":\\\"health\\\",\\\"ZOD_SCHEMA\\\":\\\"z.object({ ok: z.boolean() })\\\"}}\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
