@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/auth/supabase-client';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
-  Settings, Home, Users, Calendar, Target, CheckSquare, FolderKanban,
-  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones
+  Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
+  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock
 } from 'lucide-react';
 
 const navigation = [
@@ -17,13 +17,14 @@ const navigation = [
   { name: 'Keywords', href: '/keywords', icon: TrendingUp, section: 'SEO' },
   { name: 'Rankings', href: '/rankings', icon: BarChart3, section: 'SEO' },
   { name: 'Reports', href: '/reports', icon: FileText, section: 'SEO' },
+  { name: 'Schedule', href: '/schedule', icon: Clock, section: 'SEO' },
 ];
 
 const crmNavigation = [
   { name: 'Contacts', href: '/crm/contacts', icon: Users, section: 'Pipeline' },
   { name: 'Deals', href: '/crm/deals', icon: Target, section: 'Pipeline' },
   { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare, section: 'Pipeline' },
-  { name: 'Calendar', href: '/crm/calendar', icon: Calendar, section: 'Workspace' },
+  { name: 'Calendar', href: '/crm/calendar', icon: CalendarIcon, section: 'Workspace' },
 ];
 
 const projectsNavigation = [
