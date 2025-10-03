@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 async function apiBuilds(action: string, params: any = {}) { const r = await fetch('/api/builds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
 async function apiLink(action: string, params: any = {}) { const r = await fetch('/api/link', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
@@ -33,9 +33,35 @@ export default function BuildsPage() {
   type Job = { id:string; status:string; pct?:number; step?:string; title?:string; updatedAt:number };
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJob, setActiveJob] = useState<string>('');
+  const [liveLog, setLiveLog] = useState<string>('');
+  const esRef = useRef<EventSource | null>(null);
+  const liveRef = useRef<HTMLPreElement | null>(null);
 
   useEffect(() => { (async () => { setLoading(true); const j = await fetch('/api/builds').then(r=>r.json()); if (j?.ok && j?.result?.builders) setBuilders(j.result.builders); setLoading(false); })(); }, []);
   useEffect(() => { const t = setInterval(async ()=>{ const r = await fetch('/api/jobs').then(x=>x.json()); setJobs(r?.result?.jobs||[]); }, 2000); return ()=>clearInterval(t); }, []);
+
+  useEffect(() => {
+    if (!activeJob) return;
+    // close previous stream
+    try { esRef.current?.close(); } catch {}
+    setLiveLog('');
+    const es = new EventSource(`/api/jobs/stream?id=${encodeURIComponent(activeJob)}`);
+    esRef.current = es;
+    es.addEventListener('hello', () => {});
+    es.addEventListener('line', (ev) => {
+      const text = (ev as MessageEvent).data || '';
+      setLiveLog(prev => (prev ? prev + '\n' : '') + text);
+      // autoscroll
+      if (liveRef.current) {
+        liveRef.current.scrollTop = liveRef.current.scrollHeight;
+      }
+    });
+    es.onerror = () => {
+      // Keep it simple: close on error
+      es.close();
+    };
+    return () => { try { es.close(); } catch {} };
+  }, [activeJob]);
 
   async function doInspect(id: string) { setSelected(id); setLog('Inspecting…'); const j = await apiBuilds('inspect_builder', { id }); setLog(JSON.stringify(j, null, 2)); }
   async function doPreview(id: string) { setSelected(id); setLog('Previewing…'); const v:any={}; if(id==='nextjs-api-route') v.ROUTE_NAME=routeName; if(id==='database-schema') v.SCHEMA_NAME=schemaName; const j=await apiBuilds('preview_apply',{id,engine:'eta',variables:v}); setLog(JSON.stringify(j,null,2)); }
@@ -49,9 +75,8 @@ export default function BuildsPage() {
   // Local deploy flows
   async function dLocal(action:'config'|'build'|'up'|'down'|'ps'|'logs'){ setLog(`[local] ${action}…`); const params:any={target:'local'}; if(action==='logs'){params.service=deployService;params.tail=deployTail;} const j=await apiDeploy(action,params); setLog(JSON.stringify(j,null,2)); }
 
-  // JOB: Sync All (bundle→scp→unpack→up) with progress
+  // JOB: Sync All (bundle→scp→unpack→up) with progress + live logs
   async function runSyncAllJob(){
-    // 1) start job
     const start = await apiJobs('start', { title: 'Sync All (bundle → scp → unpack → up)' });
     if (!start?.ok) { setLog('Failed to start job'); return; }
     const id = start.result.id as string; setActiveJob(id);
@@ -146,7 +171,7 @@ export default function BuildsPage() {
           </div>
         </div>
 
-        {/* Jobs Panel */}
+        {/* Jobs Panel + Live Logs */}
         <div className="border rounded p-4">
           <h2 className="font-medium mb-2">Jobs & Progress</h2>
           <div className="space-y-2 text-sm">
@@ -156,12 +181,15 @@ export default function BuildsPage() {
               <button className="px-3 py-2 border rounded" onClick={runSyncAllJob}>Run: Sync All (bundle → scp → unpack → up)</button>
             </div>
             <hr />
-            <div className="space-y-2 max-h-80 overflow-auto">
+            <div className="space-y-2 max-h-48 overflow-auto">
               {jobs.map(j=> (
-                <div key={j.id} className="border rounded p-2">
+                <div key={j.id} className={`border rounded p-2 ${activeJob===j.id?'bg-gray-50':''}`}>
                   <div className="flex items-center justify-between text-xs">
                     <div className="font-mono">{j.id}</div>
-                    <div className="capitalize">{j.status}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="capitalize">{j.status}</div>
+                      <button className="px-2 py-1 border rounded" onClick={()=>setActiveJob(j.id)}>Follow Logs</button>
+                    </div>
                   </div>
                   <div className="text-xs text-gray-600">{j.step || '—'}</div>
                   <div className="h-2 bg-gray-200 rounded mt-1">
@@ -170,6 +198,10 @@ export default function BuildsPage() {
                 </div>
               ))}
               {!jobs.length && <div className="text-xs text-gray-500">No jobs yet.</div>}
+            </div>
+            <div>
+              <h3 className="font-medium mt-2">Live Logs {activeJob && <span className="text-xs text-gray-500">(job {activeJob})</span>}</h3>
+              <pre ref={liveRef} className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[160px] max-h-64 overflow-auto">{liveLog || 'Select a job and click "Follow Logs".'}</pre>
             </div>
           </div>
           <h3 className="font-medium mt-4">Output</h3>

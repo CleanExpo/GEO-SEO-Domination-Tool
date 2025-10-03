@@ -23,3 +23,12 @@ Jobs persist in `server/temp/jobs.json`.
 3) logs JSON output, sets `progress` steps, then `complete` (or `fail`).
 
 You can wrap any flow by following the same pattern from `runSyncAllJob()` in the page.
+
+## Live Log Streaming (SSE)
+A new endpoint streams logs in real time:
+
+- **GET** `/api/jobs/stream?id=<jobId>` → `text/event-stream` emitting events:
+  - `hello` `{ id, cursor }`
+  - `line` `<string>` for each new log line
+
+The Builds page now includes **Follow Logs** which opens an `EventSource` to the stream for the selected job and autoscrolls the console.
