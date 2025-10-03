@@ -8,6 +8,7 @@
   "description": "Advanced local SEO and GEO ranking analysis tool integrating Perplexity and SEMrush APIs",
   "scripts": {
     "dev": "vite",
+    "dev:web": "npm run dev -w web-app",
     "build": "tsc -b && vite build && electron-builder",
     "build:win": "npm run build -- --win",
     "lint": "eslint .",
