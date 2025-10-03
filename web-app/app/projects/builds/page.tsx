@@ -1,22 +1,10 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 
-async function apiBuilds(action: string, params: any = {}) {
-  const r = await fetch('/api/builds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
-  return r.json();
-}
-async function apiLink(action: string, params: any = {}) {
-  const r = await fetch('/api/link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
-  return r.json();
-}
-async function apiDeploy(action: string, params: any = {}) {
-  const r = await fetch('/api/deploy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
-  return r.json();
-}
-async function apiSync(action: string, params: any = {}) {
-  const r = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
-  return r.json();
-}
+async function apiBuilds(action: string, params: any = {}) { const r = await fetch('/api/builds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
+async function apiLink(action: string, params: any = {}) { const r = await fetch('/api/link', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
+async function apiDeploy(action: string, params: any = {}) { const r = await fetch('/api/deploy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
+async function apiSync(action: string, params: any = {}) { const r = await fetch('/api/sync', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, params }) }); return r.json(); }
 
 export default function BuildsPage() {
   const [builders, setBuilders] = useState<any[]>([]);
@@ -32,128 +20,45 @@ export default function BuildsPage() {
   const [ghPrivate, setGhPrivate] = useState(true);
   const [vzProject, setVzProject] = useState('geo-seo-demo');
 
-  // Deploy inputs (local)
+  // Local deploy
   const [deployService, setDeployService] = useState('');
   const [deployTail, setDeployTail] = useState('200');
 
-  // SSH deploy config
-  const [sshHost, setSshHost] = useState('your.server.tld');
-  const [sshUser, setSshUser] = useState('ubuntu');
-  const [sshPort, setSshPort] = useState('22');
-  const [sshKeyPath, setSshKeyPath] = useState('');
-  const [sshExtra, setSshExtra] = useState('');
-  const [sshComposePath, setSshComposePath] = useState('/srv/app/compose.yml');
+  // Conflicts plan
+  type Row = { to: string; status: 'new'|'identical'|'modify'; decision: 'write'|'skip'; diff?: string };
+  const [planRows, setPlanRows] = useState<Row[]>([]);
 
-  // Sync config
-  const [remotePath, setRemotePath] = useState('/srv/app');
-  const [bundleName, setBundleName] = useState('');
+  useEffect(() => { (async () => { setLoading(true); const j = await fetch('/api/builds').then(r=>r.json()); if (j?.ok && j?.result?.builders) setBuilders(j.result.builders); setLoading(false); })(); }, []);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const j = await fetch('/api/builds').then(r=>r.json());
-      if (j?.ok && j?.result?.builders) setBuilders(j.result.builders);
-      setLoading(false);
-    })();
-  }, []);
+  async function doInspect(id: string) { setSelected(id); setLog('Inspecting…'); const j = await apiBuilds('inspect_builder', { id }); setLog(JSON.stringify(j, null, 2)); }
+  async function doPreview(id: string) { setSelected(id); setLog('Previewing…'); const v:any={}; if(id==='nextjs-api-route') v.ROUTE_NAME=routeName; if(id==='database-schema') v.SCHEMA_NAME=schemaName; const j=await apiBuilds('preview_apply',{id,engine:'eta',variables:v}); setLog(JSON.stringify(j,null,2)); }
+  async function doApply(id: string) { setSelected(id); setLog('Applying…'); const v:any={}; if(id==='nextjs-api-route') v.ROUTE_NAME=routeName; if(id==='database-schema') v.SCHEMA_NAME=schemaName; const j=await apiBuilds('apply_builder',{id,strategy:'safe-merge',engine:'eta',variables:v}); setLog(JSON.stringify(j,null,2)); }
+  async function doChecks() { setLog('Running checks…'); const j=await apiBuilds('post_install_check',{checks:['ts','lint','next-build']}); setLog(JSON.stringify(j,null,2)); }
 
-  async function doInspect(id: string) {
-    setSelected(id); setLog('Inspecting…');
-    const j = await apiBuilds('inspect_builder', { id });
-    setLog(JSON.stringify(j, null, 2));
+  // Link flows
+  async function createGithubRepo() { setLog('Creating GitHub repo…'); const j=await apiLink('github_create_repo',{name:ghRepo,description:'Created from CRM',private:ghPrivate}); setLog(JSON.stringify(j,null,2)); }
+  async function linkVercelProject() { setLog('Linking Vercel project…'); const repo=`${ghOwner}/${ghRepo}`; const j=await apiLink('vercel_create_project',{name:vzProject,repo}); setLog(JSON.stringify(j,null,2)); }
+
+  // Conflicts & Plan
+  function variablesFor(id: string) { const v:any={}; if(id==='nextjs-api-route') v.ROUTE_NAME=routeName; if(id==='database-schema') v.SCHEMA_NAME=schemaName; return v; }
+  async function previewConflicts() {
+    if (!selected) { setLog('Pick a builder first.'); return; }
+    setLog('Previewing conflicts…');
+    const j = await apiBuilds('preview_conflicts', { id:selected, engine:'eta', variables: variablesFor(selected) });
+    const rows: Row[] = (j?.result?.files||[]).map((f:any)=> ({ to: f.to, status: f.status, decision: f.status==='identical'?'skip':'write', diff: f.diff||'' }));
+    setPlanRows(rows);
+    setLog(JSON.stringify(j,null,2));
   }
-  async function doPreview(id: string) {
-    setSelected(id); setLog('Previewing…');
-    const variables: any = {};
-    if (id === 'nextjs-api-route') variables.ROUTE_NAME = routeName;
-    if (id === 'database-schema') variables.SCHEMA_NAME = schemaName;
-    const j = await apiBuilds('preview_apply', { id, engine: 'eta', variables });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function doApply(id: string) {
-    setSelected(id); setLog('Applying…');
-    const variables: any = {};
-    if (id === 'nextjs-api-route') variables.ROUTE_NAME = routeName;
-    if (id === 'database-schema') variables.SCHEMA_NAME = schemaName;
-    const j = await apiBuilds('apply_builder', { id, strategy: 'safe-merge', engine: 'eta', variables });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function doChecks() {
-    setLog('Running checks…');
-    const j = await apiBuilds('post_install_check', { checks: ['ts','lint','next-build'] });
-    setLog(JSON.stringify(j, null, 2));
+  function setDecision(i:number, val:'write'|'skip'){ setPlanRows(prev=> prev.map((r,idx)=> idx===i?{...r, decision:val}:r)); }
+  async function applyPlan(){
+    if (!selected) { setLog('Pick a builder first.'); return; }
+    const plan = planRows.map(r=> ({ to: r.to, action: r.decision }));
+    setLog('Applying plan…');
+    const j = await apiBuilds('apply_plan', { id:selected, engine:'eta', variables: variablesFor(selected), plan });
+    setLog(JSON.stringify(j,null,2));
   }
 
-  // Linking flows
-  async function createGithubRepo() {
-    setLog('Creating GitHub repo…');
-    const j = await apiLink('github_create_repo', { name: ghRepo, description: 'Created from CRM', private: ghPrivate });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function linkVercelProject() {
-    setLog('Linking Vercel project…');
-    const repo = `${ghOwner}/${ghRepo}`; // owner/name
-    const j = await apiLink('vercel_create_project', { name: vzProject, repo });
-    setLog(JSON.stringify(j, null, 2));
-  }
-
-  // Local deploy flows
-  async function dLocal(action: 'config'|'build'|'up'|'down'|'ps'|'logs') {
-    setLog(`[local] ${action}…`);
-    const params: any = { target: 'local' };
-    if (action === 'logs') { params.service = deployService; params.tail = deployTail; }
-    const j = await apiDeploy(action, params);
-    setLog(JSON.stringify(j, null, 2));
-  }
-
-  // SSH deploy flows
-  async function saveSSH() {
-    setLog('Saving SSH config…');
-    const j = await apiDeploy('save_ssh', { host: sshHost, user: sshUser, port: Number(sshPort)||22, keyPath: sshKeyPath, extraSshArgs: sshExtra, composePath: sshComposePath });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function statusSSH() {
-    setLog('Checking SSH…');
-    const j = await apiDeploy('status_ssh', {});
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function dSSH(action: 'config'|'build'|'up'|'down'|'ps'|'logs') {
-    setLog(`[ssh] ${action}…`);
-    const params: any = { target: 'ssh', composePath: sshComposePath };
-    if (action === 'logs') { params.service = deployService; params.tail = deployTail; }
-    const j = await apiDeploy(action, params);
-    setLog(JSON.stringify(j, null, 2));
-  }
-
-  // Sync flows
-  async function saveRemotePath() {
-    setLog('Saving remote path…');
-    const j = await apiSync('save_remote_path', { remotePath });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function dryRun() {
-    setLog('Dry run via rsync…');
-    const j = await apiSync('dry_run', { remotePath });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function syncRsync() {
-    setLog('Sync (rsync)…');
-    const j = await apiSync('sync_rsync', { remotePath });
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function makeBundle() {
-    setLog('Making bundle…');
-    const j = await apiSync('make_bundle', {});
-    if (j?.result?.bundle) setBundleName(j.result.bundle.split(/[\\\/]/).pop() || '');
-    setLog(JSON.stringify(j, null, 2));
-  }
-  async function syncAll() {
-    setLog('Sync all (bundle→scp→unpack→up)…');
-    const j = await apiSync('sync_all', { remotePath, composePath: sshComposePath });
-    setLog(JSON.stringify(j, null, 2));
-  }
-
-  const hasBuilders = useMemo(() => (builders?.length ?? 0) > 0, [builders]);
+  const hasBuilders = useMemo(()=> (builders?.length ?? 0) > 0,[builders]);
 
   return (
     <div className="p-6 space-y-6">
@@ -169,14 +74,14 @@ export default function BuildsPage() {
           {loading && <div>Loading…</div>}
           {!loading && !hasBuilders && <div>No builders found. Ensure /builders has manifests.</div>}
           <ul className="space-y-2">
-            {builders.map((b: any) => (
+            {builders.map((b:any)=> (
               <li key={b.id} className={`border rounded p-3 ${selected===b.id?'bg-gray-50':''}`}>
                 <div className="font-semibold">{b.title} <span className="text-xs text-gray-500">({b.id})</span></div>
                 {b.summary && <div className="text-sm text-gray-600">{b.summary}</div>}
                 <div className="mt-2 flex gap-2">
-                  <button className="px-2 py-1 border rounded" onClick={() => doInspect(b.id)}>Inspect</button>
-                  <button className="px-2 py-1 border rounded" onClick={() => doPreview(b.id)}>Preview</button>
-                  <button className="px-2 py-1 border rounded" onClick={() => doApply(b.id)}>Apply</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>{setSelected(b.id); doInspect(b.id);}}>Inspect</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>{setSelected(b.id); doPreview(b.id);}}>Preview</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>{setSelected(b.id); doApply(b.id);}}>Quick Apply</button>
                 </div>
                 {b.id==='nextjs-api-route' && (
                   <div className="mt-3 flex items-center gap-2 text-sm">
@@ -195,121 +100,101 @@ export default function BuildsPage() {
           </ul>
         </div>
 
-        {/* Link + Deploy (Local / SSH) */}
+        {/* Conflicts & Dry-Run */}
         <div className="border rounded p-4 2xl:col-span-2">
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Link Panel */}
-            <div>
-              <h2 className="font-medium mb-2">One-Click Link: GitHub ↔ Vercel</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <label className="w-28">GH Owner</label>
-                  <input className="border rounded px-2 py-1 w-full" value={ghOwner} onChange={e=>setGhOwner(e.target.value)} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="w-28">Repo Name</label>
-                  <input className="border rounded px-2 py-1 w-full" value={ghRepo} onChange={e=>setGhRepo(e.target.value)} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="w-28">Private?</label>
-                  <input type="checkbox" checked={ghPrivate} onChange={e=>setGhPrivate(e.target.checked)} />
-                  <button className="px-3 py-2 border rounded ml-auto" onClick={createGithubRepo}>Create GitHub Repo</button>
-                </div>
-                <hr />
-                <div className="flex items-center gap-2">
-                  <label className="w-28">Vercel Name</label>
-                  <input className="border rounded px-2 py-1 w-full" value={vzProject} onChange={e=>setVzProject(e.target.value)} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="w-28">Link Repo</label>
-                  <input className="border rounded px-2 py-1 w-full" value={`${ghOwner}/${ghRepo}`} readOnly />
-                  <button className="px-3 py-2 border rounded ml-auto" onClick={linkVercelProject}>Link to Vercel</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Local Deploy */}
-            <div>
-              <h2 className="font-medium mb-2">Deploy (Local Docker Compose)</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex flex-wrap gap-2">
-                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('config')}>Config</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('build')}>Build</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('up')}>Up</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('down')}>Down</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('ps')}>PS</button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="w-24">Logs service</label>
-                  <input className="border rounded px-2 py-1 w-full" placeholder="(optional) service name" value={deployService} onChange={e=>setDeployService(e.target.value)} />
-                  <label className="w-10">Tail</label>
-                  <input className="border rounded px-2 py-1 w-24" value={deployTail} onChange={e=>setDeployTail(e.target.value)} />
-                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('logs')}>Logs</button>
-                </div>
-              </div>
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">Conflicts & Dry-Run</h2>
+            <div className="flex gap-2">
+              <button className="px-3 py-2 border rounded" onClick={previewConflicts} disabled={!selected}>Preview Conflicts</button>
+              <button className="px-3 py-2 border rounded" onClick={applyPlan} disabled={!planRows.length}>Apply Plan</button>
             </div>
           </div>
 
-          <hr className="my-6" />
+          {!planRows.length && <div className="text-sm text-gray-600 mt-2">Select a builder, set variables, then click <b>Preview Conflicts</b>.</div>}
 
-          {/* SSH Config */}
-          <div>
-            <h2 className="font-medium mb-2">SSH Config (for Deploy & Sync)</h2>
-            <div className="grid md:grid-cols-2 gap-2 text-sm">
-              <input className="border rounded px-2 py-1" placeholder="Host" value={sshHost} onChange={e=>setSshHost(e.target.value)} />
-              <input className="border rounded px-2 py-1" placeholder="User" value={sshUser} onChange={e=>setSshUser(e.target.value)} />
-              <input className="border rounded px-2 py-1" placeholder="Port (22)" value={sshPort} onChange={e=>setSshPort(e.target.value)} />
-              <input className="border rounded px-2 py-1" placeholder="Key path" value={sshKeyPath} onChange={e=>setSshKeyPath(e.target.value)} />
+          {!!planRows.length && (
+            <div className="mt-3 space-y-3">
+              <table className="w-full text-sm border">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left p-2 border">File</th>
+                    <th className="text-left p-2 border">Status</th>
+                    <th className="text-left p-2 border">Decision</th>
+                    <th className="text-left p-2 border">Diff</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {planRows.map((r, i) => (
+                    <tr key={r.to} className="align-top">
+                      <td className="p-2 border font-mono text-xs">{r.to}</td>
+                      <td className="p-2 border">
+                        <span className={r.status==='modify'?'text-amber-600':r.status==='new'?'text-green-600':'text-gray-500'}>{r.status}</span>
+                      </td>
+                      <td className="p-2 border">
+                        <select className="border rounded px-2 py-1" value={r.decision} onChange={(e)=>setDecision(i, e.target.value as any)}>
+                          <option value="write">write</option>
+                          <option value="skip">skip</option>
+                        </select>
+                      </td>
+                      <td className="p-2 border">
+                        {r.diff ? (
+                          <details>
+                            <summary className="cursor-pointer">view diff</summary>
+                            <pre className="bg-black text-green-200 p-2 rounded whitespace-pre-wrap text-[11px] overflow-auto max-h-64">{r.diff}</pre>
+                          </details>
+                        ) : <span className="text-gray-400">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="flex gap-2 mt-2">
-              <button className="px-2 py-1 border rounded text-sm" onClick={saveSSH}>Save SSH</button>
-              <button className="px-2 py-1 border rounded text-sm" onClick={statusSSH}>Check SSH</button>
+          )}
+
+          <h3 className="font-medium mt-6">Output</h3>
+          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[200px]">{log || 'Ready.'}</pre>
+        </div>
+      </div>
+
+      {/* Link + Local Deploy (kept) */}
+      <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+        <div className="border rounded p-4">
+          <h2 className="font-medium mb-2">Link (GitHub ↔ Vercel)</h2>
+          <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-2">
+              <input className="border rounded px-2 py-1" placeholder="GH Owner" value={ghOwner} onChange={e=>setGhOwner(e.target.value)} />
+              <input className="border rounded px-2 py-1" placeholder="Repo" value={ghRepo} onChange={e=>setGhRepo(e.target.value)} />
+            </div>
+            <div className="flex gap-2 items-center">
+              <label className="text-sm">Private?</label>
+              <input type="checkbox" checked={ghPrivate} onChange={e=>setGhPrivate(e.target.checked)} />
+              <button className="px-2 py-1 border rounded ml-auto" onClick={createGithubRepo}>Create Repo</button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input className="border rounded px-2 py-1" placeholder="Vercel Project" value={vzProject} onChange={e=>setVzProject(e.target.value)} />
+              <button className="px-2 py-1 border rounded" onClick={linkVercelProject}>Link to Vercel</button>
             </div>
           </div>
+        </div>
 
-          <hr className="my-6" />
-
-          {/* Remote Sync + Deploy */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Sync Panel */}
-            <div>
-              <h2 className="font-medium mb-2">Remote Sync</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex gap-2">
-                  <input className="border rounded px-2 py-1 w-full" placeholder="Remote path (/srv/app)" value={remotePath} onChange={e=>setRemotePath(e.target.value)} />
-                  <button className="px-2 py-1 border rounded" onClick={saveRemotePath}>Save</button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button className="px-2 py-1 border rounded" onClick={dryRun}>Dry Run (rsync)</button>
-                  <button className="px-2 py-1 border rounded" onClick={syncRsync}>Sync (rsync)</button>
-                </div>
-                <div className="flex gap-2">
-                  <button className="px-2 py-1 border rounded" onClick={makeBundle}>Make Bundle</button>
-                  <input className="border rounded px-2 py-1 w-full text-xs" placeholder="Bundle name (auto)" value={bundleName} readOnly />
-                </div>
-                <button className="px-2 py-1 border rounded w-full" onClick={syncAll}>Sync All (bundle→scp→unpack→up)</button>
-              </div>
+        <div className="border rounded p-4 2xl:col-span-2">
+          <h2 className="font-medium mb-2">Local Deploy (Compose)</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex flex-wrap gap-2">
+              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('config',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Config</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('build',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Build</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('up',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Up</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('down',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>Down</button>
+              <button className="px-2 py-1 border rounded" onClick={()=>apiDeploy('ps',{target:'local'}).then(j=>setLog(JSON.stringify(j,null,2)))}>PS</button>
             </div>
-
-            {/* SSH Deploy Panel */}
-            <div>
-              <h2 className="font-medium mb-2">Remote Deploy (SSH)</h2>
-              <div className="space-y-2 text-sm">
-                <input className="border rounded px-2 py-1 w-full" placeholder="Compose path (/srv/app/compose.yml)" value={sshComposePath} onChange={e=>setSshComposePath(e.target.value)} />
-                <div className="flex flex-wrap gap-2">
-                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('config')}>Config</button>
-                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('build')}>Build</button>
-                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('up')}>Up</button>
-                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('down')}>Down</button>
-                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('ps')}>PS</button>
-                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('logs')}>Logs</button>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <label className="w-24">Logs service</label>
+              <input className="border rounded px-2 py-1 w-full" placeholder="(optional) service name" value={deployService} onChange={e=>setDeployService(e.target.value)} />
+              <label className="w-10">Tail</label>
+              <input className="border rounded px-2 py-1 w-24" value={deployTail} onChange={e=>setDeployTail(e.target.value)} />
+              <button className="px-3 py-2 border rounded" onClick={()=>apiDeploy('logs',{target:'local', service:deployService, tail:deployTail}).then(j=>setLog(JSON.stringify(j,null,2)))}>Logs</button>
             </div>
           </div>
-
-          <h3 className="font-medium mt-4">Output</h3>
-          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[220px]">{log || 'Ready.'}</pre>
         </div>
       </div>
     </div>
