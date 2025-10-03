@@ -1,4 +1,5 @@
-import fse from 'fs-extra';
+import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import fg from 'fast-glob';
 import { join, resolve, relative, basename } from 'path';
 import yaml from 'js-yaml';
@@ -24,14 +25,14 @@ export async function applyBuilder(opts: {
 
   const manifestJson = join(buildersRoot, id, 'manifest.json');
   const manifestYaml = join(buildersRoot, id, 'manifest.yaml');
-  const existsJson = await fse.pathExists(manifestJson);
-  const existsYaml = await fse.pathExists(manifestYaml);
+  const existsJson = existsSync(manifestJson);
+  const existsYaml = existsSync(manifestYaml);
 
   if (!existsJson && !existsYaml) {
     throw new Error(`Builder manifest not found for ${id}`);
   }
 
-  const raw = await fse.readFile(existsJson ? manifestJson : manifestYaml, 'utf8');
+  const raw = await readFile(existsJson ? manifestJson : manifestYaml, 'utf8');
   const manifest: any = existsJson ? JSON.parse(raw) : yaml.load(raw);
 
   const templates: Array<{ from: string; to: string; engine?: Engine }> = manifest.templates || [];

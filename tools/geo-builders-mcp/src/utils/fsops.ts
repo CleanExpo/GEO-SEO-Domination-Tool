@@ -1,15 +1,16 @@
-import fse from 'fs-extra';
+import { mkdir, writeFile, readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { dirname } from 'path';
 
 export async function writeFileSafe(absPath: string, content: string) {
-  await fse.ensureDir(dirname(absPath));
-  await fse.writeFile(absPath, content, 'utf8');
+  await mkdir(dirname(absPath), { recursive: true });
+  await writeFile(absPath, content, 'utf8');
 }
 
 export async function fileExists(absPath: string) {
-  return fse.pathExists(absPath);
+  return existsSync(absPath);
 }
 
 export async function readFileUtf8(absPath: string) {
-  return fse.readFile(absPath, 'utf8');
+  return readFile(absPath, 'utf8');
 }

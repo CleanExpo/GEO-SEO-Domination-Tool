@@ -1,5 +1,8 @@
-import { Eta } from 'eta';
+import { createRequire } from 'module';
 import { readFileUtf8 } from '../utils/fsops.js';
+
+const require = createRequire(import.meta.url);
+const { Eta } = require('eta');
 
 export type Engine = 'eta' | 'handlebars';
 

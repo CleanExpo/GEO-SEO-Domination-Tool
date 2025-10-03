@@ -7,7 +7,8 @@
 
 import { stdin as input, stdout as output } from 'node:process';
 import { join, resolve } from 'path';
-import fse from 'fs-extra';
+import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import fg from 'fast-glob';
 import yaml from 'js-yaml';
 import { previewApply } from './tools/preview_apply.js';
@@ -38,7 +39,7 @@ async function list_builders(_params: any) {
   const out: any[] = [];
   for (const p of entries) {
     const full = join(buildersRoot, p);
-    const raw = await fse.readFile(full, 'utf8');
+    const raw = await readFile(full, 'utf8');
     const obj =
       p.endsWith('.yaml') || p.endsWith('.yml')
         ? yaml.load(raw)
@@ -63,14 +64,14 @@ async function inspect_builder(params: any) {
 
   const json = join(buildersRoot, id, 'manifest.json');
   const yamlPath = join(buildersRoot, id, 'manifest.yaml');
-  const existsJson = await fse.pathExists(json);
-  const existsYaml = await fse.pathExists(yamlPath);
+  const existsJson = existsSync(json);
+  const existsYaml = existsSync(yamlPath);
 
   if (!existsJson && !existsYaml) {
     throw new Error(`manifest not found for ${id}`);
   }
 
-  const raw = await fse.readFile(existsJson ? json : yamlPath, 'utf8');
+  const raw = await readFile(existsJson ? json : yamlPath, 'utf8');
   const data = existsJson ? JSON.parse(raw) : yaml.load(raw);
 
   return data;
