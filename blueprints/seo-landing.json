@@ -1,0 +1,26 @@
+{
+  "id": "seo-landing",
+  "title": "SEO Landing Starter",
+  "summary": "API for sitemap ping + DB schema for pages + Supabase env.",
+  "steps": [
+    {
+      "builder": "nextjs-api-route",
+      "variables": {
+        "ROUTE_NAME": "sitemap-ping"
+      }
+    },
+    {
+      "builder": "database-schema",
+      "variables": {
+        "SCHEMA_NAME": "pages"
+      }
+    },
+    {
+      "builder": "supabase-setup",
+      "variables": {
+        "SUPABASE_URL": "${env:SUPABASE_URL}",
+        "SUPABASE_ANON_KEY": "${env:SUPABASE_ANON_KEY}"
+      }
+    }
+  ]
+}
