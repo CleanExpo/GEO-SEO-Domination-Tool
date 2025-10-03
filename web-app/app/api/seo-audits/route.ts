@@ -21,7 +21,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ audits: data });
+    // Map database records to frontend format
+    const audits = data.map((audit: any) => ({
+      id: audit.id,
+      company_id: audit.company_id,
+      url: audit.url,
+      audit_date: audit.created_at,
+      seo_score: audit.overall_score,
+      critical_issues: audit.metadata?.critical_issues || [],
+      warnings: audit.metadata?.warnings || [],
+      recommendations: audit.recommendations || [],
+    }));
+
+    return NextResponse.json({ audits });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch SEO audits' },
@@ -37,9 +49,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { company_id, url } = body;
 
-    if (!company_id || !url) {
+    if (!url) {
       return NextResponse.json(
-        { error: 'company_id and url are required' },
+        { error: 'url is required' },
         { status: 400 }
       );
     }
@@ -52,15 +64,33 @@ export async function POST(request: NextRequest) {
       strategy: 'mobile',
     });
 
+    // Map the audit results to database schema
+    const dbRecord = {
+      company_id: company_id || null,
+      url: auditResults.url,
+      overall_score: auditResults.score,
+      performance_score: auditResults.performance_score,
+      seo_score: auditResults.seo_score,
+      accessibility_score: auditResults.accessibility_score,
+      best_practices_score: auditResults.extended_data?.best_practices_score || null,
+      issues: auditResults.issues || [],
+      recommendations: auditResults.extended_data?.recommendations || [],
+      metadata: {
+        title: auditResults.title,
+        meta_description: auditResults.meta_description,
+        h1_tags: auditResults.h1_tags,
+        eeat_scores: auditResults.extended_data?.eeat_scores,
+        lighthouse_data: auditResults.extended_data?.lighthouse_data,
+        crawl_data: auditResults.extended_data?.crawl_data,
+        critical_issues: auditResults.extended_data?.critical_issues,
+        warnings: auditResults.extended_data?.warnings,
+      }
+    };
+
     // Save to database
     const { data, error } = await supabase
       .from('seo_audits')
-      .insert([
-        {
-          company_id,
-          ...auditResults,
-        },
-      ])
+      .insert([dbRecord])
       .select()
       .single();
 
