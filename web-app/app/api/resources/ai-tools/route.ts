@@ -3,15 +3,17 @@ import { createClient } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const aiToolSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+  name: z.string().min(1, 'Name is required'),
   description: z.string().min(1, 'Description is required'),
   url: z.string().url('Valid URL is required'),
-  category: z.string().optional(),
-  pricing: z.string().optional(),
-  features: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
-  rating: z.number().min(0).max(5).optional(),
-  favorite: z.boolean().optional(),
+  category: z.string().min(1, 'Category is required'),
+  icon: z.string().default('🤖'),
+  features: z.union([
+    z.array(z.string()),
+    z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean))
+  ]),
+  rating: z.number().min(1).max(5).default(5),
+  isPremium: z.boolean().default(false),
 });
 
 // GET /api/resources/ai-tools - List all AI tools
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
     const favorite = searchParams.get('favorite');
 
     let query = supabase
-      .from('resource_ai_tools')
+      .from('crm_ai_tools')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -46,14 +48,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse JSON arrays from strings
-    const aiTools = data.map(tool => ({
-      ...tool,
+    // Parse JSON arrays from strings and map to page interface
+    const tools = data.map(tool => ({
+      id: tool.id,
+      name: tool.title,
+      description: tool.description,
+      category: tool.category || 'Uncategorized',
+      url: tool.url,
+      icon: tool.tags ? (() => {
+        try {
+          const tags = JSON.parse(tool.tags);
+          return tags[0] || '🤖';
+        } catch {
+          return '🤖';
+        }
+      })() : '🤖',
       features: tool.features ? JSON.parse(tool.features) : [],
-      tags: tool.tags ? JSON.parse(tool.tags) : [],
+      rating: tool.rating || 5,
+      isPremium: tool.pricing === 'paid' || tool.pricing === 'enterprise',
     }));
 
-    return NextResponse.json({ aiTools });
+    return NextResponse.json({ tools });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch AI tools' },
@@ -69,15 +84,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = aiToolSchema.parse(body);
 
-    // Convert arrays to JSON strings for SQLite
+    // Map to database schema
     const insertData = {
-      ...validatedData,
-      features: validatedData.features ? JSON.stringify(validatedData.features) : null,
-      tags: validatedData.tags ? JSON.stringify(validatedData.tags) : null,
+      title: validatedData.name,
+      description: validatedData.description,
+      url: validatedData.url,
+      category: validatedData.category,
+      pricing: validatedData.isPremium ? 'paid' : 'free',
+      features: JSON.stringify(validatedData.features),
+      tags: JSON.stringify([validatedData.icon]),
+      rating: validatedData.rating,
+      favorite: false,
     };
 
     const { data, error } = await supabase
-      .from('resource_ai_tools')
+      .from('crm_ai_tools')
       .insert([insertData])
       .select()
       .single();
@@ -86,14 +107,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse arrays back from JSON strings
-    const aiTool = {
-      ...data,
-      features: data.features ? JSON.parse(data.features) : [],
-      tags: data.tags ? JSON.parse(data.tags) : [],
+    // Map back to page interface
+    const tool = {
+      id: data.id,
+      name: data.title,
+      description: data.description,
+      category: data.category,
+      url: data.url,
+      icon: validatedData.icon,
+      features: validatedData.features,
+      rating: data.rating,
+      isPremium: validatedData.isPremium,
     };
 
-    return NextResponse.json({ aiTool }, { status: 201 });
+    return NextResponse.json({ tool }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -5,9 +5,10 @@ import { z } from 'zod';
 const promptSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().min(1, 'Content is required'),
-  category: z.string().optional(),
+  category: z.string().min(1, 'Category is required'),
   tags: z.array(z.string()).optional(),
   favorite: z.boolean().optional(),
+  usageCount: z.number().optional(),
 });
 
 // GET /api/resources/prompts - List all prompts
@@ -37,10 +38,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse tags from JSON string
+    // Parse tags from JSON string and map database fields to frontend format
     const prompts = data.map(prompt => ({
       ...prompt,
       tags: prompt.tags ? JSON.parse(prompt.tags) : [],
+      usageCount: prompt.usage_count, // Map snake_case to camelCase
     }));
 
     return NextResponse.json({ prompts });
@@ -60,9 +62,15 @@ export async function POST(request: NextRequest) {
     const validatedData = promptSchema.parse(body);
 
     // Convert tags array to JSON string for SQLite
+    // Set default values for favorite and usageCount
+    // Map camelCase to snake_case for database
     const insertData = {
-      ...validatedData,
+      title: validatedData.title,
+      content: validatedData.content,
+      category: validatedData.category,
       tags: validatedData.tags ? JSON.stringify(validatedData.tags) : null,
+      favorite: validatedData.favorite ?? false,
+      usage_count: validatedData.usageCount ?? 0,
     };
 
     const { data, error } = await supabase
@@ -75,10 +83,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse tags back to array
+    // Parse tags back to array and map database fields to frontend format
     const prompt = {
       ...data,
       tags: data.tags ? JSON.parse(data.tags) : [],
+      usageCount: data.usage_count, // Map snake_case to camelCase
     };
 
     return NextResponse.json({ prompt }, { status: 201 });

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Wrench, Plus, Search, Copy, Code, Download } from 'lucide-react';
+import { ComponentDialog } from '@/components/ComponentDialog';
 
 interface Component {
   id: string;
@@ -18,6 +19,7 @@ export default function ComponentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchComponents();
@@ -44,7 +46,7 @@ export default function ComponentsPage() {
   };
 
   const handleAddComponent = () => {
-    console.log('Add component clicked');
+    setIsDialogOpen(true);
   };
 
   const copyCode = (code: string) => {
@@ -210,6 +212,12 @@ export default function ComponentsPage() {
           </div>
         </div>
       )}
+
+      <ComponentDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchComponents()}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Wrench, Plus, Star, ExternalLink, Zap } from 'lucide-react';
+import { AIToolDialog } from '@/components/AIToolDialog';
 
 interface AITool {
   id: string;
@@ -20,6 +21,7 @@ export default function AIToolsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchTools();
@@ -46,7 +48,7 @@ export default function AIToolsPage() {
   };
 
   const handleAddTool = () => {
-    console.log('Add tool clicked');
+    setIsDialogOpen(true);
   };
 
   const categories = Array.from(new Set(tools.map(t => t.category)));
@@ -259,6 +261,12 @@ export default function AIToolsPage() {
           </div>
         </div>
       )}
+
+      <AIToolDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchTools()}
+      />
     </div>
   );
 }

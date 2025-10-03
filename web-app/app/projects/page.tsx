@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FolderKanban, Plus, Calendar, Users, TrendingUp } from 'lucide-react';
+import { ProjectDialog } from '@/components/ProjectDialog';
 
 interface Project {
   id: string;
@@ -18,6 +19,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -44,7 +46,7 @@ export default function ProjectsPage() {
   };
 
   const handleAddProject = () => {
-    console.log('Add project clicked');
+    setIsDialogOpen(true);
   };
 
   const getStatusColor = (status: Project['status']) => {
@@ -240,6 +242,12 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
+
+      <ProjectDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchProjects()}
+      />
     </div>
   );
 }

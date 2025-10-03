@@ -4,10 +4,10 @@ import { z } from 'zod';
 
 const componentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  code: z.string().min(1, 'Code is required'),
-  framework: z.string().optional(),
-  category: z.string().optional(),
+  description: z.string().min(1, 'Description is required'),
+  code: z.string().min(10, 'Code must be at least 10 characters'),
+  framework: z.string().min(1, 'Framework is required'),
+  category: z.string().min(1, 'Category is required'),
   tags: z.array(z.string()).optional(),
   demo_url: z.string().optional(),
   favorite: z.boolean().optional(),
@@ -45,9 +45,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Parse tags from JSON string
+    // Parse tags from JSON string and map title to name for frontend
     const components = data.map(component => ({
       ...component,
+      name: component.title,
+      preview: component.demo_url,
       tags: component.tags ? JSON.parse(component.tags) : [],
     }));
 

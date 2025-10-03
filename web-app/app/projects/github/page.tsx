@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Github, Plus, Star, GitFork, GitPullRequest, ExternalLink } from 'lucide-react';
+import { GitHubImportDialog } from '@/components/GitHubImportDialog';
 
 interface GithubProject {
   id: string;
@@ -19,6 +20,7 @@ export default function GithubProjectsPage() {
   const [projects, setProjects] = useState<GithubProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -35,7 +37,7 @@ export default function GithubProjectsPage() {
       }
 
       const data = await response.json();
-      setProjects(data.projects || []);
+      setProjects(data.github_projects || data.projects || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error fetching GitHub projects:', err);
@@ -45,7 +47,7 @@ export default function GithubProjectsPage() {
   };
 
   const handleImportRepo = () => {
-    console.log('Import repository clicked');
+    setIsDialogOpen(true);
   };
 
   if (error) {
@@ -209,6 +211,12 @@ export default function GithubProjectsPage() {
           </div>
         </div>
       )}
+
+      <GitHubImportDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchProjects()}
+      />
     </div>
   );
 }

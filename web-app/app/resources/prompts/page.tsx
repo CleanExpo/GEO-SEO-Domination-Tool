@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MessageSquare, Plus, Copy, Star, Search } from 'lucide-react';
+import { PromptDialog } from '@/components/PromptDialog';
 
 interface Prompt {
   id: string;
@@ -18,6 +19,7 @@ export default function PromptsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchPrompts();
@@ -44,7 +46,7 @@ export default function PromptsPage() {
   };
 
   const handleAddPrompt = () => {
-    console.log('Add prompt clicked');
+    setIsDialogOpen(true);
   };
 
   const copyToClipboard = (content: string) => {
@@ -211,6 +213,12 @@ export default function PromptsPage() {
           </div>
         </div>
       )}
+
+      <PromptDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchPrompts()}
+      />
     </div>
   );
 }
