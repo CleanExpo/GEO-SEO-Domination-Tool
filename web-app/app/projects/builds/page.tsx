@@ -1,8 +1,12 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 
-async function api(action: string, params: any = {}) {
+async function apiBuilds(action: string, params: any = {}) {
   const r = await fetch('/api/builds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
+  return r.json();
+}
+async function apiLink(action: string, params: any = {}) {
+  const r = await fetch('/api/link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
   return r.json();
 }
 
@@ -14,46 +18,58 @@ export default function BuildsPage() {
   const [routeName, setRouteName] = useState('health');
   const [schemaName, setSchemaName] = useState('events');
 
+  // Linking inputs
+  const [ghOwner, setGhOwner] = useState('your-github');
+  const [ghRepo, setGhRepo] = useState('geo-seo-demo');
+  const [ghPrivate, setGhPrivate] = useState(true);
+  const [vzProject, setVzProject] = useState('geo-seo-demo');
+
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const resp = await fetch('/api/builds');
-      const j = await resp.json();
+      const j = await fetch('/api/builds').then(r=>r.json());
       if (j?.ok && j?.result?.builders) setBuilders(j.result.builders);
       setLoading(false);
     })();
   }, []);
 
   async function doInspect(id: string) {
-    setSelected(id);
-    setLog('Inspecting…');
-    const j = await api('inspect_builder', { id });
+    setSelected(id); setLog('Inspecting…');
+    const j = await apiBuilds('inspect_builder', { id });
     setLog(JSON.stringify(j, null, 2));
   }
-
   async function doPreview(id: string) {
-    setSelected(id);
-    setLog('Previewing…');
+    setSelected(id); setLog('Previewing…');
     const variables: any = {};
     if (id === 'nextjs-api-route') variables.ROUTE_NAME = routeName;
     if (id === 'database-schema') variables.SCHEMA_NAME = schemaName;
-    const j = await api('preview_apply', { id, engine: 'eta', variables });
+    const j = await apiBuilds('preview_apply', { id, engine: 'eta', variables });
     setLog(JSON.stringify(j, null, 2));
   }
-
   async function doApply(id: string) {
-    setSelected(id);
-    setLog('Applying…');
+    setSelected(id); setLog('Applying…');
     const variables: any = {};
     if (id === 'nextjs-api-route') variables.ROUTE_NAME = routeName;
     if (id === 'database-schema') variables.SCHEMA_NAME = schemaName;
-    const j = await api('apply_builder', { id, strategy: 'safe-merge', engine: 'eta', variables });
+    const j = await apiBuilds('apply_builder', { id, strategy: 'safe-merge', engine: 'eta', variables });
     setLog(JSON.stringify(j, null, 2));
   }
-
   async function doChecks() {
     setLog('Running checks…');
-    const j = await api('post_install_check', { checks: ['ts','lint','next-build'] });
+    const j = await apiBuilds('post_install_check', { checks: ['ts','lint','next-build'] });
+    setLog(JSON.stringify(j, null, 2));
+  }
+
+  // Linking flows
+  async function createGithubRepo() {
+    setLog('Creating GitHub repo…');
+    const j = await apiLink('github_create_repo', { name: ghRepo, description: 'Created from CRM', private: ghPrivate });
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function linkVercelProject() {
+    setLog('Linking Vercel project…');
+    const repo = `${ghOwner}/${ghRepo}`; // owner/name
+    const j = await apiLink('vercel_create_project', { name: vzProject, repo });
     setLog(JSON.stringify(j, null, 2));
   }
 
@@ -66,11 +82,7 @@ export default function BuildsPage() {
         <button className="px-3 py-2 border rounded" onClick={doChecks}>Run Checks</button>
       </div>
 
-      <div className="space-y-2">
-        <div className="text-sm text-gray-500">MCP is invoked on-demand from the server API. Actions: Inspect, Preview, Apply.</div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="border rounded p-4">
           <h2 className="font-medium mb-2">Builder Catalog</h2>
           {loading && <div>Loading…</div>}
@@ -103,8 +115,35 @@ export default function BuildsPage() {
         </div>
 
         <div className="border rounded p-4">
-          <h2 className="font-medium mb-2">Logs / Output</h2>
-          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[320px]">{log || 'Select an action to see output…'}</pre>
+          <h2 className="font-medium mb-2">One-Click Link: GitHub ↔ Vercel</h2>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center gap-2">
+              <label className="w-28">GH Owner</label>
+              <input className="border rounded px-2 py-1 w-full" value={ghOwner} onChange={e=>setGhOwner(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="w-28">Repo Name</label>
+              <input className="border rounded px-2 py-1 w-full" value={ghRepo} onChange={e=>setGhRepo(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="w-28">Private?</label>
+              <input type="checkbox" checked={ghPrivate} onChange={e=>setGhPrivate(e.target.checked)} />
+              <button className="px-3 py-2 border rounded ml-auto" onClick={createGithubRepo}>Create GitHub Repo</button>
+            </div>
+            <hr />
+            <div className="flex items-center gap-2">
+              <label className="w-28">Vercel Name</label>
+              <input className="border rounded px-2 py-1 w-full" value={vzProject} onChange={e=>setVzProject(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="w-28">Link Repo</label>
+              <input className="border rounded px-2 py-1 w-full" value={`${ghOwner}/${ghRepo}`} readOnly />
+              <button className="px-3 py-2 border rounded ml-auto" onClick={linkVercelProject}>Link to Vercel</button>
+            </div>
+          </div>
+
+          <h2 className="font-medium mt-6 mb-2">Logs / Output</h2>
+          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[220px]">{log || 'Ready.'}</pre>
         </div>
       </div>
     </div>
