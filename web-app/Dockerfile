@@ -5,10 +5,11 @@ WORKDIR /app
 
 # Install dependencies only when needed
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json ./
+COPY package-lock.json* ./
 
 # Install dependencies
-RUN npm ci --only=production && \
+RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install --only=production; fi && \
     npm cache clean --force
 
 # Stage 2: Builder
@@ -16,10 +17,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json ./
+COPY package-lock.json* ./
 
 # Install all dependencies (including dev dependencies)
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copy application source
 COPY . .
