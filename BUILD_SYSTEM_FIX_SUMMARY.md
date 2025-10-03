@@ -155,6 +155,44 @@ Complete version history with:
 - Technical rationale
 - Before/after comparison
 
+### 7. TypeScript Build Errors Resolved
+
+**Additional fixes applied during build verification**:
+
+1. **Added @types/js-yaml**:
+   ```bash
+   npm install --save-dev @types/js-yaml
+   ```
+   - Resolves implicit 'any' type error for js-yaml module
+
+2. **Fixed type assertion in src/index.ts**:
+   ```typescript
+   // Before
+   const params = args as BuilderInspectParams;
+
+   // After
+   const params = args as unknown as BuilderInspectParams;
+   ```
+   - Resolves type conversion error for MCP SDK arguments
+
+3. **Configured types array in tsconfig.build.json**:
+   ```json
+   {
+     "compilerOptions": {
+       "types": ["node"]
+     }
+   }
+   ```
+   - Explicitly includes only @types/node
+   - Prevents auto-inclusion of unnecessary @types packages
+   - Resolves babel, body-parser, d3-*, pg, qs, etc. type errors
+
+**Verification**:
+- ✅ `npm run build` completes successfully
+- ✅ `node dist/index.js` starts MCP server without errors
+- ✅ dist/index.js, dist/registry.js, dist/types.js generated
+- ✅ Type declarations (.d.ts files) generated
+
 ---
 
 ## Migration Guide
@@ -309,8 +347,12 @@ BUILD_SYSTEM_FIX_SUMMARY.md          # NEW: This file
 - [x] Setup scripts updated with --no-optional
 - [x] Documentation updated
 - [x] CHANGELOG.md created
-- [ ] **Manual test**: npm install --no-optional (user to verify)
-- [ ] **Manual test**: npm run build (user to verify)
+- [x] TypeScript build errors resolved
+  - [x] Added @types/js-yaml to devDependencies
+  - [x] Fixed type assertion in src/index.ts (as unknown as BuilderInspectParams)
+  - [x] Configured types: ["node"] in tsconfig.build.json
+- [x] **Build test**: npm run build ✅ (completes successfully)
+- [x] **Runtime test**: node dist/index.js ✅ (server starts)
 - [ ] **Manual test**: npm run fix:build (user to verify)
 - [ ] **Manual test**: Claude Desktop integration (user to verify)
 
