@@ -63,3 +63,7 @@ web-app/.env.local
 
 # Local deploy config (do not commit)
 server/secrets/deploy.local.json
+
+# Remote sync temp artifacts
+server/temp/
+.deployignore

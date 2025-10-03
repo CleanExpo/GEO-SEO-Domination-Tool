@@ -13,6 +13,10 @@ async function apiDeploy(action: string, params: any = {}) {
   const r = await fetch('/api/deploy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
   return r.json();
 }
+async function apiSync(action: string, params: any = {}) {
+  const r = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, params }) });
+  return r.json();
+}
 
 export default function BuildsPage() {
   const [builders, setBuilders] = useState<any[]>([]);
@@ -39,6 +43,10 @@ export default function BuildsPage() {
   const [sshKeyPath, setSshKeyPath] = useState('');
   const [sshExtra, setSshExtra] = useState('');
   const [sshComposePath, setSshComposePath] = useState('/srv/app/compose.yml');
+
+  // Sync config
+  const [remotePath, setRemotePath] = useState('/srv/app');
+  const [bundleName, setBundleName] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -114,6 +122,34 @@ export default function BuildsPage() {
     const params: any = { target: 'ssh', composePath: sshComposePath };
     if (action === 'logs') { params.service = deployService; params.tail = deployTail; }
     const j = await apiDeploy(action, params);
+    setLog(JSON.stringify(j, null, 2));
+  }
+
+  // Sync flows
+  async function saveRemotePath() {
+    setLog('Saving remote path…');
+    const j = await apiSync('save_remote_path', { remotePath });
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function dryRun() {
+    setLog('Dry run via rsync…');
+    const j = await apiSync('dry_run', { remotePath });
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function syncRsync() {
+    setLog('Sync (rsync)…');
+    const j = await apiSync('sync_rsync', { remotePath });
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function makeBundle() {
+    setLog('Making bundle…');
+    const j = await apiSync('make_bundle', {});
+    if (j?.result?.bundle) setBundleName(j.result.bundle.split(/[\\\/]/).pop() || '');
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function syncAll() {
+    setLog('Sync all (bundle→scp→unpack→up)…');
+    const j = await apiSync('sync_all', { remotePath, composePath: sshComposePath });
     setLog(JSON.stringify(j, null, 2));
   }
 
@@ -216,30 +252,64 @@ export default function BuildsPage() {
 
           <hr className="my-6" />
 
-          {/* SSH Deploy */}
+          {/* SSH Config */}
           <div>
-            <h2 className="font-medium mb-2">Deploy (Remote via SSH)</h2>
-            <div className="grid md:grid-cols-2 gap-3 text-sm">
-              <input className="border rounded px-2 py-1 w-full" placeholder="Host (your.server.tld)" value={sshHost} onChange={e=>setSshHost(e.target.value)} />
-              <input className="border rounded px-2 py-1 w-full" placeholder="User (e.g. ubuntu)" value={sshUser} onChange={e=>setSshUser(e.target.value)} />
-              <input className="border rounded px-2 py-1 w-full" placeholder="Port (22)" value={sshPort} onChange={e=>setSshPort(e.target.value)} />
-              <input className="border rounded px-2 py-1 w-full" placeholder="Key path (optional, e.g. C:\\Users\\you\\.ssh\\id_rsa)" value={sshKeyPath} onChange={e=>setSshKeyPath(e.target.value)} />
-              <input className="border rounded px-2 py-1 w-full md:col-span-2" placeholder="Extra ssh args (optional) e.g. -o StrictHostKeyChecking=no" value={sshExtra} onChange={e=>setSshExtra(e.target.value)} />
-              <input className="border rounded px-2 py-1 w-full md:col-span-2" placeholder="Remote compose path (/srv/app/compose.yml)" value={sshComposePath} onChange={e=>setSshComposePath(e.target.value)} />
+            <h2 className="font-medium mb-2">SSH Config (for Deploy & Sync)</h2>
+            <div className="grid md:grid-cols-2 gap-2 text-sm">
+              <input className="border rounded px-2 py-1" placeholder="Host" value={sshHost} onChange={e=>setSshHost(e.target.value)} />
+              <input className="border rounded px-2 py-1" placeholder="User" value={sshUser} onChange={e=>setSshUser(e.target.value)} />
+              <input className="border rounded px-2 py-1" placeholder="Port (22)" value={sshPort} onChange={e=>setSshPort(e.target.value)} />
+              <input className="border rounded px-2 py-1" placeholder="Key path" value={sshKeyPath} onChange={e=>setSshKeyPath(e.target.value)} />
             </div>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <button className="px-3 py-2 border rounded" onClick={saveSSH}>Save SSH</button>
-              <button className="px-3 py-2 border rounded" onClick={statusSSH}>Check SSH</button>
-              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('config')}>Config</button>
-              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('build')}>Build</button>
-              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('up')}>Up</button>
-              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('down')}>Down</button>
-              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('ps')}>PS</button>
-              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('logs')}>Logs</button>
+            <div className="flex gap-2 mt-2">
+              <button className="px-2 py-1 border rounded text-sm" onClick={saveSSH}>Save SSH</button>
+              <button className="px-2 py-1 border rounded text-sm" onClick={statusSSH}>Check SSH</button>
             </div>
-            <h3 className="font-medium mt-4">Output</h3>
-            <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[220px]">{log || 'Ready.'}</pre>
           </div>
+
+          <hr className="my-6" />
+
+          {/* Remote Sync + Deploy */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Sync Panel */}
+            <div>
+              <h2 className="font-medium mb-2">Remote Sync</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex gap-2">
+                  <input className="border rounded px-2 py-1 w-full" placeholder="Remote path (/srv/app)" value={remotePath} onChange={e=>setRemotePath(e.target.value)} />
+                  <button className="px-2 py-1 border rounded" onClick={saveRemotePath}>Save</button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="px-2 py-1 border rounded" onClick={dryRun}>Dry Run (rsync)</button>
+                  <button className="px-2 py-1 border rounded" onClick={syncRsync}>Sync (rsync)</button>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-2 py-1 border rounded" onClick={makeBundle}>Make Bundle</button>
+                  <input className="border rounded px-2 py-1 w-full text-xs" placeholder="Bundle name (auto)" value={bundleName} readOnly />
+                </div>
+                <button className="px-2 py-1 border rounded w-full" onClick={syncAll}>Sync All (bundle→scp→unpack→up)</button>
+              </div>
+            </div>
+
+            {/* SSH Deploy Panel */}
+            <div>
+              <h2 className="font-medium mb-2">Remote Deploy (SSH)</h2>
+              <div className="space-y-2 text-sm">
+                <input className="border rounded px-2 py-1 w-full" placeholder="Compose path (/srv/app/compose.yml)" value={sshComposePath} onChange={e=>setSshComposePath(e.target.value)} />
+                <div className="flex flex-wrap gap-2">
+                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('config')}>Config</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('build')}>Build</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('up')}>Up</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('down')}>Down</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('ps')}>PS</button>
+                  <button className="px-2 py-1 border rounded" onClick={()=>dSSH('logs')}>Logs</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="font-medium mt-4">Output</h3>
+          <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[220px]">{log || 'Ready.'}</pre>
         </div>
       </div>
     </div>
