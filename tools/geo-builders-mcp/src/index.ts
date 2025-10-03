@@ -2,172 +2,134 @@
 
 /**
  * GEO Builders MCP Server
- *
- * Discovers, previews, and applies modular builders into existing projects.
- * Next.js-first with SQLite/Postgres+Supabase baseline.
+ * Simplified stdio-based implementation with Git snapshots
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { BuilderRegistry } from "./registry.js";
-import { listBuilders } from "./tools/list-builders.js";
-import { inspectBuilder } from "./tools/inspect-builder.js";
-import type { BuilderListParams, BuilderInspectParams } from "./types.js";
+import { stdin as input, stdout as output } from 'node:process';
+import { join, resolve } from 'path';
+import fse from 'fs-extra';
+import fg from 'fast-glob';
+import yaml from 'js-yaml';
+import { previewApply } from './tools/preview_apply.js';
+import { applyBuilder } from './tools/apply_builder.js';
 
-const SERVER_NAME = "geo-builders-mcp";
-const SERVER_VERSION = "0.1.0";
+interface Call {
+  id: string;
+  tool: string;
+  params?: any;
+}
 
-class GEOBuildersMCPServer {
-  private server: Server;
-  private registry: BuilderRegistry;
+interface Resp {
+  id: string;
+  ok: boolean;
+  result?: any;
+  error?: { message: string };
+}
 
-  constructor() {
-    this.server = new Server(
-      {
-        name: SERVER_NAME,
-        version: SERVER_VERSION,
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      }
-    );
+const repoRoot = resolve(process.cwd());
+const buildersRoot = join(repoRoot, 'builders');
 
-    // Initialize builder registry
-    this.registry = new BuilderRegistry({
-      sources: [
-        {
-          type: "local",
-          path: "./builders",
-        },
-      ],
-    });
+async function list_builders(_params: any) {
+  const entries = await fg(
+    ['*/manifest.json', '*/manifest.yaml'],
+    { cwd: buildersRoot, deep: 2 }
+  );
 
-    this.setupToolHandlers();
-    this.setupErrorHandling();
-  }
+  const out: any[] = [];
+  for (const p of entries) {
+    const full = join(buildersRoot, p);
+    const raw = await fse.readFile(full, 'utf8');
+    const obj =
+      p.endsWith('.yaml') || p.endsWith('.yml')
+        ? yaml.load(raw)
+        : JSON.parse(raw);
+    const data: any = obj;
 
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        {
-          name: "list_builders",
-          description: "List available builders from configured sources.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              source: {
-                type: "string",
-                enum: ["local"],
-                default: "local",
-                description: "Source to list builders from",
-              },
-              tags: {
-                type: "array",
-                items: { type: "string" },
-                description: "Filter by tags",
-              },
-            },
-            additionalProperties: false,
-          },
-        },
-        {
-          name: "inspect_builder",
-          description:
-            "Show manifest details and requirements for a specific builder.",
-          inputSchema: {
-            type: "object",
-            required: ["id"],
-            properties: {
-              id: {
-                type: "string",
-                description: "Builder ID to inspect",
-              },
-            },
-            additionalProperties: false,
-          },
-        },
-      ],
-    }));
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "list_builders": {
-            const params = args as BuilderListParams;
-            const result = await listBuilders(this.registry, params);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
-
-          case "inspect_builder": {
-            const params = args as unknown as BuilderInspectParams;
-            const result = await inspectBuilder(this.registry, params);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
-
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error: ${errorMessage}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+    out.push({
+      id: data.id ?? p.split('/')[0],
+      version: data.version ?? '0.0.0',
+      title: data.title ?? data.id ?? 'builder',
+      summary: data.summary ?? '',
+      tags: data.tags ?? [],
     });
   }
 
-  private setupErrorHandling() {
-    this.server.onerror = (error) => {
-      console.error("[MCP Error]", error);
-    };
+  return { builders: out };
+}
 
-    process.on("SIGINT", async () => {
-      await this.server.close();
-      process.exit(0);
-    });
+async function inspect_builder(params: any) {
+  const id = params?.id as string;
+  if (!id) throw new Error('id required');
+
+  const json = join(buildersRoot, id, 'manifest.json');
+  const yamlPath = join(buildersRoot, id, 'manifest.yaml');
+  const existsJson = await fse.pathExists(json);
+  const existsYaml = await fse.pathExists(yamlPath);
+
+  if (!existsJson && !existsYaml) {
+    throw new Error(`manifest not found for ${id}`);
   }
 
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    console.error(`${SERVER_NAME} v${SERVER_VERSION} running on stdio`);
+  const raw = await fse.readFile(existsJson ? json : yamlPath, 'utf8');
+  const data = existsJson ? JSON.parse(raw) : yaml.load(raw);
+
+  return data;
+}
+
+async function handleCall(c: Call): Promise<Resp> {
+  try {
+    if (c.tool === 'list_builders') {
+      return { id: c.id, ok: true, result: await list_builders(c.params) };
+    }
+
+    if (c.tool === 'inspect_builder') {
+      return { id: c.id, ok: true, result: await inspect_builder(c.params) };
+    }
+
+    if (c.tool === 'preview_apply') {
+      const res = await previewApply({
+        repoRoot,
+        buildersRoot,
+        id: c.params?.id,
+        variables: c.params?.variables,
+        flags: c.params?.flags,
+      });
+      return { id: c.id, ok: true, result: res };
+    }
+
+    if (c.tool === 'apply_builder') {
+      const res = await applyBuilder({
+        repoRoot,
+        buildersRoot,
+        id: c.params?.id,
+        variables: c.params?.variables,
+        strategy: c.params?.strategy,
+        engine: c.params?.engine,
+      });
+      return { id: c.id, ok: true, result: res };
+    }
+
+    throw new Error(`Unknown tool: ${c.tool}`);
+  } catch (e: any) {
+    return { id: c.id, ok: false, error: { message: e?.message || String(e) } };
   }
 }
 
-// Start the server
-const server = new GEOBuildersMCPServer();
-server.run().catch((error) => {
-  console.error("Fatal error:", error);
-  process.exit(1);
+let buf = '';
+input.setEncoding('utf8');
+input.on('data', (chunk: string) => {
+  buf += chunk;
+  let idx;
+  while ((idx = buf.indexOf('\n')) >= 0) {
+    const line = buf.slice(0, idx).trim();
+    buf = buf.slice(idx + 1);
+    if (!line) continue;
+    (async () => {
+      const call = JSON.parse(line) as Call;
+      const resp = await handleCall(call);
+      output.write(JSON.stringify(resp) + '\n');
+    })();
+  }
 });
+
+console.error('geo-builders-mcp v0.2.0 running on stdio');

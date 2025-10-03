@@ -67,6 +67,12 @@ export interface BuilderInspectParams {
   id: string;
 }
 
+export interface ApplyBuilderParams {
+  id: string;
+  variables?: Record<string, any>;
+  dryRun?: boolean;
+}
+
 // Builder Summary (for list_builders output)
 export interface BuilderSummary {
   id: string;
@@ -86,4 +92,13 @@ export interface InspectBuilderOutput extends BuilderManifest {
     type: string;
     path: string;
   };
+}
+
+export interface ApplyBuilderOutput {
+  success: boolean;
+  filesWritten?: string[];
+  filesSkipped?: string[];
+  conflicts?: string[];
+  errors?: string[];
+  dryRun?: boolean;
 }
