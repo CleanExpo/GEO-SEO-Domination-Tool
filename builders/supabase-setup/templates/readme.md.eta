@@ -1,0 +1,13 @@
+# Supabase Setup
+
+Files added:
+- `web-app/.env.local` with SUPABASE_URL and SUPABASE_ANON_KEY
+- `web-app/lib/supabaseClient.ts` (requires `@supabase/supabase-js`)
+
+Next steps:
+1. Install dependency: `npm i -w web-app @supabase/supabase-js`
+2. Use the client in your routes/components:
+```ts
+import { supabase } from '@/lib/supabaseClient';
+const { data, error } = await supabase.from('your_table').select('*');
+```

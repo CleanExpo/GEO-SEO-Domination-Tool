@@ -32,6 +32,16 @@ async function vercelStatus(token: string) {
   return { ok: r.ok, status: r.status, user: j };
 }
 
+async function supabaseStatus(url: string, anonKey: string) {
+  if (!url || !anonKey) return { ok: false, error: 'missing url or anon key' };
+  // Lightweight health endpoint for Supabase Auth
+  const r = await fetch(`${url.replace(/\/$/, '')}/auth/v1/health`, {
+    headers: { apikey: anonKey }
+  });
+  let j: any = null; try { j = await r.json(); } catch {}
+  return { ok: r.ok, status: r.status, body: j };
+}
+
 export async function GET() {
   const s = await loadSecrets();
   return NextResponse.json({ ok: true, result: { hasGithub: !!s.githubToken, hasVercel: !!s.vercelToken } }, { status: 200 });
@@ -55,6 +65,21 @@ export async function POST(req: NextRequest) {
       const gh = await ghStatus(s.githubToken || process.env.GITHUB_TOKEN || '');
       const vz = await vercelStatus(s.vercelToken || process.env.VERCEL_TOKEN || '');
       return NextResponse.json({ ok: true, result: { github: gh, vercel: vz } }, { status: 200 });
+    }
+
+    if (action === 'save_supabase') {
+      const prev = await loadSecrets();
+      const next = { ...prev, supabaseUrl: params?.supabaseUrl ?? prev.supabaseUrl, supabaseAnonKey: params?.supabaseAnonKey ?? prev.supabaseAnonKey };
+      await saveSecrets(next);
+      return NextResponse.json({ ok: true, result: { saved: true } }, { status: 200 });
+    }
+
+    if (action === 'supabase_status') {
+      const s = await loadSecrets();
+      const url = (params?.supabaseUrl ?? s.supabaseUrl ?? process.env.SUPABASE_URL ?? '').toString();
+      const anon = (params?.supabaseAnonKey ?? s.supabaseAnonKey ?? process.env.SUPABASE_ANON_KEY ?? '').toString();
+      const st = await supabaseStatus(url, anon);
+      return NextResponse.json({ ok: true, result: st }, { status: 200 });
     }
 
     return NextResponse.json({ ok: false, error: 'Unsupported action' }, { status: 400 });
