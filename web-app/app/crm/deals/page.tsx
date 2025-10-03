@@ -2,22 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { Target, Plus, DollarSign, TrendingUp, Clock } from 'lucide-react';
+import { DealDialog } from '@/components/DealDialog';
 
 interface Deal {
   id: string;
   title: string;
-  company: string;
-  value: number;
-  stage: 'prospect' | 'qualification' | 'proposal' | 'negotiation' | 'closed';
+  amount: number;
+  stage: 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed-won' | 'closed-lost';
   probability: number;
-  closeDate: string;
-  contact: string;
+  expected_close_date: string;
+  crm_contacts?: {
+    name: string;
+    email: string;
+    company?: string;
+  };
 }
 
 export default function DealsPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchDeals();
@@ -43,21 +48,21 @@ export default function DealsPage() {
     }
   };
 
-  const handleAddDeal = async () => {
-    // TODO: Implement add deal modal/form
-    console.log('Add deal clicked');
+  const handleAddDeal = () => {
+    setIsDialogOpen(true);
   };
 
-  const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0);
-  const weightedValue = deals.reduce((sum, deal) => sum + (deal.value * deal.probability / 100), 0);
+  const totalValue = deals.reduce((sum, deal) => sum + (deal.amount || 0), 0);
+  const weightedValue = deals.reduce((sum, deal) => sum + ((deal.amount || 0) * (deal.probability || 0) / 100), 0);
 
   const getStageColor = (stage: Deal['stage']) => {
     const colors = {
-      prospect: 'bg-gray-100 text-gray-800',
-      qualification: 'bg-blue-100 text-blue-800',
+      lead: 'bg-gray-100 text-gray-800',
+      qualified: 'bg-blue-100 text-blue-800',
       proposal: 'bg-yellow-100 text-yellow-800',
       negotiation: 'bg-orange-100 text-orange-800',
-      closed: 'bg-green-100 text-green-800',
+      'closed-won': 'bg-green-100 text-green-800',
+      'closed-lost': 'bg-red-100 text-red-800',
     };
     return colors[stage];
   };
@@ -170,29 +175,31 @@ export default function DealsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{deal.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{deal.company} • {deal.contact}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {deal.crm_contacts?.company || 'No company'} • {deal.crm_contacts?.name || 'No contact'}
+                      </p>
                       <div className="flex items-center gap-4 mt-3">
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-gray-500" />
                           <span className="text-sm font-medium text-gray-900">
-                            ${deal.value.toLocaleString()}
+                            ${(deal.amount || 0).toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-gray-500" />
                           <span className="text-sm text-gray-600">
-                            Close: {new Date(deal.closeDate).toLocaleDateString()}
+                            Close: {new Date(deal.expected_close_date).toLocaleDateString()}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-600">{deal.probability}% probability</span>
+                          <span className="text-sm text-gray-600">{deal.probability || 0}% probability</span>
                         </div>
                       </div>
                     </div>
                     <div className="ml-4">
                       <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStageColor(deal.stage)}`}>
-                        {deal.stage}
+                        {deal.stage.replace('-', ' ')}
                       </span>
                     </div>
                   </div>
@@ -201,7 +208,7 @@ export default function DealsPage() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-emerald-600 h-2 rounded-full transition-all"
-                        style={{ width: `${deal.probability}%` }}
+                        style={{ width: `${deal.probability || 0}%` }}
                       />
                     </div>
                   </div>
@@ -211,6 +218,12 @@ export default function DealsPage() {
           )}
         </div>
       </div>
+
+      <DealDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchDeals()}
+      />
     </div>
   );
 }

@@ -2,22 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Calendar, User, AlertCircle } from 'lucide-react';
+import { TaskDialog } from '@/components/TaskDialog';
 
 interface Task {
   id: string;
   title: string;
   description: string;
-  dueDate: string;
+  due_date: string;
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in_progress' | 'completed';
-  assignedTo: string;
-  relatedTo?: string;
+  assigned_to: string;
+  contact_id?: string;
+  deal_id?: string;
 }
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -44,7 +47,7 @@ export default function TasksPage() {
   };
 
   const handleAddTask = () => {
-    console.log('Add task clicked');
+    setIsDialogOpen(true);
   };
 
   const getPriorityColor = (priority: Task['priority']) => {
@@ -223,9 +226,6 @@ export default function TasksPage() {
                             {task.title}
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                          {task.relatedTo && (
-                            <p className="text-sm text-emerald-600 mt-1">Related: {task.relatedTo}</p>
-                          )}
                         </div>
                         <div className="flex gap-2 ml-4">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
@@ -239,11 +239,11 @@ export default function TasksPage() {
                       <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                          <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          <span>{task.assignedTo}</span>
+                          <span>{task.assigned_to}</span>
                         </div>
                       </div>
                     </div>
@@ -254,6 +254,12 @@ export default function TasksPage() {
           )}
         </div>
       </div>
+
+      <TaskDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchTasks()}
+      />
     </div>
   );
 }

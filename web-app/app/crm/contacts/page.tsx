@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Users, Plus, Search, Mail, Phone, Building2, MapPin } from 'lucide-react';
+import { ContactDialog } from '@/components/ContactDialog';
 
 interface Contact {
   id: string;
@@ -18,6 +19,7 @@ export default function ContactsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchContacts();
@@ -43,10 +45,8 @@ export default function ContactsPage() {
     }
   };
 
-  const handleAddContact = async () => {
-    // TODO: Implement add contact modal/form
-    // For now, this is a placeholder that could be connected to a modal
-    console.log('Add contact clicked');
+  const handleAddContact = () => {
+    setIsDialogOpen(true);
   };
 
   const filteredContacts = contacts.filter(contact =>
@@ -242,6 +242,12 @@ export default function ContactsPage() {
           </div>
         )}
       </div>
+
+      <ContactDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchContacts()}
+      />
     </div>
   );
 }

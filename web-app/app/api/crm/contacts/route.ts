@@ -5,9 +5,9 @@ import { z } from 'zod';
 const contactSchema = z.object({
   name: z.string().min(1, 'Contact name is required'),
   email: z.string().email('Valid email is required'),
-  phone: z.string().optional(),
-  company: z.string().optional(),
-  location: z.string().optional(),
+  phone: z.string().min(1, 'Phone is required'),
+  company: z.string().min(1, 'Company is required'),
+  location: z.string().min(1, 'Location is required'),
   status: z.enum(['lead', 'active', 'inactive']).default('lead'),
   notes: z.string().optional(),
 });

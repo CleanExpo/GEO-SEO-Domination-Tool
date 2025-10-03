@@ -5,11 +5,12 @@ import { z } from 'zod';
 const dealSchema = z.object({
   title: z.string().min(1, 'Deal title is required'),
   contact_id: z.string().uuid('Valid contact ID is required'),
-  company: z.string().optional(),
-  value: z.number().positive('Deal value must be positive'),
-  stage: z.enum(['prospect', 'qualification', 'proposal', 'negotiation', 'closed']).default('prospect'),
+  company_id: z.string().uuid().optional(),
+  amount: z.number().positive('Deal value must be positive'),
+  stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed-won', 'closed-lost']).default('lead'),
   probability: z.number().min(0).max(100).default(0),
-  close_date: z.string().optional(),
+  expected_close_date: z.string().min(1, 'Close date is required'),
+  notes: z.string().optional(),
 });
 
 // GET /api/crm/deals - List all deals

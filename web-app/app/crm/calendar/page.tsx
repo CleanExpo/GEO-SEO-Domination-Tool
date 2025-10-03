@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Plus, Clock, Video, MapPin } from 'lucide-react';
+import { EventDialog } from '@/components/EventDialog';
 
 interface Event {
   id: string;
@@ -19,6 +20,7 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -45,7 +47,7 @@ export default function CalendarPage() {
   };
 
   const handleAddEvent = () => {
-    console.log('Add event clicked');
+    setIsDialogOpen(true);
   };
 
   const getTypeColor = (type: Event['type']) => {
@@ -255,6 +257,12 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+
+      <EventDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchEvents()}
+      />
     </div>
   );
 }

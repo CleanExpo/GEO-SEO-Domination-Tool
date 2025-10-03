@@ -77,6 +77,43 @@ export async function PUT(
   }
 }
 
+// PATCH /api/crm/tasks/[id] - Partially update a task
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const supabase = await createClient();
+    const { id } = await params;
+    const body = await request.json();
+    const validatedData = taskUpdateSchema.parse(body);
+
+    const { data, error } = await supabase
+      .from('crm_tasks')
+      .update({ ...validatedData, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ task: data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Failed to update task' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/crm/tasks/[id] - Delete a task
 export async function DELETE(
   request: NextRequest,
