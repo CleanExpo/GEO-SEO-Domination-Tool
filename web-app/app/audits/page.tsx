@@ -1,25 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, AlertCircle, CheckCircle, XCircle, TrendingUp, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, AlertCircle, CheckCircle, XCircle, TrendingUp, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { AuditDialog } from '@/components/AuditDialog';
 
 interface AuditResult {
   id: string;
-  companyName: string;
+  company_id: string;
   url: string;
-  date: string;
-  score: number;
-  issues: {
-    critical: number;
-    warnings: number;
-    passed: number;
-  };
-  status: 'completed' | 'in-progress' | 'failed';
+  audit_date: string;
+  seo_score: number;
+  critical_issues: any[];
+  warnings: any[];
+  recommendations: any[];
 }
 
 export default function AuditsPage() {
   const [audits, setAudits] = useState<AuditResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchAudits();
+  }, []);
+
+  const fetchAudits = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/seo-audits');
+      const data = await res.json();
+      setAudits(data.audits || []);
+    } catch (err) {
+      console.error('Failed to fetch audits:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600';
@@ -41,7 +58,10 @@ export default function AuditsPage() {
             <h1 className="text-3xl font-bold text-gray-900">SEO Audits</h1>
             <p className="text-gray-600 mt-1">Comprehensive website SEO analysis and recommendations</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             New Audit
           </button>
@@ -57,7 +77,9 @@ export default function AuditsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Audits</p>
-              <p className="text-2xl font-bold text-gray-900">{audits.length}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {loading ? '-' : audits.length}
+              </p>
             </div>
           </div>
         </div>
@@ -69,7 +91,7 @@ export default function AuditsPage() {
             <div>
               <p className="text-sm text-gray-600">Critical Issues</p>
               <p className="text-2xl font-bold text-gray-900">
-                {audits.reduce((sum, a) => sum + a.issues.critical, 0)}
+                {loading ? '-' : audits.reduce((sum, a) => sum + (a.critical_issues?.length || 0), 0)}
               </p>
             </div>
           </div>
@@ -82,7 +104,7 @@ export default function AuditsPage() {
             <div>
               <p className="text-sm text-gray-600">Warnings</p>
               <p className="text-2xl font-bold text-gray-900">
-                {audits.reduce((sum, a) => sum + a.issues.warnings, 0)}
+                {loading ? '-' : audits.reduce((sum, a) => sum + (a.warnings?.length || 0), 0)}
               </p>
             </div>
           </div>
@@ -93,9 +115,9 @@ export default function AuditsPage() {
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Passed Checks</p>
+              <p className="text-sm text-gray-600">Recommendations</p>
               <p className="text-2xl font-bold text-gray-900">
-                {audits.reduce((sum, a) => sum + a.issues.passed, 0)}
+                {loading ? '-' : audits.reduce((sum, a) => sum + (a.recommendations?.length || 0), 0)}
               </p>
             </div>
           </div>
@@ -104,7 +126,11 @@ export default function AuditsPage() {
 
       {/* Audits List */}
       <div className="space-y-4">
-        {audits.length === 0 ? (
+        {loading ? (
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          </div>
+        ) : audits.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center">
             <div className="flex flex-col items-center gap-4">
               <Search className="h-16 w-16 text-gray-300" />
@@ -113,7 +139,10 @@ export default function AuditsPage() {
                 <p className="text-gray-600 mb-6">
                   Start analyzing your website's SEO performance by running your first audit.
                 </p>
-                <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+                <button
+                  onClick={() => setIsDialogOpen(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+                >
                   <Plus className="h-5 w-5" />
                   Run Your First Audit
                 </button>
@@ -129,7 +158,7 @@ export default function AuditsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold text-gray-900">{audit.companyName}</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">SEO Audit</h3>
                     <a
                       href={audit.url}
                       target="_blank"
@@ -141,7 +170,7 @@ export default function AuditsPage() {
                     </a>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Audited on {new Date(audit.date).toLocaleDateString()}
+                    Audited on {new Date(audit.audit_date).toLocaleDateString()}
                   </p>
 
                   <div className="grid grid-cols-3 gap-4">
@@ -149,35 +178,35 @@ export default function AuditsPage() {
                       <XCircle className="h-5 w-5 text-red-500" />
                       <div>
                         <p className="text-xs text-gray-600">Critical</p>
-                        <p className="text-lg font-semibold text-gray-900">{audit.issues.critical}</p>
+                        <p className="text-lg font-semibold text-gray-900">{audit.critical_issues?.length || 0}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-yellow-500" />
                       <div>
                         <p className="text-xs text-gray-600">Warnings</p>
-                        <p className="text-lg font-semibold text-gray-900">{audit.issues.warnings}</p>
+                        <p className="text-lg font-semibold text-gray-900">{audit.warnings?.length || 0}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-500" />
                       <div>
-                        <p className="text-xs text-gray-600">Passed</p>
-                        <p className="text-lg font-semibold text-gray-900">{audit.issues.passed}</p>
+                        <p className="text-xs text-gray-600">Recommendations</p>
+                        <p className="text-lg font-semibold text-gray-900">{audit.recommendations?.length || 0}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="ml-6 flex flex-col items-center gap-2">
-                  <div className={`w-24 h-24 rounded-full ${getScoreBgColor(audit.score)} flex items-center justify-center`}>
+                  <div className={`w-24 h-24 rounded-full ${getScoreBgColor(audit.seo_score || 0)} flex items-center justify-center`}>
                     <div className="text-center">
-                      <p className={`text-3xl font-bold ${getScoreColor(audit.score)}`}>{audit.score}</p>
+                      <p className={`text-3xl font-bold ${getScoreColor(audit.seo_score || 0)}`}>{audit.seo_score || 0}</p>
                       <p className="text-xs text-gray-600">Score</p>
                     </div>
                   </div>
                   <Link
-                    href={`/companies/${audit.id}/seo-audit`}
+                    href={`/companies/${audit.company_id}/seo-audit`}
                     className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors text-sm font-medium"
                   >
                     View Details
@@ -189,6 +218,12 @@ export default function AuditsPage() {
           ))
         )}
       </div>
+
+      <AuditDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchAudits()}
+      />
     </div>
   );
 }
