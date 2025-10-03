@@ -33,7 +33,8 @@ async function callMcp(tool: string, params: any = {}) {
     const nodePath = process.execPath;
     const server = spawn(nodePath, [MCP_PATH], { stdio: ['pipe', 'pipe', 'pipe'] });
     const req = { id: String(Date.now()), tool, params } as any;
-    let out = ''; let err = '';
+    let out = '';
+    let err = '';
     server.stdout.on('data', (d) => { out += d.toString(); });
     server.stderr.on('data', (d) => { err += d.toString(); });
     server.on('close', () => {
@@ -77,39 +78,64 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { action, params } = await req.json();
+
     if (action === 'list') {
       const list = await listBlueprints();
       return NextResponse.json({ ok:true, result:{ blueprints: list } }, { status:200 });
     }
-    if (action === 'preview') {
+
+    if (action === 'introspect') {
       const id = params?.id as string;
       if (!id) return NextResponse.json({ ok:false, error:'Missing blueprint id' }, { status:400 });
       const filePath = join(BLUEPRINTS_DIR, `${id}.json`);
       if (!existsSync(filePath)) return NextResponse.json({ ok:false, error:'Blueprint not found' }, { status:404 });
       const bp = resolveEnvVars(JSON.parse(await readFile(filePath,'utf8')));
+      const steps = bp.steps || [];
+      const shape:any[] = [];
+      for (let i=0;i<steps.length;i++) {
+        const step = steps[i];
+        const insp = await callMcp('inspect_builder', { id: step.builder });
+        const vars = (insp?.result?.variables || []).map((v:any)=> ({ name:v.name, required: !!v.required, example: v.example ?? '' }));
+        shape.push({ index:i, builder: step.builder, variables: vars });
+      }
+      return NextResponse.json({ ok:true, result:{ steps: shape } }, { status:200 });
+    }
+
+    if (action === 'preview') {
+      const id = params?.id as string;
+      const overrides = (params?.overrides || []) as Array<{ index:number; variables: Record<string,string> }>;
+      if (!id) return NextResponse.json({ ok:false, error:'Missing blueprint id' }, { status:400 });
+      const filePath = join(BLUEPRINTS_DIR, `${id}.json`);
+      if (!existsSync(filePath)) return NextResponse.json({ ok:false, error:'Blueprint not found' }, { status:404 });
+      const bp = resolveEnvVars(JSON.parse(await readFile(filePath,'utf8')));
+
       const filesAgg: any[] = [];
-      for (const step of (bp.steps||[])) {
-        const p = await callMcp('preview_apply', { id: step.builder, engine:'eta', variables: step.variables||{} });
+      for (let i=0;i<(bp.steps||[]).length;i++) {
+        const step = bp.steps[i];
+        const ov = overrides.find(o=>o.index===i)?.variables || {};
+        const variables = { ...(step.variables||{}), ...ov };
+        const p = await callMcp('preview_apply', { id: step.builder, engine:'eta', variables });
         if (!p?.ok) return NextResponse.json({ ok:false, error:`Preview failed for ${step.builder}` }, { status:200 });
         const items = (p.result?.files || p.result || []) as Array<{ to:string; content?:string }>;
-        for (const it of items) filesAgg.push({ ...it, builder: step.builder });
+        for (const it of items) filesAgg.push({ ...it, builder: step.builder, index:i });
       }
-      // Build per-file status+diff
-      const result: any[] = [];
+      const result:any[] = [];
       for (const f of filesAgg) {
         const abs = join(REPO_ROOT, f.to);
         const exists = existsSync(abs);
-        if (!exists) { result.push({ to:f.to, builder:f.builder, status:'new', diff: await unifiedDiff(abs, f.content||'') }); continue; }
+        if (!exists) { result.push({ to:f.to, builder:f.builder, index:f.index, status:'new', diff: await unifiedDiff(abs, f.content||'') }); continue; }
         const cur = await readFile(abs,'utf8').catch(()=> '');
         const next = f.content||'';
-        if (cur === next) result.push({ to:f.to, builder:f.builder, status:'identical', diff:'' });
-        else result.push({ to:f.to, builder:f.builder, status:'modify', diff: await unifiedDiff(abs,next) });
+        if (cur === next) result.push({ to:f.to, builder:f.builder, index:f.index, status:'identical', diff:'' });
+        else result.push({ to:f.to, builder:f.builder, index:f.index, status:'modify', diff: await unifiedDiff(abs,next) });
       }
       return NextResponse.json({ ok:true, result:{ files: result } }, { status:200 });
     }
+
     if (action === 'apply') {
       const id = params?.id as string;
       const selections = params?.selections as Array<{ to:string; action:'write'|'skip' }> | undefined;
+      const overrides = (params?.overrides || []) as Array<{ index:number; variables: Record<string,string> }>;
       if (!id) return NextResponse.json({ ok:false, error:'Missing blueprint id' }, { status:400 });
       const filePath = join(BLUEPRINTS_DIR, `${id}.json`);
       if (!existsSync(filePath)) return NextResponse.json({ ok:false, error:'Blueprint not found' }, { status:404 });
@@ -117,10 +143,12 @@ export async function POST(req: NextRequest) {
       const planMap = new Map<string,'write'|'skip'>();
       (selections||[]).forEach(s=> planMap.set(s.to, s.action));
 
-      // Render all files again and write honoring allowlist & selections
       const writes:any[] = []; const skipped:any[] = [];
-      for (const step of (bp.steps||[])) {
-        const p = await callMcp('preview_apply', { id: step.builder, engine:'eta', variables: step.variables||{} });
+      for (let i=0;i<(bp.steps||[]).length;i++) {
+        const step = bp.steps[i];
+        const ov = overrides.find(o=>o.index===i)?.variables || {};
+        const variables = { ...(step.variables||{}), ...ov };
+        const p = await callMcp('preview_apply', { id: step.builder, engine:'eta', variables });
         if (!p?.ok) return NextResponse.json({ ok:false, error:`Preview failed for ${step.builder}` }, { status:200 });
         const items = (p.result?.files || p.result || []) as Array<{ to:string; content?:string }>;
         for (const it of items) {
@@ -130,7 +158,7 @@ export async function POST(req: NextRequest) {
           if (decision === 'skip') { skipped.push({ to:it.to, reason:'user-skip' }); continue; }
           await ensureDir(abs);
           await writeFile(abs, it.content||'', 'utf8');
-          writes.push({ to:it.to, bytes:(it.content||'').length });
+          writes.push({ to:it.to, bytes:(it.content||'').length, index:i, builder: step.builder });
         }
       }
       return NextResponse.json({ ok:true, result:{ wrote:writes, skipped } }, { status:200 });
