@@ -28,9 +28,17 @@ export default function BuildsPage() {
   const [ghPrivate, setGhPrivate] = useState(true);
   const [vzProject, setVzProject] = useState('geo-seo-demo');
 
-  // Deploy inputs
+  // Deploy inputs (local)
   const [deployService, setDeployService] = useState('');
   const [deployTail, setDeployTail] = useState('200');
+
+  // SSH deploy config
+  const [sshHost, setSshHost] = useState('your.server.tld');
+  const [sshUser, setSshUser] = useState('ubuntu');
+  const [sshPort, setSshPort] = useState('22');
+  const [sshKeyPath, setSshKeyPath] = useState('');
+  const [sshExtra, setSshExtra] = useState('');
+  const [sshComposePath, setSshComposePath] = useState('/srv/app/compose.yml');
 
   useEffect(() => {
     (async () => {
@@ -81,10 +89,29 @@ export default function BuildsPage() {
     setLog(JSON.stringify(j, null, 2));
   }
 
-  // Deploy flows
-  async function d(action: 'config'|'build'|'up'|'down'|'ps'|'logs') {
-    setLog(`Deploy action: ${action}…`);
-    const params: any = {};
+  // Local deploy flows
+  async function dLocal(action: 'config'|'build'|'up'|'down'|'ps'|'logs') {
+    setLog(`[local] ${action}…`);
+    const params: any = { target: 'local' };
+    if (action === 'logs') { params.service = deployService; params.tail = deployTail; }
+    const j = await apiDeploy(action, params);
+    setLog(JSON.stringify(j, null, 2));
+  }
+
+  // SSH deploy flows
+  async function saveSSH() {
+    setLog('Saving SSH config…');
+    const j = await apiDeploy('save_ssh', { host: sshHost, user: sshUser, port: Number(sshPort)||22, keyPath: sshKeyPath, extraSshArgs: sshExtra, composePath: sshComposePath });
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function statusSSH() {
+    setLog('Checking SSH…');
+    const j = await apiDeploy('status_ssh', {});
+    setLog(JSON.stringify(j, null, 2));
+  }
+  async function dSSH(action: 'config'|'build'|'up'|'down'|'ps'|'logs') {
+    setLog(`[ssh] ${action}…`);
+    const params: any = { target: 'ssh', composePath: sshComposePath };
     if (action === 'logs') { params.service = deployService; params.tail = deployTail; }
     const j = await apiDeploy(action, params);
     setLog(JSON.stringify(j, null, 2));
@@ -99,9 +126,9 @@ export default function BuildsPage() {
         <button className="px-3 py-2 border rounded" onClick={doChecks}>Run Checks</button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 2xl:grid-cols-3 gap-6">
         {/* Catalog */}
-        <div className="border rounded p-4 xl:col-span-1">
+        <div className="border rounded p-4">
           <h2 className="font-medium mb-2">Builder Catalog</h2>
           {loading && <div>Loading…</div>}
           {!loading && !hasBuilders && <div>No builders found. Ensure /builders has manifests.</div>}
@@ -132,9 +159,9 @@ export default function BuildsPage() {
           </ul>
         </div>
 
-        {/* Link + Deploy */}
-        <div className="border rounded p-4 xl:col-span-2">
-          <div className="grid md:grid-cols-2 gap-6">
+        {/* Link + Deploy (Local / SSH) */}
+        <div className="border rounded p-4 2xl:col-span-2">
+          <div className="grid lg:grid-cols-2 gap-6">
             {/* Link Panel */}
             <div>
               <h2 className="font-medium mb-2">One-Click Link: GitHub ↔ Vercel</h2>
@@ -165,28 +192,53 @@ export default function BuildsPage() {
               </div>
             </div>
 
-            {/* Deploy Panel */}
+            {/* Local Deploy */}
             <div>
-              <h2 className="font-medium mb-2">Deploy (Docker Compose)</h2>
+              <h2 className="font-medium mb-2">Deploy (Local Docker Compose)</h2>
               <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <button className="px-3 py-2 border rounded" onClick={()=>d('config')}>Config</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>d('build')}>Build</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>d('up')}>Up (detached)</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>d('down')}>Down</button>
-                  <button className="px-3 py-2 border rounded" onClick={()=>d('ps')}>PS</button>
+                <div className="flex flex-wrap gap-2">
+                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('config')}>Config</button>
+                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('build')}>Build</button>
+                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('up')}>Up</button>
+                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('down')}>Down</button>
+                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('ps')}>PS</button>
                 </div>
                 <div className="flex items-center gap-2">
                   <label className="w-24">Logs service</label>
                   <input className="border rounded px-2 py-1 w-full" placeholder="(optional) service name" value={deployService} onChange={e=>setDeployService(e.target.value)} />
                   <label className="w-10">Tail</label>
                   <input className="border rounded px-2 py-1 w-24" value={deployTail} onChange={e=>setDeployTail(e.target.value)} />
-                  <button className="px-3 py-2 border rounded" onClick={()=>d('logs')}>Logs</button>
+                  <button className="px-3 py-2 border rounded" onClick={()=>dLocal('logs')}>Logs</button>
                 </div>
               </div>
-              <h3 className="font-medium mt-4">Output</h3>
-              <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[220px]">{log || 'Ready.'}</pre>
             </div>
+          </div>
+
+          <hr className="my-6" />
+
+          {/* SSH Deploy */}
+          <div>
+            <h2 className="font-medium mb-2">Deploy (Remote via SSH)</h2>
+            <div className="grid md:grid-cols-2 gap-3 text-sm">
+              <input className="border rounded px-2 py-1 w-full" placeholder="Host (your.server.tld)" value={sshHost} onChange={e=>setSshHost(e.target.value)} />
+              <input className="border rounded px-2 py-1 w-full" placeholder="User (e.g. ubuntu)" value={sshUser} onChange={e=>setSshUser(e.target.value)} />
+              <input className="border rounded px-2 py-1 w-full" placeholder="Port (22)" value={sshPort} onChange={e=>setSshPort(e.target.value)} />
+              <input className="border rounded px-2 py-1 w-full" placeholder="Key path (optional, e.g. C:\\Users\\you\\.ssh\\id_rsa)" value={sshKeyPath} onChange={e=>setSshKeyPath(e.target.value)} />
+              <input className="border rounded px-2 py-1 w-full md:col-span-2" placeholder="Extra ssh args (optional) e.g. -o StrictHostKeyChecking=no" value={sshExtra} onChange={e=>setSshExtra(e.target.value)} />
+              <input className="border rounded px-2 py-1 w-full md:col-span-2" placeholder="Remote compose path (/srv/app/compose.yml)" value={sshComposePath} onChange={e=>setSshComposePath(e.target.value)} />
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button className="px-3 py-2 border rounded" onClick={saveSSH}>Save SSH</button>
+              <button className="px-3 py-2 border rounded" onClick={statusSSH}>Check SSH</button>
+              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('config')}>Config</button>
+              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('build')}>Build</button>
+              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('up')}>Up</button>
+              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('down')}>Down</button>
+              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('ps')}>PS</button>
+              <button className="px-3 py-2 border rounded" onClick={()=>dSSH('logs')}>Logs</button>
+            </div>
+            <h3 className="font-medium mt-4">Output</h3>
+            <pre className="text-xs whitespace-pre-wrap bg-black text-green-200 p-3 rounded min-h-[220px]">{log || 'Ready.'}</pre>
           </div>
         </div>
       </div>
