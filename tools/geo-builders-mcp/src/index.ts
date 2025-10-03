@@ -27,12 +27,13 @@ interface Resp {
   error?: { message: string };
 }
 
-const repoRoot = resolve(process.cwd());
+// Navigate up to repo root from tools/geo-builders-mcp
+const repoRoot = resolve(join(import.meta.dirname || __dirname, '..', '..', '..'));
 const buildersRoot = join(repoRoot, 'builders');
 
 async function list_builders(_params: any) {
   const entries = await fg(
-    ['*/manifest.json', '*/manifest.yaml'],
+    ['*/builder.manifest.json', '*/builder.manifest.yaml'],
     { cwd: buildersRoot, deep: 2 }
   );
 
@@ -62,8 +63,8 @@ async function inspect_builder(params: any) {
   const id = params?.id as string;
   if (!id) throw new Error('id required');
 
-  const json = join(buildersRoot, id, 'manifest.json');
-  const yamlPath = join(buildersRoot, id, 'manifest.yaml');
+  const json = join(buildersRoot, id, 'builder.manifest.json');
+  const yamlPath = join(buildersRoot, id, 'builder.manifest.yaml');
   const existsJson = existsSync(json);
   const existsYaml = existsSync(yamlPath);
 

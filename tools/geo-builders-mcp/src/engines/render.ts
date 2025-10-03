@@ -1,36 +1,23 @@
+import { readFile } from 'fs/promises';
 import { createRequire } from 'module';
-import { readFileUtf8 } from '../utils/fsops.js';
-
 const require = createRequire(import.meta.url);
+// eta is CJS; load via require to avoid ESM resolver quirks on Windows
 const { Eta } = require('eta');
+import Handlebars from 'handlebars';
 
 export type Engine = 'eta' | 'handlebars';
 
-const eta = new Eta({
-  autoEscape: false,
-  autoTrim: false,
-});
+const eta = new Eta({ useWith: true, autoEscape: false });
 
-export async function renderTemplate(
-  engine: Engine,
-  templatePath: string,
-  variables: Record<string, unknown>
-): Promise<string> {
-  const templateContent = await readFileUtf8(templatePath);
+export async function renderTemplate(engine: Engine, absTemplatePath: string, vars: Record<string, unknown>): Promise<string> {
+  const raw = await readFile(absTemplatePath, 'utf8');
+  return renderInline(engine, raw, vars);
+}
 
-  if (engine === 'eta') {
-    const rendered = eta.renderString(templateContent, variables);
-
-    if (typeof rendered !== 'string') {
-      throw new Error('Eta render did not return a string');
-    }
-
-    return rendered;
-  }
-
+export function renderInline(engine: Engine, raw: string, vars: Record<string, unknown>): string {
   if (engine === 'handlebars') {
-    throw new Error('Handlebars engine not yet implemented');
+    const tpl = Handlebars.compile(raw, { noEscape: true });
+    return tpl(vars);
   }
-
-  throw new Error(`Unknown template engine: ${engine}`);
+  return eta.renderString(raw, vars) ?? '';
 }
