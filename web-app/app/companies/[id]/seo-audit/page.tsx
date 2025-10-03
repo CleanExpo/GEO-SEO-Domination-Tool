@@ -215,9 +215,9 @@ export default function SEOAuditPage() {
               )}
 
               <div className="mt-6">
-                <h4 className="font-semibold text-gray-900 mb-3">Issues Found ({audit.issues.length})</h4>
+                <h4 className="font-semibold text-gray-900 mb-3">Issues Found ({audit.issues?.length || 0})</h4>
                 <div className="space-y-3">
-                  {audit.issues.map((issue, idx) => (
+                  {audit.issues?.map((issue, idx) => (
                     <div
                       key={idx}
                       className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
