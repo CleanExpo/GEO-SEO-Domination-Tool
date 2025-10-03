@@ -47,9 +47,15 @@ export async function PUT(
     const body = await request.json();
     const validatedData = companyUpdateSchema.parse(body);
 
+    // Create update object with proper typing
+    const updateData: Record<string, unknown> = {
+      ...validatedData,
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('companies')
-      .update({ ...validatedData, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
