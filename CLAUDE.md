@@ -10,6 +10,15 @@ GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platfo
 
 Both applications share core SEO analysis functionality but serve different deployment contexts.
 
+**Current Branch**: `new-life` - Next development phase with build assistant tools integration
+
+**Core Features**:
+- Lighthouse Website Audits & E-E-A-T Score Calculation
+- Local Pack Tracking & Share of Local Voice (SoLV)
+- AI Search Optimization (7 proven strategies, 120%-20,000% growth)
+- Multi-platform AI Visibility Tracking (Claude, ChatGPT, Google AI)
+- Campaign Management with topic clustering & buyer journey mapping
+
 ## Development Commands
 
 ### Electron Desktop App
@@ -288,6 +297,13 @@ The repository includes extensive documentation:
 - `SCHEDULER_*.md` - Job scheduler documentation and package scripts
 - `NOTIFICATION_*.md` - Notification system architecture
 - `*_MCP_GUIDE.md` - Integration guides for SEMrush, GitHub, Vercel, Playwright, Schema.org
+- `docs/build-assistant-tools/` - Build assistant tools documentation
+  - `README.md` - Master index with integration strategies
+  - `mcp-server-guide.md` - Complete MCP server building guide (Python, TypeScript, Java, Kotlin, C#)
+  - `claude-code-cli.md` - Claude Code CLI reference (subagents, tools, automation)
+  - `openai-codex-cloud.md` - OpenAI Codex Cloud guide (delegated tasks, GitHub integration)
+  - `parallel-r1.md` - Parallel thinking framework for AI optimization
+  - `spec-kit.md` - GitHub documentation framework (DocFX, GitHub Pages)
 
 **Before making significant changes**: Review `DEPLOYMENT_CHECKPOINT.md` for known issues and fixes.
 
@@ -330,3 +346,87 @@ cd web-app && npm run lint
 - **Database**: Supabase PostgreSQL (production) or SQLite (development)
 
 Current production URL: `https://geo-seo-domination-tool-c9zk94zwn-unite-group.vercel.app`
+
+## Build Assistant Tools
+
+The `new-life` branch integrates five build assistant tools for accelerated development:
+
+### MCP (Model Context Protocol) Servers
+Build custom tools that extend Claude's capabilities. See `docs/build-assistant-tools/mcp-server-guide.md`.
+
+**Potential SEO MCP Servers**:
+- **SEO Audit Server**: Technical audits, mobile performance, page speed
+- **Keyword Research Server**: Opportunities, SERP analysis, search volume
+- **Competitor Analysis Server**: Keyword tracking, backlinks, rankings
+- **Local SEO Server**: GBP status, citations, local rankings
+- **Content Optimization Server**: Quality analysis, meta tags, suggestions
+
+**Languages**: Python (FastMCP), TypeScript (MCP SDK), Java (Spring AI), Kotlin, C#
+
+### Claude Code CLI
+Automate code reviews, test generation, and documentation. See `docs/build-assistant-tools/claude-code-cli.md`.
+
+**Key Commands**:
+```bash
+claude                 # Interactive mode
+claude -c             # Continue conversation
+claude -p "query"     # Print and exit
+claude --agents {...} # Define subagents for specialized tasks
+```
+
+**Use Cases**:
+- Automated code reviews with `--agents code-reviewer.json`
+- Test generation with custom subagents
+- CI/CD integration with `--allowedTools` restrictions
+- Multi-agent workflows for complex tasks
+
+### OpenAI Codex Cloud
+Cloud-based AI coding with sandboxed execution. See `docs/build-assistant-tools/openai-codex-cloud.md`.
+
+**Access**: chatgpt.com/codex or `@codex` in GitHub issues/PRs
+
+**Capabilities**:
+- Bug fixing with isolated container execution
+- Security audits and vulnerability scanning
+- Architecture documentation (mermaid diagrams)
+- Parallel task processing across multiple containers
+
+### Parallel-R1 Framework
+Apply parallel thinking concepts to SEO analysis. See `docs/build-assistant-tools/parallel-r1.md`.
+
+**Applications**:
+- Multi-strategy SEO analysis (explore different optimization approaches)
+- Parallel ranking checks (test multiple keyword strategies)
+- Cross-verification of AI recommendations
+- Enhanced reasoning for content suggestions
+
+### GitHub Spec-Kit
+Documentation as code with DocFX. See `docs/build-assistant-tools/spec-kit.md`.
+
+**Setup**:
+```bash
+dotnet tool install -g docfx
+cd docs && docfx init
+docfx docfx.json --serve  # Local preview
+```
+
+**Use Cases**:
+- API documentation with automated GitHub Pages deployment
+- Technical specifications version-controlled with code
+- Team collaboration on documentation
+
+### Tool Synergy
+
+**Development Workflow**:
+1. MCP Servers: Build custom SEO tools
+2. Codex: Generate and debug code in cloud
+3. Claude Code: Review and refactor locally
+4. Spec-Kit: Document features and APIs
+5. Parallel-R1: Optimize complex algorithms
+
+**Quality Assurance**:
+1. MCP Servers: Automated SEO audits
+2. Codex: Security vulnerability scanning
+3. Claude Code: Test generation with subagents
+4. Parallel-R1: Multi-path verification
+5. Spec-Kit: Test documentation
