@@ -12,12 +12,12 @@ if [ ! -f "package.json" ]; then
   exit 1
 fi
 
-# Install dependencies
+# Install dependencies (skip optional to avoid build issues)
 echo "📦 Installing dependencies..."
-npm install
+npm install --no-optional
 
-# Build the server
-echo "🏗️  Building TypeScript..."
+# Build the server with tsc (pure TypeScript, no bundler)
+echo "🏗️  Building TypeScript with tsc..."
 npm run build
 
 # Verify build

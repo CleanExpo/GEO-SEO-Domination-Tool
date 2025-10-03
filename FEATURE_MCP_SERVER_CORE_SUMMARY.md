@@ -164,19 +164,23 @@ docs/
 
 ### 1. Install Dependencies (MANUAL STEP)
 
-The npm install timed out during development. You need to run:
+**UPDATE (v0.1.1)**: Build system fixed to use pure TypeScript instead of bundlers.
 
 ```powershell
 cd D:\GEO_SEO_Domination-Tool\geo-seo-domination-tool\tools\geo-builders-mcp
-npm install
-npm run build
+npm install --no-optional  # Skip optional deps to avoid Windows issues
+npm run build              # Pure tsc compilation
 ```
 
-Or use the setup script:
+**If you encounter errors**, use the automated fix:
+```powershell
+npm run fix:build
+```
 
+Or use the updated setup script:
 ```powershell
 cd tools\geo-builders-mcp
-.\scripts\setup.ps1
+.\scripts\setup.ps1  # Now includes --no-optional flag
 ```
 
 ### 2. Configure Claude Desktop

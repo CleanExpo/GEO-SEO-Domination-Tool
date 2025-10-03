@@ -10,12 +10,12 @@ if (-not (Test-Path "package.json")) {
     exit 1
 }
 
-# Install dependencies
+# Install dependencies (skip optional to avoid Windows build issues)
 Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
-npm install
+npm install --no-optional
 
-# Build the server
-Write-Host "🏗️  Building TypeScript..." -ForegroundColor Yellow
+# Build the server with tsc (pure TypeScript, no bundler)
+Write-Host "🏗️  Building TypeScript with tsc..." -ForegroundColor Yellow
 npm run build
 
 # Verify build

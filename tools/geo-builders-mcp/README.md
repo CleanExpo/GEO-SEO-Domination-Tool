@@ -14,9 +14,22 @@ Model Context Protocol server that discovers, previews, and applies modular buil
 
 ```bash
 cd tools/geo-builders-mcp
-npm install
-npm run build
+npm install --no-optional  # Skip optional deps to avoid Windows build issues
+npm run build              # Pure TypeScript compilation (tsc)
 ```
+
+**Troubleshooting Installation on Windows:**
+
+If you encounter build errors related to optional dependencies (esbuild, rollup, etc.), use the automated fix script:
+
+```powershell
+npm run fix:build
+```
+
+This will:
+- Clean node_modules and lockfile
+- Reinstall with `--no-optional`
+- Build with pure TypeScript (no bundler)
 
 ## Usage with Claude Desktop
 
@@ -128,7 +141,7 @@ Generate a new MCP tool implementation for the geo-builders-mcp server (meta!).
 # Run in development mode
 npm run dev
 
-# Build for production
+# Build for production (pure TypeScript, no bundler)
 npm run build
 
 # Type check
@@ -136,7 +149,16 @@ npm run typecheck
 
 # Lint
 npm run lint
+
+# Fix build issues (Windows)
+npm run fix:build
 ```
+
+**Build System:**
+- Uses pure TypeScript compiler (`tsc`) instead of bundlers
+- Avoids optional dependency issues on Windows
+- Outputs ESM modules to `dist/`
+- Generates `.d.ts` declaration files
 
 ## Architecture
 

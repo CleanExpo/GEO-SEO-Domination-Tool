@@ -36,9 +36,17 @@ Result: Consistent, validated, production-ready code
 
 ```bash
 cd tools/geo-builders-mcp
-npm install
-npm run build
+npm install --no-optional  # Skip optional deps to avoid Windows build issues
+npm run build              # Pure TypeScript compilation (tsc)
 ```
+
+**Windows Users**: If you encounter errors with optional dependencies (esbuild, rollup), use:
+
+```powershell
+npm run fix:build
+```
+
+This automated script will clean, reinstall without optional deps, and build with pure TypeScript.
 
 ### 2. Configure Claude Desktop
 

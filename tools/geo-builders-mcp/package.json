@@ -1,6 +1,6 @@
 {
   "name": "geo-builders-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "MCP server that discovers, previews, and applies modular builders into an existing project (Next.js-first; SQLite/Postgres+Supabase baseline; Prisma/Docker via optional builders).",
@@ -10,11 +10,12 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsup src/index.ts --format esm --dts --out-dir dist --clean",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx || exit 0",
-    "preflight:windows": "node scripts/preflight-windows.mjs || exit 0"
+    "preflight:windows": "node scripts/preflight-windows.mjs || exit 0",
+    "fix:build": "powershell -ExecutionPolicy Bypass -File ./scripts/fix-build.ps1"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -36,7 +37,6 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.7.4",
     "eslint": "^9.10.0",
-    "tsup": "^8.2.4",
     "tsx": "^4.19.1",
     "typescript": "^5.5.4"
   }
