@@ -54,3 +54,6 @@ coverage
 
 # OS
 Thumbs.db
+
+# Local integration secrets (do not commit)
+server/secrets/*.json
