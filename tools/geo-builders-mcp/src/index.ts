@@ -116,7 +116,7 @@ class GEOBuildersMCPServer {
           }
 
           case "inspect_builder": {
-            const params = args as BuilderInspectParams;
+            const params = args as unknown as BuilderInspectParams;
             const result = await inspectBuilder(this.registry, params);
             return {
               content: [
