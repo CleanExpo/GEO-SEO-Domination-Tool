@@ -1,21 +1,41 @@
 'use client';
 
-import { useState } from 'react';
-import { TrendingUp, Plus, Search, ArrowUp, ArrowDown, Minus, Target } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, Plus, Search, ArrowUp, ArrowDown, Minus, Target, Loader2 } from 'lucide-react';
+import { KeywordDialog } from '@/components/KeywordDialog';
 
 interface Keyword {
   id: string;
+  company_id: string;
   keyword: string;
-  position: number;
-  previousPosition: number;
-  searchVolume: number;
-  difficulty: number;
-  url: string;
-  company: string;
+  search_volume?: number;
+  difficulty?: number;
+  cpc?: number;
+  location?: string;
+  created_at: string;
 }
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchKeywords();
+  }, []);
+
+  const fetchKeywords = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/keywords');
+      const data = await res.json();
+      setKeywords(data.keywords || []);
+    } catch (err) {
+      console.error('Failed to fetch keywords:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -33,12 +53,13 @@ export default function KeywordsPage() {
   };
 
   const filteredKeywords = keywords.filter(kw =>
-    kw.keyword.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    kw.company.toLowerCase().includes(searchTerm.toLowerCase())
+    kw.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const avgPosition = keywords.length > 0 ? Math.round(keywords.reduce((sum, kw) => sum + kw.position, 0) / keywords.length) : 0;
-  const totalVolume = keywords.reduce((sum, kw) => sum + kw.searchVolume, 0);
+  const totalVolume = keywords.reduce((sum, kw) => sum + (kw.search_volume || 0), 0);
+  const avgDifficulty = keywords.length > 0
+    ? Math.round(keywords.reduce((sum, kw) => sum + (kw.difficulty || 0), 0) / keywords.length)
+    : 0;
 
   return (
     <div className="p-8">
@@ -48,7 +69,10 @@ export default function KeywordsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Keyword Tracking</h1>
             <p className="text-gray-600 mt-1">Monitor your keyword rankings and performance</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
             <Plus className="h-5 w-5" />
             Add Keywords
           </button>
@@ -64,7 +88,7 @@ export default function KeywordsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Keywords</p>
-              <p className="text-2xl font-bold text-gray-900">{keywords.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{loading ? '-' : keywords.length}</p>
             </div>
           </div>
         </div>
@@ -74,8 +98,8 @@ export default function KeywordsPage() {
               <TrendingUp className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Avg Position</p>
-              <p className="text-2xl font-bold text-gray-900">{avgPosition}</p>
+              <p className="text-sm text-gray-600">Avg Difficulty</p>
+              <p className="text-2xl font-bold text-gray-900">{loading ? '-' : avgDifficulty}</p>
             </div>
           </div>
         </div>
@@ -86,7 +110,7 @@ export default function KeywordsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Search Volume</p>
-              <p className="text-2xl font-bold text-gray-900">{totalVolume.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">{loading ? '-' : totalVolume.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -96,9 +120,9 @@ export default function KeywordsPage() {
               <ArrowUp className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Top 10 Rankings</p>
+              <p className="text-sm text-gray-600">Avg CPC</p>
               <p className="text-2xl font-bold text-gray-900">
-                {keywords.filter(kw => kw.position <= 10).length}
+                {loading ? '-' : `$${(keywords.reduce((sum, kw) => sum + (kw.cpc || 0), 0) / (keywords.length || 1)).toFixed(2)}`}
               </p>
             </div>
           </div>
@@ -121,7 +145,11 @@ export default function KeywordsPage() {
 
       {/* Keywords Table */}
       <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50">
-        {filteredKeywords.length === 0 && keywords.length === 0 ? (
+        {loading ? (
+          <div className="p-12 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          </div>
+        ) : filteredKeywords.length === 0 && keywords.length === 0 ? (
           <div className="p-12 text-center">
             <div className="flex flex-col items-center gap-4">
               <Target className="h-16 w-16 text-gray-300" />
@@ -130,7 +158,10 @@ export default function KeywordsPage() {
                 <p className="text-gray-600 mb-6">
                   Start tracking your keyword rankings to monitor your SEO performance over time.
                 </p>
-                <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto">
+                <button
+                  onClick={() => setIsDialogOpen(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
+                >
                   <Plus className="h-5 w-5" />
                   Add Your First Keywords
                 </button>
@@ -158,64 +189,60 @@ export default function KeywordsPage() {
                     Keyword
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Position
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Change
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Search Volume
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Difficulty
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Company
+                    CPC
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Location
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredKeywords.map((keyword) => {
-                  const change = getPositionChange(keyword.position, keyword.previousPosition);
-                  const ChangeIcon = change.icon;
-                  return (
-                    <tr key={keyword.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">{keyword.keyword}</span>
-                          <span className="text-sm text-gray-500">{keyword.url}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold text-gray-900">#{keyword.position}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`flex items-center gap-1 ${change.color}`}>
-                          <ChangeIcon className="h-4 w-4" />
-                          <span className="font-medium">{change.value}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-gray-900">{keyword.searchVolume.toLocaleString()}/mo</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                {filteredKeywords.map((keyword) => (
+                  <tr key={keyword.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-gray-900">{keyword.keyword}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-gray-900">
+                        {keyword.search_volume ? `${keyword.search_volume.toLocaleString()}/mo` : '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {keyword.difficulty ? (
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(keyword.difficulty)}`}>
                           {keyword.difficulty}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-gray-900">{keyword.company}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-gray-900">
+                        {keyword.cpc ? `$${keyword.cpc.toFixed(2)}` : '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-gray-600">{keyword.location || '-'}</span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      <KeywordDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={() => fetchKeywords()}
+      />
     </div>
   );
 }
