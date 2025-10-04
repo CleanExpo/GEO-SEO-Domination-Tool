@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/auth/supabase-client';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
-  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock
+  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut
 } from 'lucide-react';
 
 const navigation = [
@@ -46,6 +46,7 @@ const membersNavigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<{ email?: string; user_metadata?: { full_name?: string; name?: string } } | null>(null);
   const supabase = createClient();
 
@@ -63,6 +64,11 @@ export function Sidebar() {
 
     return () => subscription.unsubscribe();
   }, [supabase]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
   const renderNavSection = (title: string, items: typeof navigation) => (
     <div className="mb-6">
@@ -122,6 +128,17 @@ export function Sidebar() {
           <Settings className="h-5 w-5" />
           Settings
         </Link>
+      </div>
+
+      {/* Sign Out */}
+      <div className="p-4 border-t border-gray-200/50">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full"
+        >
+          <LogOut className="h-5 w-5" />
+          Sign Out
+        </button>
       </div>
 
       {/* User Profile */}
