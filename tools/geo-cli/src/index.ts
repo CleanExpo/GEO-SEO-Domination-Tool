@@ -2,12 +2,13 @@
 import { Command } from 'commander';
 import { baseUrl, jget, jpost, pwsh, sh, repoRoot } from './util.js';
 import { runDoctor } from './doctor.js';
+import { setSecretKV, getSecretKV, listSecretsRedacted } from './secrets.js';
 
 const program = new Command();
 program
   .name('geo')
   .description('GEO CRM & MCP CLI (Vercel-like)')
-  .version('0.1.1');
+  .version('0.1.2');
 
 program
   .command('status')
@@ -159,5 +160,29 @@ program
   .description('Run local + remote health checks and suggest fixes')
   .option('--base-url <url>')
   .action(async (opts)=> runDoctor(opts));
+
+program
+  .command('secrets')
+  .description('Manage local secrets (gitignored): github.token, vercel.token, supabase.url, supabase.anonKey')
+  .option('--set <KEY=VALUE>', 'Set a secret (e.g., github_token=ghp_xxx, supabase_url=https://...)')
+  .option('--get <KEY>', 'Get a secret by key (prints raw value)')
+  .option('--list', 'List secrets redacted')
+  .action((opts)=>{
+    if (opts.set){
+      const [k,v] = String(opts.set).split('=',2);
+      if (!k || v===undefined) { console.error('Provide KEY=VALUE'); process.exit(1); }
+      const fp = setSecretKV(k.replace('.', '_'), v);
+      console.log('✓ Saved', k, '→', fp);
+      return;
+    }
+    if (opts.get){
+      const val = getSecretKV(String(opts.get).replace('.', '_'));
+      if (val==null) { process.exitCode = 1; return; }
+      process.stdout.write(String(val));
+      return;
+    }
+    const j = listSecretsRedacted();
+    console.log(JSON.stringify(j, null, 2));
+  });
 
 program.parseAsync(process.argv);

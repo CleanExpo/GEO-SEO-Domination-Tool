@@ -57,6 +57,8 @@ Thumbs.db
 
 # Local integration secrets (do not commit)
 server/secrets/*.json
+server/secrets/
+server/logs/
 
 # Local env (ensure ignored)
 web-app/.env.local
