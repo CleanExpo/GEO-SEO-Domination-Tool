@@ -11,7 +11,7 @@ services:
       - web_green
 
   web_blue:
-    image: ghcr.io/YOUR_ORG/YOUR_REPO/web:latest
+    image: ghcr.io/cleanexpo/geo-seo-domination-tool/web:latest
     container_name: geo_web_blue
     env_file:
       - ../../geo-seo-domination-tool/web-app/.env.local
@@ -23,7 +23,7 @@ services:
       - "3000"
 
   web_green:
-    image: ghcr.io/YOUR_ORG/YOUR_REPO/web:latest
+    image: ghcr.io/cleanexpo/geo-seo-domination-tool/web:latest
     container_name: geo_web_green
     env_file:
       - ../../geo-seo-domination-tool/web-app/.env.local

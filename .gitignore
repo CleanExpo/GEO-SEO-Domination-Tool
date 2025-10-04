@@ -109,3 +109,4 @@ server/secrets/deploy.local.json
 # Remote sync temp artifacts
 server/temp/
 .deployignore
+.git-rewrite/
