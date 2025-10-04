@@ -1,0 +1,13 @@
+{
+  "folders": [
+    { "path": "." },
+    { "path": "web-app" },
+    { "path": "tools/geo-builders-mcp" },
+    { "path": "tools/geo-cli" }
+  ],
+  "settings": {
+    "files.eol": "\n",
+    "editor.formatOnSave": true,
+    "terminal.integrated.defaultProfile.windows": "PowerShell"
+  }
+}

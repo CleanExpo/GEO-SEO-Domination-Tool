@@ -1,4 +1,9 @@
-# GEO-SEO Domination Tool
+# GEO CRM — Vercel-style Builder Platform
+
+Welcome! This repo gives you a Vercel-like experience in your own CRM:
+- **CRM UI** for blueprints, builders, deploys, release monitor.
+- **MCP server** powering Claude-driven code generation.
+- **`geo` CLI** mirroring Vercel commands (init, link, env, deploy, logs, release).
 
 Advanced local SEO and GEO ranking analysis tool integrating Claude AI and SEMrush APIs to identify gaps, optimize E-E-A-T signals, and dominate Google's Local 3-Pack.
 
@@ -21,17 +26,30 @@ Advanced local SEO and GEO ranking analysis tool integrating Claude AI and SEMru
 - **Topic Cluster & Buyer Journey Mapping**
 - **Seasonality & Authority Building Tools**
 
-## 📋 Setup
+## 📋 Quickstart (Windows + VS Code)
 
-1. **Install dependencies:**
+1. **Clone** and open in VS Code.
+2. **Run bootstrap** (installs deps, builds MCP/Web, links CLI, health check):
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1
+   ```
+3. Open **Run and Debug → Run All: Web + MCP + Worker** (or Tasks: *Web: dev*, *MCP: start*).
+4. Visit **http://localhost:3000** → **/projects/catalog**, **/settings/integrations**, **/release/monitor**, **/health**.
+5. (Optional) One-shot scaffold:
    ```bash
-   npm install
+   geo init --id saas-starter --owner YOUR_ORG --repo my-saas
    ```
 
-2. **Configure API keys:**
-   ```bash
-   cp .env.example .env
-   ```
+## What's inside
+- **web-app/** Next.js CRM
+- **tools/geo-builders-mcp/** MCP server (TypeScript)
+- **tools/geo-cli/** `geo` CLI
+- **infra/docker/** Docker & compose
+- **blueprints/** Turn-key stacks
+
+See **docs/ARCHITECTURE.md** and **docs/OPERATIONS.md** for deeper details.
+
+## 📋 Legacy Setup (Original SEO Tool)
 
    Add your API keys to `.env`:
    ```
