@@ -10,7 +10,7 @@ GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platfo
 
 Both applications share core SEO analysis functionality but serve different deployment contexts.
 
-**Current Branch**: `new-life` - Next development phase with build assistant tools integration
+**Current Branch**: `main` - Production-ready with monitoring and health systems
 
 **Core Features**:
 - Lighthouse Website Audits & E-E-A-T Score Calculation
@@ -37,6 +37,15 @@ npm run dev              # Start Next.js dev server (port 3000)
 npm run build            # Build for production (runs TypeScript check first)
 npm start                # Start production server
 npm run lint             # Run Next.js linter
+```
+
+### Health & Monitoring
+```bash
+pwsh scripts/uptime/ping.ps1              # Manual uptime check
+pwsh scripts/fix/repair-health.ps1        # Fix MCP dist and create secrets
+pwsh scripts/quick/set-secrets.ps1        # Set integration tokens interactively
+start http://localhost:3004/health         # View system health dashboard
+start http://localhost:3004/settings/integrations  # Manage API keys
 ```
 
 ### Database Management
@@ -179,6 +188,28 @@ Both apps use **strict TypeScript**. Common issues from deployment history:
 3. **Interface Property Access**:
    Always verify properties exist in interfaces. Retrieve from source if needed.
 
+4. **useSearchParams() Suspense Boundary** (CRITICAL for Vercel):
+   ```typescript
+   // ❌ Wrong (causes Vercel build errors)
+   'use client';
+   function Component() {
+     const searchParams = useSearchParams();
+     return <div>{searchParams.get('q')}</div>;
+   }
+
+   // ✅ Correct (wrap in Suspense)
+   'use client';
+   import { Suspense } from 'react';
+   function Inner() {
+     const searchParams = useSearchParams();
+     return <div>{searchParams.get('q')}</div>;
+   }
+   export function Component() {
+     return <Suspense fallback={null}><Inner /></Suspense>;
+   }
+   ```
+   **Reason**: Next.js static generation requires Suspense for dynamic hooks. Missing this breaks Vercel deployments.
+
 ### Next.js Configuration
 
 - **Output**: `standalone` (for Docker/Vercel)
@@ -228,13 +259,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 ### Web App Routes (Next.js App Router)
 
-**23 total pages** organized into 5 sections:
+**25+ pages** organized into 6 sections:
 
-1. **SEO Tools**: `/dashboard`, `/companies`, `/audits`, `/keywords`, `/rankings`, `/reports`
+1. **SEO Tools**: `/dashboard`, `/companies`, `/audits`, `/keywords`, `/rankings`, `/reports`, `/seo/results`, `/schedule`
 2. **CRM**: `/crm/contacts`, `/crm/deals`, `/crm/tasks`, `/crm/calendar`
-3. **Projects**: `/projects`, `/projects/github`, `/projects/notes`
+3. **Projects**: `/projects`, `/projects/github`, `/projects/notes`, `/release/monitor`
 4. **Resources**: `/resources/prompts`, `/resources/components`, `/resources/ai-tools`, `/resources/tutorials`
-5. **Settings**: `/settings`, `/support`
+5. **System**: `/health`, `/settings`, `/settings/integrations`, `/support`
+6. **Deploy**: `/release/bluegreen` (blue-green deployment UI)
 
 **Dynamic Routes**: `/companies/[id]/seo-audit`, `/companies/[id]/keywords`, `/companies/[id]/rankings`
 
@@ -290,14 +322,29 @@ DROP TABLE example;
 
 The repository includes extensive documentation:
 
+### Core Documentation
 - `DEPLOYMENT_CHECKPOINT.md` - Last successful build details and TypeScript fixes
+- `DATABASE_AUDIT_SUMMARY.md` - ✅ Confirms real database connections (no mocks)
 - `SUPABASE_SETUP.md` - Database setup guide
 - `DATABASE_ARCHITECTURE.md` - Database design diagrams and relationships
-- `NAVIGATION_COMPLETE.md` - Complete navigation map with all 23 pages
+- `NAVIGATION_COMPLETE.md` - Complete navigation map with all pages
+- `GO_LIVE_CHECKLIST.md` - Production deployment guide
+
+### Operations & Monitoring
+- `UPTIME.md` - Uptime monitoring system (24h availability tracking)
+- `HEALTH_REPAIR.md` - Health check repair script documentation
+- `INTEGRATIONS_UI.md` - API key management UI guide
+- `PROVISION_PROD.md` - Production provisioning with GHCR
+- `SHIP_IT_RUNBOOK.md` - Blue-green deployment runbook
+- `ANALYTICS_TAG_STAMPING.md` - Release tracking system
+
+### Integration Guides
+- `*_MCP_GUIDE.md` - Integration guides for SEMrush, GitHub, Vercel, Playwright, Schema.org
 - `SCHEDULER_*.md` - Job scheduler documentation and package scripts
 - `NOTIFICATION_*.md` - Notification system architecture
-- `*_MCP_GUIDE.md` - Integration guides for SEMrush, GitHub, Vercel, Playwright, Schema.org
-- `docs/build-assistant-tools/` - Build assistant tools documentation
+
+### Build Assistant Tools
+- `docs/build-assistant-tools/` - Advanced development tooling
   - `README.md` - Master index with integration strategies
   - `mcp-server-guide.md` - Complete MCP server building guide (Python, TypeScript, Java, Kotlin, C#)
   - `claude-code-cli.md` - Claude Code CLI reference (subagents, tools, automation)
@@ -305,7 +352,7 @@ The repository includes extensive documentation:
   - `parallel-r1.md` - Parallel thinking framework for AI optimization
   - `spec-kit.md` - GitHub documentation framework (DocFX, GitHub Pages)
 
-**Before making significant changes**: Review `DEPLOYMENT_CHECKPOINT.md` for known issues and fixes.
+**Before making significant changes**: Review `DEPLOYMENT_CHECKPOINT.md` and `DATABASE_AUDIT_SUMMARY.md` for known issues and architecture decisions.
 
 ## Common Development Workflows
 
@@ -345,11 +392,49 @@ cd web-app && npm run lint
 - **Web**: Vercel (Next.js App Router)
 - **Database**: Supabase PostgreSQL (production) or SQLite (development)
 
-Current production URL: `https://geo-seo-domination-tool-c9zk94zwn-unite-group.vercel.app`
+**Latest Vercel deployments**:
+- Production: `https://web-re90l8wal-unite-group.vercel.app`
+- Project: `web-app` (team: unite-group)
+
+**Docker Blue-Green Deployment**:
+- Proxy: `http://localhost:8080` (nginx reverse proxy)
+- Blue/Green containers managed via `geo bluegreen` CLI or UI at `/release/bluegreen`
+
+## Production Monitoring & Health Systems
+
+### Uptime Monitoring
+- **Location**: `scripts/uptime/ping.ps1`
+- **Logs**: `server/logs/uptime/pings.ndjson` (NDJSON format, gitignored)
+- **API**: `/api/uptime` - GET (24h stats) / POST (record ping)
+- **UI**: `/health` page with 24h availability badge
+- **Scheduler**: Windows Task Scheduler (5-minute intervals recommended)
+
+**Color-coded availability**:
+- Green: ≥99.9%
+- Yellow: ≥98%
+- Red: <98%
+
+### Health Check System
+- **Endpoint**: `/api/health` - System health diagnostics
+- **UI**: `/health` page with status dashboard
+- **Checks**: Node version, Docker, MCP dist, Supabase env, integration secrets
+- **Repair**: `pwsh scripts/fix/repair-health.ps1` - Builds MCP and creates secrets file
+
+### Integration Management
+- **UI**: `/settings/integrations` - Visual token management
+- **API**: `/api/integrations` - Save tokens, check status
+- **Storage**: `server/secrets/integrations.local.json` (gitignored)
+- **Quick Setup**: `pwsh scripts/quick/set-secrets.ps1`
+- **Validation**: Real-time API connectivity checks for GitHub, Vercel, Supabase
+
+### Release Tracking
+- **UI**: `/release/bluegreen` - Blue-green deployment dashboard with analytics
+- **Tag Stamping**: `pwsh scripts/release/stamp-env.ps1` - Writes `server/release.env`
+- **Analytics**: Traffic stamped with release version for A/B testing
 
 ## Build Assistant Tools
 
-The `new-life` branch integrates five build assistant tools for accelerated development:
+Available build assistant tools for accelerated development:
 
 ### MCP (Model Context Protocol) Servers
 Build custom tools that extend Claude's capabilities. See `docs/build-assistant-tools/mcp-server-guide.md`.
