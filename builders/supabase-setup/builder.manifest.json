@@ -1,0 +1,17 @@
+{
+  "id": "supabase-setup",
+  "version": "1.0.0",
+  "title": "Supabase Env + Client",
+  "summary": "Injects SUPABASE_URL/ANON vars and a minimal Supabase client for Next.js.",
+  "tags": ["supabase", "env", "nextjs"],
+  "variables": [
+    { "name": "SUPABASE_URL", "required": true, "example": "https://xxxx.supabase.co" },
+    { "name": "SUPABASE_ANON_KEY", "required": true, "example": "eyJhbGciOi..." }
+  ],
+  "templates": [
+    { "from": "templates/env.local.eta", "to": "web-app/.env.local", "engine": "eta" },
+    { "from": "templates/supabaseClient.ts.eta", "to": "web-app/lib/supabaseClient.ts", "engine": "eta" },
+    { "from": "templates/readme.md.eta", "to": "docs/builders/supabase-setup.md", "engine": "eta" }
+  ],
+  "licenses": [{ "name": "MIT" }]
+}

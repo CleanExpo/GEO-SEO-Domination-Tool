@@ -54,3 +54,16 @@ coverage
 
 # OS
 Thumbs.db
+
+# Local integration secrets (do not commit)
+server/secrets/*.json
+
+# Local env (ensure ignored)
+web-app/.env.local
+
+# Local deploy config (do not commit)
+server/secrets/deploy.local.json
+
+# Remote sync temp artifacts
+server/temp/
+.deployignore

@@ -1,0 +1,27 @@
+## Multi-stage build for Next.js (web-app workspace)
+# syntax=docker/dockerfile:1
+ARG NODE_VERSION=<%= NODE_VERSION || '20' %>
+FROM node:${NODE_VERSION}-alpine AS base
+WORKDIR /app
+
+# Enable corepack for pnpm/yarn if needed; npm works by default
+RUN corepack enable || true
+
+# Copy the whole monorepo (simple & reliable). If large, switch to selective COPY with workspaces.
+COPY . .
+
+# Install deps and build web-app
+RUN npm ci
+RUN npm run build -w web-app
+
+# --- runtime image ---
+FROM node:${NODE_VERSION}-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy built app and minimal files
+COPY --from=base /app .
+EXPOSE 3000
+# Set Next.js port via env PORT
+ENV PORT=<%= PORT || '3000' %>
+CMD ["npm","run","start","-w","web-app"]
