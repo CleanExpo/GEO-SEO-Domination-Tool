@@ -7,7 +7,7 @@ import { createClient } from '@/lib/auth/supabase-client';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
-  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut
+  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, GitPullRequest
 } from 'lucide-react';
 
 const navigation = [
@@ -31,6 +31,7 @@ const projectsNavigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban, section: 'Projects' },
   { name: 'GitHub Projects', href: '/projects/github', icon: Github, section: 'Projects' },
   { name: 'Notes & Docs', href: '/projects/notes', icon: Notes, section: 'Projects' },
+  { name: 'Release Monitor', href: '/release/monitor', icon: GitPullRequest, section: 'Projects' },
 ];
 
 const resourcesNavigation = [
