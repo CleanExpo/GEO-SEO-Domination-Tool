@@ -39,7 +39,8 @@
       "mcp__playwright__browser_type",
       "mcp__vercel__get_project",
       "mcp__vercel__list_projects",
-      "mcp__vercel__get_deployment_build_logs"
+      "mcp__vercel__get_deployment_build_logs",
+      "WebFetch(domain:api-docs.deepseek.com)"
     ],
     "deny": [],
     "ask": []
