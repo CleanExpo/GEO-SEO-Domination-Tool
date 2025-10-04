@@ -1,0 +1,24 @@
+{
+  "id": "database-schema",
+  "version": "1.0.0",
+  "title": "Database Schema (SQLite/Postgres)",
+  "summary": "Adds a portable SQL schema file compatible with SQLite/PostgreSQL.",
+  "tags": ["sql", "schema", "db"],
+  "variables": [
+    { "name": "SCHEMA_NAME", "required": true, "example": "events" }
+  ],
+  "templates": [
+    {
+      "from": "templates/schema.sql.eta",
+      "to": "database/schemas/<%= SCHEMA_NAME %>.sql",
+      "engine": "eta"
+    },
+    {
+      "from": "templates/readme.md.eta",
+      "to": "docs/builders/schema-<%= SCHEMA_NAME %>.md",
+      "engine": "eta"
+    }
+  ],
+  "validators": [],
+  "licenses": [{ "name": "MIT" }]
+}

@@ -1,0 +1,132 @@
+-- Audit Logs Schema + RLS
+-- Tracks all user actions, API calls, and system events
+
+create table if not exists <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %> (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  workspace_id uuid references public.workspaces(id) on delete cascade,
+  action text not null,
+  resource_type text,
+  resource_id text,
+  metadata jsonb default '{}'::jsonb,
+  ip_address inet,
+  user_agent text,
+  success boolean default true,
+  error_message text,
+  created_at timestamptz default now()
+);
+
+-- Indexes for common queries
+create index if not exists idx_<%= TABLE_NAME || 'audit_logs' %>_user on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>(user_id, created_at desc);
+create index if not exists idx_<%= TABLE_NAME || 'audit_logs' %>_workspace on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>(workspace_id, created_at desc);
+create index if not exists idx_<%= TABLE_NAME || 'audit_logs' %>_action on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>(action, created_at desc);
+create index if not exists idx_<%= TABLE_NAME || 'audit_logs' %>_resource on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>(resource_type, resource_id);
+
+-- RLS
+alter table <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %> enable row level security;
+
+-- Policy: Users can view their own logs
+create policy if not exists "Users can view own audit logs" on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>
+  for select using (user_id = auth.uid());
+
+-- Policy: Admins can view all logs
+create policy if not exists "Admins can view all audit logs" on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>
+  for select using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Policy: Workspace members can view workspace logs
+create policy if not exists "Workspace members can view workspace logs" on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>
+  for select using (
+    workspace_id is not null and
+    exists (
+      select 1 from public.workspace_memberships
+      where workspace_id = <%= TABLE_NAME || 'audit_logs' %>.workspace_id
+        and user_id = auth.uid()
+    )
+  );
+
+-- Policy: System can insert logs (service role only)
+create policy if not exists "Service role can insert audit logs" on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>
+  for insert with check (true);
+
+-- Helper function: Log audit event
+create or replace function <%= SCHEMA_NAME || 'public' %>.log_audit_event(
+  p_action text,
+  p_resource_type text default null,
+  p_resource_id text default null,
+  p_metadata jsonb default '{}'::jsonb,
+  p_workspace_id uuid default null,
+  p_success boolean default true,
+  p_error_message text default null
+)
+returns uuid
+language plpgsql
+security definer
+as $$
+declare
+  v_log_id uuid;
+begin
+  insert into <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %> (
+    user_id,
+    workspace_id,
+    action,
+    resource_type,
+    resource_id,
+    metadata,
+    success,
+    error_message,
+    created_at
+  ) values (
+    auth.uid(),
+    p_workspace_id,
+    p_action,
+    p_resource_type,
+    p_resource_id,
+    p_metadata,
+    p_success,
+    p_error_message,
+    now()
+  )
+  returning id into v_log_id;
+
+  return v_log_id;
+end;
+$$;
+
+-- Helper function: Get recent user activity
+create or replace function <%= SCHEMA_NAME || 'public' %>.get_user_recent_activity(
+  p_user_id uuid default null,
+  p_limit int default 50
+)
+returns table (
+  id uuid,
+  action text,
+  resource_type text,
+  resource_id text,
+  metadata jsonb,
+  success boolean,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+as $$
+  select id, action, resource_type, resource_id, metadata, success, created_at
+  from <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %>
+  where user_id = coalesce(p_user_id, auth.uid())
+  order by created_at desc
+  limit p_limit;
+$$;
+
+-- Retention policy: Auto-delete old logs (optional)
+-- Uncomment to enable 90-day retention
+-- create extension if not exists pg_cron;
+-- select cron.schedule(
+--   'delete-old-audit-logs',
+--   '0 2 * * *',
+--   $$delete from <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'audit_logs' %> where created_at < now() - interval '90 days'$$
+-- );

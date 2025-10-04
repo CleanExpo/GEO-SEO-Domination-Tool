@@ -1,0 +1,42 @@
+# Stripe Billing Starter
+
+This builder adds a Billing UI, Checkout + Customer Portal API routes, and a Webhook that upgrades roles to **pro**.
+
+## Env vars (web-app/.env.local)
+```
+STRIPE_SECRET_KEY=sk_live_or_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_or_test_...
+# Optional base URL override (otherwise uses Vercel URL or http://localhost:3000)
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+## Dependencies
+Install in the web-app package:
+```
+npm i stripe
+```
+
+## Database assumptions
+`profiles` table includes:
+- `id uuid primary key`
+- `email text`
+- `role text default 'free'`
+- `stripe_customer_id text`
+- `plan text`
+- `current_period_end bigint`
+
+## Flows
+- **Checkout** → POST `/api/billing/create-checkout-session` with `{ priceId }` → redirects to Stripe → on success, webhook sets role `pro`.
+- **Portal** → POST `/api/billing/portal` opens Stripe customer portal.
+- **Webhook** → `/api/billing/webhook` handles `checkout.session.completed`, `customer.subscription.updated`, `invoice.paid`, `customer.subscription.deleted` → updates `profiles.role`.
+
+## Testing
+1. Set env vars and run `npm i stripe` in `web-app`.
+2. Start dev server and open `/settings/billing`.
+3. Create a Stripe Price (recurring) and paste its ID.
+4. Use Stripe CLI to forward webhooks:
+```
+stripe listen --forward-to localhost:3000/api/billing/webhook
+```
+5. Complete a test checkout → role becomes `pro`.

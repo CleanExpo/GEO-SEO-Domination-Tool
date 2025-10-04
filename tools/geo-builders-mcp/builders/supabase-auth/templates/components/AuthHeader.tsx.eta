@@ -1,0 +1,36 @@
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+export default function AuthHeader(){
+  const [user, setUser] = useState<{ email?:string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    fetch('/api/auth/user').then(r=> r.json()).then(j=> { setUser(j?.user || null); setLoading(false); }).catch(()=> setLoading(false));
+  }, []);
+
+  async function signOut(){
+    await fetch('/api/auth/signout', { method:'POST' });
+    setUser(null);
+    window.location.href = '/sign-in';
+  }
+
+  if (loading) return <header className='border-b p-4'><div className='max-w-7xl mx-auto'>Loading…</div></header>;
+
+  return (
+    <header className='border-b p-4'>
+      <div className='max-w-7xl mx-auto flex justify-between items-center'>
+        <Link href='/' className='font-semibold'>GEO-SEO Domination Tool</Link>
+        {user ? (
+          <div className='flex items-center gap-4'>
+            <span className='text-sm text-gray-600'>{user.email}</span>
+            <button className='text-sm underline' onClick={signOut}>Sign Out</button>
+          </div>
+        ) : (
+          <Link href='/sign-in' className='text-sm underline'>Sign In</Link>
+        )}
+      </div>
+    </header>
+  );
+}

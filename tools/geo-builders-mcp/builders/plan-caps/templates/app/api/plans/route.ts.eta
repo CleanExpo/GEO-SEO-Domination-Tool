@@ -1,0 +1,48 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import { getPlanCaps, updatePlanCaps } from '@/lib/plans';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+function svc(){ return createClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_SERVICE_ROLE as string); }
+
+async function getRole(req: NextRequest){
+  const supa = createServerClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_ANON_KEY as string, {
+    cookies: { get: (n)=> req.cookies.get(n)?.value, set(){}, remove(){} }
+  });
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return { user:null, role:'free' } as const;
+  const { data: prof } = await svc().from('profiles').select('role').eq('id', user.id).maybeSingle();
+  return { user, role: (prof?.role || 'free') as 'free'|'pro'|'admin' };
+}
+
+// GET /api/plans → list all plan caps
+export async function GET(req: NextRequest){
+  const { data } = await svc().from('plan_defaults').select('role, caps').order('role');
+  return NextResponse.json({ ok: true, plans: data || [] }, { status: 200 });
+}
+
+// POST /api/plans → update plan caps (admin only)
+export async function POST(req: NextRequest){
+  const { user, role } = await getRole(req);
+  if (!user || role !== 'admin') {
+    return NextResponse.json({ ok: false, error: 'Admin access required' }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const { plan_role, caps } = body;
+
+  if (!plan_role || !caps) {
+    return NextResponse.json({ ok: false, error: 'Missing plan_role or caps' }, { status: 400 });
+  }
+
+  if (!['free','pro','admin'].includes(plan_role)) {
+    return NextResponse.json({ ok: false, error: 'Invalid plan_role' }, { status: 400 });
+  }
+
+  await updatePlanCaps(plan_role, caps);
+
+  return NextResponse.json({ ok: true, message: 'Plan caps updated' }, { status: 200 });
+}

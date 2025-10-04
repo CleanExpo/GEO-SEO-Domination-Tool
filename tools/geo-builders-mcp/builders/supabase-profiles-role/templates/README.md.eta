@@ -1,0 +1,5 @@
+# Builder: supabase-profiles-role
+
+Adds a `role` text column (default `free`) to your profiles table.
+
+Run the generated SQL in Supabase SQL editor or include in your migration flow.

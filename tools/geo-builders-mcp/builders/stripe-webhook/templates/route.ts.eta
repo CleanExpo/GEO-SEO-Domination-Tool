@@ -1,0 +1,53 @@
+import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '<%= WEBHOOK_SECRET %>';
+
+// NOTE: In the App Router, use req.text() to get raw body for signature verification
+export async function POST(req: NextRequest) {
+  try {
+    const sig = req.headers.get('stripe-signature');
+    if (!sig) return NextResponse.json({ ok:false, error:'missing stripe-signature' }, { status:400 });
+
+    const raw = await req.text();
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2024-06-20' });
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(raw, sig, WEBHOOK_SECRET);
+    } catch (err: any) {
+      return new NextResponse(`Webhook signature verification failed: ${err.message}`, { status: 400 });
+    }
+
+    // Handle event types as needed
+    switch (event.type) {
+      case 'checkout.session.completed':
+        console.log('[webhook] checkout.session.completed', event.data.object);
+        break;
+      case 'customer.subscription.created':
+        console.log('[webhook] customer.subscription.created', event.data.object);
+        break;
+      case 'customer.subscription.updated':
+        console.log('[webhook] customer.subscription.updated', event.data.object);
+        break;
+      case 'customer.subscription.deleted':
+        console.log('[webhook] customer.subscription.deleted', event.data.object);
+        break;
+      case 'invoice.payment_succeeded':
+        console.log('[webhook] invoice.payment_succeeded', event.data.object);
+        break;
+      case 'invoice.payment_failed':
+        console.log('[webhook] invoice.payment_failed', event.data.object);
+        break;
+      default:
+        console.log('[webhook] unhandled event type', event.type);
+    }
+
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message || 'unknown error' }, { status: 500 });
+  }
+}

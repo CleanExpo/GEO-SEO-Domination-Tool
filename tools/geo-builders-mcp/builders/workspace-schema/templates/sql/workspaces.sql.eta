@@ -1,0 +1,131 @@
+-- Workspaces + RLS (idempotent)
+-- Customize schema/table names via variables.
+
+-- Core tables
+create table if not exists <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %> (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text unique,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> (
+  workspace_id uuid not null references <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null check (role in ('owner','admin','member','viewer')) default 'member',
+  created_at timestamptz default now(),
+  primary key (workspace_id, user_id)
+);
+
+create table if not exists <%= SCHEMA_NAME || 'public' %>.<%= PROJECTS_TABLE || 'projects' %> (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>(id) on delete cascade,
+  name text not null,
+  description text,
+  created_at timestamptz default now()
+);
+
+-- RLS
+alter table <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %> enable row level security;
+alter table <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> enable row level security;
+alter table <%= SCHEMA_NAME || 'public' %>.<%= PROJECTS_TABLE || 'projects' %> enable row level security;
+
+-- Helper: membership check
+create or replace function <%= SCHEMA_NAME || 'public' %>.user_in_workspace(w_id uuid)
+returns boolean language sql stable as $$
+  select exists(
+    select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+    where m.workspace_id = w_id and m.user_id = auth.uid()
+  );
+$$;
+
+-- Policies: Workspaces
+create policy if not exists "Members can view workspace" on <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>
+  for select using (<%= SCHEMA_NAME || 'public' %>.user_in_workspace(id));
+
+create policy if not exists "Users can create workspace" on <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>
+  for insert with check (owner_id = auth.uid());
+
+create policy if not exists "Owner/admin can update workspace" on <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>
+  for update using (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+create policy if not exists "Owner can delete workspace" on <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>
+  for delete using (owner_id = auth.uid());
+
+-- Policies: Memberships
+create policy if not exists "Members can view memberships" on <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %>
+  for select using (<%= SCHEMA_NAME || 'public' %>.user_in_workspace(workspace_id));
+
+create policy if not exists "Owner/admin can add members" on <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %>
+  for insert with check (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = workspace_id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+create policy if not exists "Owner/admin can update members" on <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %>
+  for update using (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = workspace_id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+create policy if not exists "Owner/admin can remove members" on <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %>
+  for delete using (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = workspace_id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+-- Policies: Projects (member read, admin+ write)
+create policy if not exists "Members can view projects" on <%= SCHEMA_NAME || 'public' %>.<%= PROJECTS_TABLE || 'projects' %>
+  for select using (<%= SCHEMA_NAME || 'public' %>.user_in_workspace(workspace_id));
+
+create policy if not exists "Admin can create projects" on <%= SCHEMA_NAME || 'public' %>.<%= PROJECTS_TABLE || 'projects' %>
+  for insert with check (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = workspace_id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+create policy if not exists "Admin can update projects" on <%= SCHEMA_NAME || 'public' %>.<%= PROJECTS_TABLE || 'projects' %>
+  for update using (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = workspace_id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+create policy if not exists "Admin can delete projects" on <%= SCHEMA_NAME || 'public' %>.<%= PROJECTS_TABLE || 'projects' %>
+  for delete using (
+    exists(
+      select 1 from <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %> m
+      where m.workspace_id = workspace_id and m.user_id = auth.uid() and m.role in ('owner','admin')
+    )
+  );
+
+-- Trigger: auto-add owner membership
+create or replace function <%= SCHEMA_NAME || 'public' %>.add_owner_membership()
+returns trigger language plpgsql as $$
+begin
+  insert into <%= SCHEMA_NAME || 'public' %>.<%= MEMBERSHIPS_TABLE || 'workspace_memberships' %>(workspace_id, user_id, role)
+  values (new.id, new.owner_id, 'owner')
+  on conflict do nothing;
+  return new;
+end;$$;
+
+drop trigger if exists workspaces_owner_membership on <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>;
+create trigger workspaces_owner_membership
+  after insert on <%= SCHEMA_NAME || 'public' %>.<%= WORKSPACES_TABLE || 'workspaces' %>
+  for each row execute function <%= SCHEMA_NAME || 'public' %>.add_owner_membership();

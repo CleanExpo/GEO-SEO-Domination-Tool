@@ -1,0 +1,25 @@
+{
+  "id": "supabase-profiles-rls",
+  "title": "Supabase Profiles Table with RLS",
+  "summary": "Creates a user profiles table with Row Level Security policies for authenticated users.",
+  "engine": "eta",
+  "variables": [
+    {
+      "name": "SCHEMA_NAME",
+      "required": false,
+      "example": "public"
+    },
+    {
+      "name": "TABLE_NAME",
+      "required": false,
+      "example": "profiles"
+    }
+  ],
+  "files": [
+    {
+      "from": "templates/profiles.sql.eta",
+      "to": "supabase/migrations/<%= Date.now() %>_profiles_rls.sql",
+      "strategy": "create-or-overwrite"
+    }
+  ]
+}

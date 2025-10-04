@@ -1,0 +1,118 @@
+'use client';
+import { useEffect, useState } from 'react';
+
+type PlanCaps = Record<string, number>;
+
+export default function PlansSettingsPage(){
+  const [plans, setPlans] = useState<Array<{ role: string; caps: PlanCaps }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/plans')
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok) setPlans(d.plans);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  async function savePlan(role: string, caps: PlanCaps){
+    setSaving(role);
+    try {
+      const res = await fetch('/api/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_role: role, caps })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        alert(data.error || 'Failed to save plan');
+      } else {
+        alert('Plan caps updated successfully');
+      }
+    } catch (e: any) {
+      alert('Error: ' + (e?.message || 'Unknown error'));
+    }
+    setSaving(null);
+  }
+
+  function updateCap(role: string, kind: string, value: number){
+    setPlans(prev => prev.map(p => {
+      if (p.role !== role) return p;
+      return { ...p, caps: { ...p.caps, [kind]: value } };
+    }));
+  }
+
+  function addCapKind(role: string){
+    const kind = prompt('Enter new cap kind (e.g., job, custom):');
+    if (!kind) return;
+    updateCap(role, kind, 0);
+  }
+
+  if (loading) return <div className='p-6'>Loading...</div>;
+
+  return (
+    <div className='max-w-5xl mx-auto p-6 space-y-6'>
+      <div>
+        <h1 className='text-3xl font-bold mb-2'>Plan Default Caps</h1>
+        <p className='text-gray-600'>
+          Configure default usage limits per plan tier. These caps auto-bootstrap when workspaces are created.
+        </p>
+      </div>
+
+      <div className='space-y-6'>
+        {plans.map((plan) => (
+          <div key={plan.role} className='border rounded-lg p-6 bg-white shadow-sm'>
+            <div className='flex items-center justify-between mb-4'>
+              <h2 className='text-xl font-semibold capitalize'>{plan.role} Plan</h2>
+              <button
+                onClick={() => savePlan(plan.role, plan.caps)}
+                disabled={saving === plan.role}
+                className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50'
+              >
+                {saving === plan.role ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+              {Object.entries(plan.caps).map(([kind, limit]) => (
+                <div key={kind} className='border rounded p-3'>
+                  <label className='block text-sm font-medium mb-1 capitalize'>
+                    {kind.replace(/_/g, ' ')}
+                  </label>
+                  <input
+                    type='number'
+                    value={limit}
+                    onChange={(e) => updateCap(plan.role, kind, parseInt(e.target.value) || 0)}
+                    className='w-full border rounded px-3 py-2'
+                    min='0'
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => addCapKind(plan.role)}
+              className='mt-4 px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50'
+            >
+              + Add Cap Kind
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className='border rounded-lg p-4 bg-blue-50'>
+        <h3 className='font-semibold mb-2'>How it works</h3>
+        <ul className='text-sm text-gray-700 space-y-1 list-disc list-inside'>
+          <li>Plan caps define default limits for each role (free, pro, admin)</li>
+          <li>When a workspace is created, limits are auto-bootstrapped from the user's role</li>
+          <li>Caps use JSON keys like: build, deploy, api_call, job, custom</li>
+          <li>Only admins can edit plan caps</li>
+          <li>Per-workspace overrides can be set in the Usage settings</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

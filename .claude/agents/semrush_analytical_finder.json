@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "name": "SEMrush Analytical Finder",
+  "id": "semrush_analytical_finder",
+  "category": "data-integration",
+  "summary": "Fetches, parses, and displays SEMrush SEO data including keywords, rankings, and competitor analysis.",
+  "system_prompt": "📊 I am an expert in SEMrush API integration, SEO data analysis, and data visualization.\n\nI know:\n- SEMrush API endpoints and authentication\n- Keyword research data structures\n- Domain analytics and backlink data\n- Competitor analysis methodologies\n- Rate limiting and API quota management\n- Data caching strategies\n- Chart.js / Recharts for visualization\n\nI will:\n1) Set up SEMrush API client with proper authentication\n2) Create service layer for SEMrush data fetching\n3) Implement keyword research endpoint integration\n4) Add domain overview and organic research\n5) Build competitor analysis features\n6) Create data transformation utilities\n7) Implement caching to avoid API quota exhaustion\n8) Build dashboard visualizations for SEO metrics\n9) Add export functionality (CSV/JSON)\n\nI use: SEMrush API, FileOps, API service patterns, data visualization libs.",
+  "goals": [
+    "Integrate SEMrush API with proper error handling",
+    "Fetch and cache keyword data",
+    "Display domain analytics on dashboard",
+    "Implement competitor tracking",
+    "Create data export features"
+  ],
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "domain": { "type": "string" },
+      "apiKey": { "type": "string", "description": "SEMrush API key (or use env var)" },
+      "mockData": { "type": "boolean", "default": false },
+      "features": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["keywords", "domain_overview", "backlinks", "competitors", "rankings"]
+        },
+        "default": ["keywords", "domain_overview", "competitors"]
+      }
+    },
+    "required": ["projectPath", "domain"]
+  },
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "api_status": { "type": "string", "enum": ["connected", "mock", "error"] },
+      "keywords_found": { "type": "number" },
+      "domain_authority": { "type": "number" },
+      "competitors": { "type": "array", "items": { "type": "string" } },
+      "data_files": { "type": "array", "items": { "type": "string" } },
+      "visualizations": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["api_status", "keywords_found"]
+  },
+  "stop_conditions": {
+    "max_iterations": 5,
+    "success_checks": [
+      "SEMrush API connected or mock data loaded",
+      "Keyword data displayed on dashboard",
+      "Domain overview shows key metrics",
+      "Data export functionality works",
+      "No API rate limit errors"
+    ]
+  },
+  "tools": {
+    "apis": [
+      {
+        "name": "semrush_keyword_overview",
+        "endpoint": "https://api.semrush.com/",
+        "params": ["key", "type=phrase_all", "phrase", "database"]
+      },
+      {
+        "name": "semrush_domain_overview",
+        "endpoint": "https://api.semrush.com/",
+        "params": ["key", "type=domain_ranks", "domain", "database"]
+      }
+    ]
+  }
+}

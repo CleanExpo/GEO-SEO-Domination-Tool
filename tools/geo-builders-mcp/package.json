@@ -1,0 +1,51 @@
+{
+  "name": "geo-builders-mcp",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server that discovers, previews, and applies modular builders into an existing project (Next.js-first; SQLite/Postgres+Supabase baseline; Prisma/Docker via optional builders).",
+  "main": "dist/index.js",
+  "bin": {
+    "geo-builders-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx || exit 0",
+    "preflight:windows": "node scripts/preflight-windows.mjs || exit 0",
+    "fix:build": "powershell -ExecutionPolicy Bypass -File ./scripts/fix-build.ps1",
+    "call:list": "node scripts/call-mcp.mjs list_builders {}",
+    "call:inspect": "node scripts/call-mcp.mjs inspect_builder \"{\\\"id\\\":\\\"nextjs-api-route\\\"}\"",
+    "call:preview:health": "node scripts/call-mcp.mjs preview_apply \"{\\\"id\\\":\\\"nextjs-api-route\\\",\\\"engine\\\":\\\"eta\\\",\\\"variables\\\":{\\\"ROUTE_NAME\\\":\\\"health\\\",\\\"ZOD_SCHEMA\\\":\\\"z.object({ ok: z.boolean() })\\\"}}\"",
+    "call:apply:health": "node scripts/call-mcp.mjs apply_builder \"{\\\"id\\\":\\\"nextjs-api-route\\\",\\\"strategy\\\":\\\"safe-merge\\\",\\\"engine\\\":\\\"eta\\\",\\\"variables\\\":{\\\"ROUTE_NAME\\\":\\\"health\\\",\\\"ZOD_SCHEMA\\\":\\\"z.object({ ok: z.boolean() })\\\"}}\"",
+    "call:check:fast": "node scripts/call-mcp.mjs post_install_check \"{\\\"checks\\\":[\\\"ts\\\",\\\"lint\\\",\\\"next-build\\\"]}\"",
+    "call:check:full": "node scripts/call-mcp.mjs post_install_check \"{\\\"checks\\\":[\\\"ts\\\",\\\"lint\\\",\\\"next-build\\\",\\\"test\\\",\\\"docker-build\\\"]}\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ajv": "^8.17.1",
+    "chalk": "^5.3.0",
+    "diff": "^7.0.0",
+    "eta": "^3.3.0",
+    "fast-glob": "^3.3.3",
+    "glob": "^10.4.5",
+    "handlebars": "^4.7.8",
+    "ignore": "^7.0.5",
+    "js-yaml": "^4.1.0",
+    "minimatch": "^9.0.5",
+    "pathe": "^2.0.3",
+    "picocolors": "^1.0.0",
+    "simple-git": "^3.28.0",
+    "tempy": "^3.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.7.4",
+    "eslint": "^9.10.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.5.4"
+  }
+}

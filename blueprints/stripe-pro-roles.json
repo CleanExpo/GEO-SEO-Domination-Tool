@@ -1,0 +1,27 @@
+{
+  "id": "stripe-pro-roles",
+  "title": "Stripe Pro Roles Gating",
+  "summary": "Complete Stripe subscription sync with Supabase roles: adds role column, webhook sync, and protected /pro page.",
+  "steps": [
+    {
+      "builder": "stripe-setup",
+      "variables": {
+        "STRIPE_SECRET_KEY": "${env:STRIPE_SECRET_KEY}",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "${env:NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
+      }
+    },
+    {
+      "builder": "supabase-profiles-role",
+      "variables": {
+        "SCHEMA_NAME": "public",
+        "TABLE_NAME": "profiles"
+      }
+    },
+    {
+      "builder": "stripe-webhook-roles-sync",
+      "variables": {
+        "WEBHOOK_SEGMENT": "stripe-sync"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# Supabase OAuth (Google + GitHub)
+
+This adds OAuth buttons to **/auth/sign-in** using Supabase `signInWithOAuth`.
+
+## Prereqs
+1. In Supabase Dashboard → **Authentication → URL Configuration**
+   - **Site URL**: your app URL (e.g., `http://localhost:3000`)
+   - **Redirect URLs**: include `http://localhost:3000/settings/account`
+2. In **Authentication → Providers**
+   - Enable **Google** and/or **GitHub** and paste client IDs/secrets.
+3. Ensure env in `web-app/.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+```
+
+## Usage
+- Visit `/auth/sign-in` → click **Continue with Google** or **Continue with GitHub**.
+- On success, users land at `/settings/account`.
+
+## Notes
+- Email OTP remains available as fallback.
+- Combine with **Role Guards** to protect admin/pro routes.

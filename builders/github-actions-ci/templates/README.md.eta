@@ -1,0 +1,9 @@
+# GitHub Actions CI
+
+**ci.yml** runs typecheck/lint/build on pushes and PRs to `main`.
+
+**docker-publish.yml** builds + pushes Docker image when **REGISTRY** and **IMAGE_NAME** are set in the workflow template and registry credentials exist as secrets:
+- `REGISTRY_USERNAME` / `REGISTRY_PASSWORD` (generic)
+- or `GHCR_PAT` (GitHub Container Registry PAT)
+
+Update variables in the builder or edit after apply.

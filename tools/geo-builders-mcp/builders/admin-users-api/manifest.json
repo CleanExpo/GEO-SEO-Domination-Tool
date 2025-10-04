@@ -1,0 +1,24 @@
+{
+  "id": "admin-users-api",
+  "title": "Admin Users API",
+  "summary": "API routes for admin operations: update user roles, delete users, view stats.",
+  "engine": "eta",
+  "variables": [],
+  "files": [
+    {
+      "from": "templates/app/api/admin/update-role/route.ts.eta",
+      "to": "web-app/app/api/admin/update-role/route.ts",
+      "strategy": "create-or-overwrite"
+    },
+    {
+      "from": "templates/app/api/admin/stats/route.ts.eta",
+      "to": "web-app/app/api/admin/stats/route.ts",
+      "strategy": "create-or-overwrite"
+    },
+    {
+      "from": "templates/README.md.eta",
+      "to": "docs/builders/admin-users-api.md",
+      "strategy": "create-or-overwrite"
+    }
+  ]
+}

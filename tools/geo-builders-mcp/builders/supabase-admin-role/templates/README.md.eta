@@ -1,0 +1,17 @@
+# Builder: supabase-admin-role
+
+Adds 'admin' role support to profiles table with RLS policies allowing admins to view and update all user profiles.
+
+**Requires**: `supabase-profiles-role` builder to be applied first (adds role column).
+
+**Features**:
+- Updates role constraint to include 'admin'
+- RLS policies for admin read/write access to all profiles
+- `is_admin()` helper function for database queries
+
+**Usage**: Run the generated SQL in Supabase SQL Editor after applying the builder.
+
+**Manually promote a user to admin**:
+```sql
+UPDATE profiles SET role = 'admin' WHERE email = 'admin@example.com';
+```

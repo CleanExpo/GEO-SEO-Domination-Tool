@@ -1,0 +1,222 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "compat": {
+    "shell": "powershell",
+    "os": "windows",
+    "editors": ["vscode"],
+    "cli": ["claude-code-cli", "cline", "vercel"]
+  },
+  "conventions": {
+    "language": "TypeScript",
+    "frameworks": ["Next.js 15", "Tailwind", "shadcn/ui"],
+    "repo_layout": "src/**, app router"
+  },
+  "name": "DevOps Deployer",
+  "id": "devops_deployer",
+  "category": "devops",
+  "summary": "Preflight env checks and one-command Vercel preview deploy (requires Vercel CLI auth). Captures preview URL.",
+  "system_prompt": "🚀 I run deploy preflights (env, build) and push a preview to Vercel, capturing the deployment URL. I never store secrets in code—use environment variables. Task ends when a preview URL is returned or a clear error report is written.",
+  "goals": [
+    "Verify Node/npm and Vercel CLI availability",
+    "Optionally set VERCEL_TOKEN for non-interactive auth",
+    "Build locally and deploy to a preview environment",
+    "Return the preview URL"
+  ],
+  "stop_conditions": {
+    "max_iterations": 2,
+    "success_checks": [
+      "vercel --version returns 0",
+      "`npm run build` exits 0",
+      "Preview URL extracted from vercel output"
+    ]
+  },
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "vercelProjectName": { "type": "string" },
+      "vercelOrgId": { "type": "string" },
+      "vercelToken": { "type": "string", "description": "Optional; will be set to $env:VERCEL_TOKEN for this session" }
+    },
+    "required": ["projectPath"]
+  },
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "previewUrl": { "type": "string" },
+      "deploymentId": { "type": "string" },
+      "buildTime": { "type": "number", "description": "Build time in seconds" },
+      "notes": { "type": "string" }
+    },
+    "required": ["notes"]
+  },
+  "tools": {
+    "commands": [
+      {
+        "name": "check_tools",
+        "description": "Confirm Node, npm, and Vercel CLI",
+        "cmd": "pwsh -NoProfile -Command \"node -v; npm -v; vercel --version\""
+      },
+      {
+        "name": "set_token",
+        "description": "Set Vercel token for this session if provided",
+        "cmd": "pwsh -NoProfile -Command \"if ('${vercelToken}' -and '${vercelToken}' -ne '') { $env:VERCEL_TOKEN='${vercelToken}' }\""
+      },
+      {
+        "name": "ensure_vercel_project",
+        "description": "Create minimal .vercel/project.json if missing",
+        "cmd": "pwsh -NoProfile -Command \"$dir='${projectPath}\\.vercel'; New-Item -Force -ItemType Directory $dir | Out-Null; $f=Join-Path $dir 'project.json'; if (-not (Test-Path $f)) { $name='${vercelProjectName}'; if (-not $name -or $name -eq '') { $name = Split-Path '${projectPath}' -Leaf } $json = @{ projectId=''; orgId='${vercelOrgId}'; projectName=$name } | ConvertTo-Json -Depth 5; Set-Content -Encoding UTF8 -Path $f -Value $json }\""
+      },
+      {
+        "name": "build_local",
+        "description": "Verify the project builds locally before deploy",
+        "cmd": "pwsh -NoProfile -Command \"Set-Location '${projectPath}'; npm i; npm run build\""
+      },
+      {
+        "name": "deploy_preview",
+        "description": "Deploy to Vercel preview and capture URL",
+        "cmd": "pwsh -NoProfile -Command \"Set-Location '${projectPath}'; $out = vercel deploy --confirm --cwd '${projectPath}' 2>&1; $url = ($out | Select-String -Pattern 'https://.*\\.vercel\\.app' -AllMatches).Matches.Value | Select-Object -Last 1; if (-not $url) { $url = ($out | Select-String -Pattern 'https://.*' -AllMatches).Matches.Value | Select-Object -Last 1 }; if ($url) { Set-Content -Encoding UTF8 -Path ('${projectPath}\\.preview-url.txt') -Value $url } else { $out | Set-Content ('${projectPath}\\.preview-output.txt') }\""
+      }
+    ]
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Preflight Checks",
+      "tasks": [
+        "Verify Node.js is installed (node -v)",
+        "Verify npm is available (npm -v)",
+        "Verify Vercel CLI is installed (vercel --version)",
+        "Check for authentication (Vercel token or logged in)"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Authentication Setup",
+      "tasks": [
+        "Set VERCEL_TOKEN environment variable if provided",
+        "Ensure non-interactive deployment is possible",
+        "Create .vercel/project.json if missing",
+        "Set project name and org ID"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Local Build",
+      "tasks": [
+        "Install dependencies (npm install)",
+        "Run production build (npm run build)",
+        "Verify build succeeds before deploying",
+        "Capture build time for metrics"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Preview Deployment",
+      "tasks": [
+        "Run vercel deploy with --confirm flag",
+        "Capture deployment output",
+        "Extract preview URL from output",
+        "Save URL to .preview-url.txt"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Post-Deployment",
+      "tasks": [
+        "Return preview URL to user",
+        "Save deployment ID if available",
+        "Log deployment metrics",
+        "Generate error report if deployment failed"
+      ]
+    }
+  ],
+  "plan": [
+    "Run check_tools",
+    "Run set_token (if provided)",
+    "Run ensure_vercel_project",
+    "Run build_local",
+    "Run deploy_preview",
+    "Return previewUrl if found; else notes with path to .preview-output.txt"
+  ],
+  "environment_variables": {
+    "VERCEL_TOKEN": {
+      "description": "Vercel authentication token for non-interactive deployments",
+      "required": false,
+      "secure": true,
+      "how_to_obtain": "vercel login or create token at vercel.com/account/tokens"
+    },
+    "VERCEL_ORG_ID": {
+      "description": "Vercel organization/team ID",
+      "required": false,
+      "how_to_obtain": "Found in .vercel/project.json after first deployment"
+    },
+    "VERCEL_PROJECT_ID": {
+      "description": "Vercel project ID",
+      "required": false,
+      "how_to_obtain": "Found in .vercel/project.json after first deployment"
+    }
+  },
+  "security_best_practices": [
+    "NEVER store Vercel tokens in code or version control",
+    "Use environment variables for all secrets",
+    "Rotate tokens regularly",
+    "Use team tokens for CI/CD, not personal tokens",
+    "Set appropriate token scopes (deploy-only when possible)",
+    "Store tokens in secure vaults (GitHub Secrets, 1Password, etc.)",
+    "Never log or expose tokens in output files"
+  ],
+  "deployment_outputs": {
+    ".preview-url.txt": "Contains the preview deployment URL",
+    ".preview-output.txt": "Contains full Vercel CLI output if URL extraction failed",
+    ".vercel/project.json": "Vercel project configuration"
+  },
+  "error_handling": {
+    "vercel_cli_not_found": {
+      "message": "Vercel CLI not installed. Run: npm i -g vercel",
+      "action": "Install Vercel CLI globally"
+    },
+    "not_authenticated": {
+      "message": "Not authenticated with Vercel. Run: vercel login",
+      "action": "Login to Vercel or provide VERCEL_TOKEN"
+    },
+    "build_failed": {
+      "message": "Local build failed. Fix build errors before deploying.",
+      "action": "Review build output and fix errors"
+    },
+    "deployment_failed": {
+      "message": "Deployment failed. Check .preview-output.txt for details.",
+      "action": "Review deployment logs and retry"
+    }
+  },
+  "best_practices": [
+    "Always build locally before deploying",
+    "Use preview deployments for testing",
+    "Promote to production only after validation",
+    "Set up environment variables in Vercel dashboard first",
+    "Use Vercel project linking for team collaboration",
+    "Monitor deployment logs for errors",
+    "Keep Vercel CLI updated (npm update -g vercel)"
+  ],
+  "use_cases": [
+    "Automated preview deployments in CI/CD",
+    "Quick testing of feature branches",
+    "Sharing work-in-progress with stakeholders",
+    "Pre-production validation",
+    "Integration testing with real URLs",
+    "Canary deployments for gradual rollouts"
+  ],
+  "integration_examples": {
+    "github_actions": {
+      "description": "Run in GitHub Actions workflow",
+      "setup": "Add VERCEL_TOKEN to GitHub Secrets",
+      "workflow_step": "claude-code --agent devops_deployer --input '{\"projectPath\": \"./web-app\", \"vercelToken\": \"${{ secrets.VERCEL_TOKEN }}\" }'"
+    },
+    "local_development": {
+      "description": "Quick preview from local machine",
+      "setup": "Run vercel login once",
+      "command": "claude-code --agent devops_deployer --input '{\"projectPath\": \"./web-app\"}'"
+    }
+  }
+}
