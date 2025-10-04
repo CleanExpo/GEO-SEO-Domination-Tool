@@ -1,0 +1,13 @@
+{
+  "id": "saas-starter",
+  "title": "SaaS Starter (Auth + Roles + Docker + CI + Billing)",
+  "summary": "One-shot setup: health route, role guards, Supabase client/env, Docker Compose, GitHub Actions CI, Stripe billing UI/APIs. Works with Auto-Link + First Deploy toggles.",
+  "steps": [
+    { "builder": "nextjs-api-route", "variables": { "ROUTE_NAME": "health" } },
+    { "builder": "role-guards" },
+    { "builder": "supabase-setup", "variables": { "SUPABASE_URL": "", "SUPABASE_ANON_KEY": "" } },
+    { "builder": "docker-compose", "variables": { "SERVICE_NAME": "web", "PORT": "3000" } },
+    { "builder": "github-actions-ci" },
+    { "builder": "stripe-billing" }
+  ]
+}
