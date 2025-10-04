@@ -8,9 +8,11 @@ type Tab = 'account' | 'api-keys' | 'notifications';
 interface UserSettings {
   full_name: string;
   company_name: string;
-  email_notifications: boolean;
-  weekly_reports: boolean;
-  ranking_alerts: boolean;
+  preferences: {
+    email_notifications: boolean;
+    weekly_reports: boolean;
+    ranking_alerts: boolean;
+  };
 }
 
 interface ApiKey {
@@ -34,9 +36,11 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings>({
     full_name: '',
     company_name: '',
-    email_notifications: true,
-    weekly_reports: true,
-    ranking_alerts: true,
+    preferences: {
+      email_notifications: true,
+      weekly_reports: true,
+      ranking_alerts: true,
+    },
   });
 
   // API Keys
@@ -450,9 +454,9 @@ export default function SettingsPage() {
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={settings.email_notifications}
+                        checked={settings.preferences.email_notifications}
                         onChange={(e) =>
-                          setSettings({ ...settings, email_notifications: e.target.checked })
+                          setSettings({ ...settings, preferences: { ...settings.preferences, email_notifications: e.target.checked } })
                         }
                         className="sr-only peer"
                       />
@@ -468,9 +472,9 @@ export default function SettingsPage() {
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={settings.weekly_reports}
+                        checked={settings.preferences.weekly_reports}
                         onChange={(e) =>
-                          setSettings({ ...settings, weekly_reports: e.target.checked })
+                          setSettings({ ...settings, preferences: { ...settings.preferences, weekly_reports: e.target.checked } })
                         }
                         className="sr-only peer"
                       />
@@ -488,9 +492,9 @@ export default function SettingsPage() {
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={settings.ranking_alerts}
+                        checked={settings.preferences.ranking_alerts}
                         onChange={(e) =>
-                          setSettings({ ...settings, ranking_alerts: e.target.checked })
+                          setSettings({ ...settings, preferences: { ...settings.preferences, ranking_alerts: e.target.checked } })
                         }
                         className="sr-only peer"
                       />

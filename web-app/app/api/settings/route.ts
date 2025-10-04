@@ -5,9 +5,11 @@ import { z } from 'zod';
 const settingsSchema = z.object({
   full_name: z.string().optional(),
   company_name: z.string().optional(),
-  email_notifications: z.boolean().optional(),
-  weekly_reports: z.boolean().optional(),
-  ranking_alerts: z.boolean().optional(),
+  preferences: z.object({
+    email_notifications: z.boolean().optional(),
+    weekly_reports: z.boolean().optional(),
+    ranking_alerts: z.boolean().optional(),
+  }).optional(),
 });
 
 // GET /api/settings - Get user settings
@@ -39,9 +41,11 @@ export async function GET(request: NextRequest) {
         user_id: user.id,
         full_name: user.user_metadata?.full_name || '',
         company_name: '',
-        email_notifications: true,
-        weekly_reports: true,
-        ranking_alerts: true,
+        preferences: {
+          email_notifications: true,
+          weekly_reports: true,
+          ranking_alerts: true,
+        },
       };
 
       return NextResponse.json({ settings: defaultSettings });
