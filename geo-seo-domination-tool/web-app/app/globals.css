@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827; /* Dark gray-900 for maximum contrast */
+
+  /* Force light mode colors */
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #059669; /* emerald-600 */
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6; /* gray-100 */
+  --secondary-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280; /* gray-500 */
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb; /* gray-200 */
+  --input: #e5e7eb;
+  --ring: #059669;
+}
+
+/* Override dark mode - force light mode always */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #ffffff;
+    --foreground: #111827;
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+    --primary: #059669;
+    --primary-foreground: #ffffff;
+    --secondary: #f3f4f6;
+    --secondary-foreground: #111827;
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+    --accent: #f3f4f6;
+    --accent-foreground: #111827;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e5e7eb;
+    --input: #e5e7eb;
+    --ring: #059669;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure placeholder text has proper contrast - dark text on light background */
+input::placeholder,
+textarea::placeholder {
+  color: #4b5563 !important; /* gray-600 for good readability */
+  opacity: 1 !important;
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder {
+  color: #9ca3af !important; /* gray-400 when focused */
+  opacity: 1 !important;
+}
+
+/* Ensure input/textarea text is always dark */
+input,
+textarea {
+  color: #111827 !important; /* gray-900 for maximum readability */
+}
+
+/* Force dark text on all text elements */
+h1, h2, h3, h4, h5, h6 {
+  color: #111827 !important;
+}
+
+label {
+  color: #111827 !important;
+}
+
+p {
+  color: #374151 !important; /* gray-700 */
+}
+
+/* Force all card components to have dark text */
+[class*="card"] {
+  color: #111827 !important;
+}
+
+/* Override any muted text to ensure readability */
+.text-muted-foreground {
+  color: #6b7280 !important; /* gray-500 - still readable */
+}
+
+/* Ensure buttons have proper contrast */
+button {
+  color: inherit;
+}
+
+button:not([class*="bg-"]) {
+  color: #111827;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

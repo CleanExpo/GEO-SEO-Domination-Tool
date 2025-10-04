@@ -1,0 +1,31 @@
+{
+  "id": "admin-complete",
+  "title": "Admin Dashboard Complete",
+  "summary": "Complete admin system: role setup, dashboard page, and API routes for user management.",
+  "steps": [
+    {
+      "builder": "supabase-profiles-role",
+      "variables": {
+        "SCHEMA_NAME": "public",
+        "TABLE_NAME": "profiles"
+      }
+    },
+    {
+      "builder": "supabase-admin-role",
+      "variables": {
+        "SCHEMA_NAME": "public",
+        "TABLE_NAME": "profiles"
+      }
+    },
+    {
+      "builder": "admin-dashboard-page",
+      "variables": {
+        "ADMIN_PATH": "admin"
+      }
+    },
+    {
+      "builder": "admin-users-api",
+      "variables": {}
+    }
+  ]
+}

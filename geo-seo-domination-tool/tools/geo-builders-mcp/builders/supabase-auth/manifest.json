@@ -1,0 +1,18 @@
+{
+  "id": "supabase-auth",
+  "title": "Supabase Auth Starter",
+  "summary": "Adds sign-in/up pages (email OTP), session header, protected-route middleware, and /api/auth endpoints using existing Supabase client.",
+  "engine": "eta",
+  "variables": [],
+  "files": [
+    { "from": "templates/pages/auth/sign-in.tsx.eta", "to": "web-app/app/(auth)/sign-in/page.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/pages/auth/sign-up.tsx.eta", "to": "web-app/app/(auth)/sign-up/page.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/pages/auth/layout.tsx.eta", "to": "web-app/app/(auth)/layout.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/components/AuthHeader.tsx.eta", "to": "web-app/components/AuthHeader.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/middleware.ts.eta", "to": "web-app/middleware.ts", "strategy": "merge-or-create" },
+    { "from": "templates/api/user.ts.eta", "to": "web-app/app/api/auth/user/route.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/api/signout.ts.eta", "to": "web-app/app/api/auth/signout/route.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/pages/settings/account.tsx.eta", "to": "web-app/app/settings/account/page.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/docs.md.eta", "to": "docs/SUPABASE_AUTH_STARTER.md", "strategy": "create-or-overwrite" }
+  ]
+}

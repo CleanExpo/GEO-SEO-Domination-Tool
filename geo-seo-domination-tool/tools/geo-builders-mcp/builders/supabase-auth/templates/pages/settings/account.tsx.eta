@@ -1,0 +1,25 @@
+'use client';
+import { useEffect, useState } from 'react';
+
+export default function AccountSettingsPage(){
+  const [user, setUser] = useState<{ email?:string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    fetch('/api/auth/user').then(r=> r.json()).then(j=> { setUser(j?.user || null); setLoading(false); }).catch(()=> setLoading(false));
+  }, []);
+
+  if (loading) return <div className='p-6'>Loading…</div>;
+  if (!user) return <div className='p-6'>Not signed in</div>;
+
+  return (
+    <div className='max-w-3xl mx-auto p-6 space-y-6'>
+      <h1 className='text-2xl font-semibold'>Account Settings</h1>
+      <div className='border rounded p-4 space-y-2'>
+        <div className='text-sm text-gray-600'>Email</div>
+        <div className='font-medium'>{user.email}</div>
+      </div>
+      <p className='text-sm text-gray-600'>Contact support to change your email or delete your account.</p>
+    </div>
+  );
+}

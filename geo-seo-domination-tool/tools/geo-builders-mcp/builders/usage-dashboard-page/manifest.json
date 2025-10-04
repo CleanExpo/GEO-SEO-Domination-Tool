@@ -1,0 +1,25 @@
+{
+  "id": "usage-dashboard-page",
+  "title": "Usage Dashboard Page",
+  "summary": "User-facing dashboard showing quota usage, limits, and usage history with progress bars.",
+  "engine": "eta",
+  "variables": [
+    {
+      "name": "USAGE_PATH",
+      "required": false,
+      "example": "usage"
+    }
+  ],
+  "files": [
+    {
+      "from": "templates/app/[path]/page.tsx.eta",
+      "to": "web-app/app/<%= USAGE_PATH || 'usage' %>/page.tsx",
+      "strategy": "create-or-overwrite"
+    },
+    {
+      "from": "templates/README.md.eta",
+      "to": "docs/builders/usage-dashboard-page.md",
+      "strategy": "create-or-overwrite"
+    }
+  ]
+}

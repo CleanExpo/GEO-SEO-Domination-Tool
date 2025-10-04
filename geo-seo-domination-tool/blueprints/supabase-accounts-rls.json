@@ -1,0 +1,22 @@
+{
+  "id": "supabase-accounts-rls",
+  "title": "Supabase Auth + Profiles with RLS",
+  "summary": "Complete Supabase authentication setup with protected pages, middleware, and user profiles table with Row Level Security.",
+  "steps": [
+    {
+      "builder": "supabase-auth-pages",
+      "variables": {
+        "LOGIN_PATH": "login",
+        "DASHBOARD_PATH": "dashboard",
+        "OAUTH_PROVIDERS": "google,github"
+      }
+    },
+    {
+      "builder": "supabase-profiles-rls",
+      "variables": {
+        "SCHEMA_NAME": "public",
+        "TABLE_NAME": "profiles"
+      }
+    }
+  ]
+}

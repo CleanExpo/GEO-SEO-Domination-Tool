@@ -1,0 +1,14 @@
+{
+  "id": "seo-site-audit-lite",
+  "title": "SEO • Site Audit (Lite)",
+  "summary": "Audit discovered URLs for title/meta/heading/http status. Produces JSON+CSV.",
+  "variables": [
+    { "name": "INPUT_JSON", "required": true, "description": "Crawl JSON path from sitemap-crawler (e.g., server/logs/seo/crawl-*.json)" },
+    { "name": "OUTPUT_DIR", "required": false, "default": "server/logs/seo", "description": "Where to store audit outputs" },
+    { "name": "CONCURRENCY", "required": false, "default": "6", "description": "Fetch concurrency" }
+  ],
+  "templates": [
+    { "from": "audit.ts.eta", "to": "<%= OUTPUT_DIR %>/audit-site.ts" },
+    { "from": "README.md.eta", "to": "docs/builders/seo-site-audit-lite.md" }
+  ]
+}

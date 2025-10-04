@@ -1,0 +1,14 @@
+{
+  "id": "seo-sitemap-crawler",
+  "title": "SEO • Sitemap Crawler",
+  "summary": "Crawl a sitemap.xml (or site root) and emit URL inventory JSON.",
+  "variables": [
+    { "name": "START_URL", "required": true, "description": "Homepage or sitemap URL (e.g., https://example.com)" },
+    { "name": "MAX_URLS", "required": false, "default": "1000", "description": "Max URLs to process" },
+    { "name": "OUTPUT_DIR", "required": false, "default": "server/logs/seo", "description": "Where to store JSON output" }
+  ],
+  "templates": [
+    { "from": "crawler.ts.eta", "to": "<%= OUTPUT_DIR %>/crawl-site.ts" },
+    { "from": "README.md.eta", "to": "docs/builders/seo-sitemap-crawler.md" }
+  ]
+}

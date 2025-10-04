@@ -1,0 +1,36 @@
+# Reduce build context size
+.git
+.gitignore
+node_modules
+**/node_modules
+npm-debug.log*
+.yarn
+.pnpm-store
+.DS_Store
+.tmp
+.cache
+# Next build artifacts (rebuilt in container)
+**/.next
+# Local env & secrets (compose mounts env_file when needed)
+**/web-app/.env.local
+server/secrets/
+server/logs/
+# IDE
+.vscode
+.idea
+# Testing
+coverage
+__tests__
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+# Logs
+logs
+*.log
+# Database
+*.sqlite
+*.db
+# Backups
+*.backup
+*.bak
+backups

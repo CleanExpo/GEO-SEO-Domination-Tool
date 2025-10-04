@@ -1,0 +1,16 @@
+{
+  "id": "stripe-billing",
+  "title": "Stripe Billing Starter (free → pro)",
+  "summary": "Adds settings/billing UI, checkout + portal API routes, and webhook to set roles. Requires Stripe keys in env.",
+  "engine": "eta",
+  "variables": [],
+  "files": [
+    { "from": "templates/lib/stripe.ts.eta", "to": "web-app/lib/stripe.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/lib/billing.ts.eta", "to": "web-app/lib/billing.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/pages/settings/billing/page.tsx.eta", "to": "web-app/app/settings/billing/page.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/api/billing/create-checkout-session/route.ts.eta", "to": "web-app/app/api/billing/create-checkout-session/route.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/api/billing/portal/route.ts.eta", "to": "web-app/app/api/billing/portal/route.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/api/billing/webhook/route.ts.eta", "to": "web-app/app/api/billing/webhook/route.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/docs.md.eta", "to": "docs/STRIPE_BILLING.md", "strategy": "create-or-overwrite" }
+  ]
+}

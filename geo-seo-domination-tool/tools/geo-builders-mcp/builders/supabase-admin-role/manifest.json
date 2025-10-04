@@ -1,0 +1,30 @@
+{
+  "id": "supabase-admin-role",
+  "title": "Supabase Admin Role Setup",
+  "summary": "Adds admin role value and RLS policy allowing admins to view all profiles.",
+  "engine": "eta",
+  "variables": [
+    {
+      "name": "SCHEMA_NAME",
+      "required": false,
+      "example": "public"
+    },
+    {
+      "name": "TABLE_NAME",
+      "required": false,
+      "example": "profiles"
+    }
+  ],
+  "files": [
+    {
+      "from": "templates/sql/admin-policies.sql.eta",
+      "to": "database/supabase/<%= TABLE_NAME || 'profiles' %>_admin_policies.sql",
+      "strategy": "create-or-overwrite"
+    },
+    {
+      "from": "templates/README.md.eta",
+      "to": "docs/builders/supabase-admin-role.md",
+      "strategy": "create-or-overwrite"
+    }
+  ]
+}

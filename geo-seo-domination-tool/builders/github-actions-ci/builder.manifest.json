@@ -1,0 +1,18 @@
+{
+  "id": "github-actions-ci",
+  "version": "1.0.0",
+  "title": "GitHub Actions CI (+ optional Docker publish)",
+  "summary": "Adds CI workflow for lint/type/build and optional Docker image build/push when registry secrets are present.",
+  "tags": ["github-actions", "ci", "docker"],
+  "variables": [
+    { "name": "NODE_VERSION", "required": false, "example": "20" },
+    { "name": "REGISTRY", "required": false, "example": "ghcr.io" },
+    { "name": "IMAGE_NAME", "required": false, "example": "your-user/geo-seo/web" }
+  ],
+  "templates": [
+    { "from": "templates/ci.yml.eta",            "to": ".github/workflows/ci.yml",            "engine": "eta" },
+    { "from": "templates/docker-publish.yml.eta","to": ".github/workflows/docker-publish.yml","engine": "eta" },
+    { "from": "templates/README.md.eta",         "to": "docs/builders/github-actions-ci.md",  "engine": "eta" }
+  ],
+  "licenses": [{ "name": "MIT" }]
+}

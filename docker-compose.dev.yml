@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: geo-seo-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: geoseo
+      POSTGRES_PASSWORD: dev_password_change_me
+      POSTGRES_DB: geo_seo_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - geo-seo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geoseo -d geo_seo_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: geo-seo-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass dev_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - geo-seo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Web Application
+  web-app:
+    build:
+      context: ./geo-seo-domination-tool/web-app
+      dockerfile: Dockerfile
+      target: runner
+    container_name: geo-seo-web-dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://geoseo:dev_password_change_me@postgres:5432/geo_seo_db
+      - REDIS_URL=redis://:dev_redis_password@redis:6379
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - SEMRUSH_API_KEY=${SEMRUSH_API_KEY}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reloading
+      - ./geo-seo-domination-tool/web-app:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - geo-seo-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # PgAdmin (Optional - Database Management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: geo-seo-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@geoseo.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - geo-seo-network
+    depends_on:
+      - postgres
+
+networks:
+  geo-seo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local

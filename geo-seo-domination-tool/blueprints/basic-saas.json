@@ -1,0 +1,43 @@
+{
+  "id": "basic-saas",
+  "title": "Basic SaaS (API + DB + Supabase + CI + Docker)",
+  "summary": "Bootstraps a minimal SaaS: health API, DB schema, Supabase env & client, CI, Docker.",
+  "steps": [
+    {
+      "builder": "nextjs-api-route",
+      "variables": {
+        "ROUTE_NAME": "health"
+      }
+    },
+    {
+      "builder": "database-schema",
+      "variables": {
+        "SCHEMA_NAME": "events"
+      }
+    },
+    {
+      "builder": "supabase-setup",
+      "variables": {
+        "SUPABASE_URL": "${env:SUPABASE_URL}",
+        "SUPABASE_ANON_KEY": "${env:SUPABASE_ANON_KEY}"
+      }
+    },
+    {
+      "builder": "docker-compose",
+      "variables": {
+        "SERVICE_NAME": "web",
+        "PORT": "3000",
+        "NODE_VERSION": "20",
+        "IMAGE_PREFIX": ""
+      }
+    },
+    {
+      "builder": "github-actions-ci",
+      "variables": {
+        "NODE_VERSION": "20",
+        "REGISTRY": "",
+        "IMAGE_NAME": ""
+      }
+    }
+  ]
+}

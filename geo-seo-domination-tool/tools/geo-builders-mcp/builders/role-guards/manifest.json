@@ -1,0 +1,15 @@
+{
+  "id": "role-guards",
+  "title": "Role Guards (free/pro/admin)",
+  "summary": "Installs role helpers, guarded middleware, an admin-only Roles page, and a basic roles API.",
+  "engine": "eta",
+  "variables": [],
+  "files": [
+    { "from": "templates/lib/roles.ts.eta", "to": "web-app/lib/roles.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/middleware.ts.eta", "to": "web-app/middleware.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/app/403/page.tsx.eta", "to": "web-app/app/403/page.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/app/settings/roles/page.tsx.eta", "to": "web-app/app/settings/roles/page.tsx", "strategy": "create-or-overwrite" },
+    { "from": "templates/app/api/roles/route.ts.eta", "to": "web-app/app/api/roles/route.ts", "strategy": "create-or-overwrite" },
+    { "from": "templates/docs.md.eta", "to": "docs/ROLE_GUARDS.md", "strategy": "create-or-overwrite" }
+  ]
+}

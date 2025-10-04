@@ -1,0 +1,39 @@
+services:
+  reverse_proxy:
+    image: nginx:alpine
+    container_name: geo_reverse_proxy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - web_blue
+      - web_green
+
+  web_blue:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    container_name: geo_web_blue
+    env_file:
+      - ../../geo-seo-domination-tool/web-app/.env.local
+      - ../../server/release.env
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_TRAFFIC_COLOR=blue
+    expose:
+      - "3000"
+
+  web_green:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    container_name: geo_web_green
+    env_file:
+      - ../../geo-seo-domination-tool/web-app/.env.local
+      - ../../server/release.env
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_TRAFFIC_COLOR=green
+    expose:
+      - "3000"

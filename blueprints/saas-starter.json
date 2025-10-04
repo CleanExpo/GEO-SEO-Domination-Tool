@@ -1,0 +1,36 @@
+{
+  "name": "SaaS Starter",
+  "description": "Turnkey SaaS foundation with auth, usage metering, plan caps, health checks, and CI/CD",
+  "steps": [
+    {
+      "builder": "plan-caps",
+      "variables": {}
+    },
+    {
+      "builder": "usage-schema",
+      "variables": {}
+    },
+    {
+      "builder": "usage-runtime",
+      "variables": {}
+    },
+    {
+      "builder": "supabase-setup",
+      "variables": {}
+    },
+    {
+      "builder": "nextjs-api-route",
+      "variables": {
+        "ROUTE_NAME": "health"
+      }
+    },
+    {
+      "builder": "github-actions-ci",
+      "variables": {}
+    },
+    {
+      "builder": "docker-compose",
+      "variables": {}
+    }
+  ]
+}

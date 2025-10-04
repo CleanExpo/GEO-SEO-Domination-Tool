@@ -1,0 +1,39 @@
+'use client';
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
+const providers = ("<%= (OAUTH_PROVIDERS || '') %>".split(',').map(p=>p.trim()).filter(Boolean));
+
+export default function LoginPage(){
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function sendMagic(){
+    try{
+      setLoading(true); setMsg('');
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/<%= DASHBOARD_PATH || 'dashboard' %>' } });
+      if (error) throw error;
+      setMsg('Check your email for the login link.');
+    }catch(e:any){ setMsg(e?.message || 'Sign-in failed'); }
+    finally{ setLoading(false); }
+  }
+
+  async function loginOAuth(provider: any){
+    await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + '/<%= DASHBOARD_PATH || 'dashboard' %>' } });
+  }
+
+  return (
+    <div className='max-w-md mx-auto p-8'>
+      <h1 className='text-2xl font-bold mb-2'>Sign in</h1>
+      <p className='text-gray-600 mb-6'>Enter your email to receive a magic link.</p>
+      <div className='space-y-3'>
+        <input className='border rounded w-full px-3 py-2' placeholder='Email' value={email} onChange={e=>setEmail(e.target.value)} />
+        <button className='px-4 py-2 border rounded w-full' onClick={sendMagic} disabled={loading}>{loading?'Sending...':'Send magic link'}</button>
+        {!!providers.length && (<div className='text-center text-sm text-gray-500 my-2'>or</div>)}
+        {providers.map(p=> <button key={p} className='px-4 py-2 border rounded w-full' onClick={()=>loginOAuth(p)}>Sign in with {p}</button>)}
+      </div>
+      {msg && <div className='mt-4 text-sm text-gray-700'>{msg}</div>}
+    </div>
+  );
+}

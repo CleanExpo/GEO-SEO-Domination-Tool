@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests",
+      "Bash(git checkout:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm link:*)",
+      "Bash(geo bluegreen:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(geo doctor:*)",
+      "Bash(docker compose:*)",
+      "Bash(git init:*)",
+      "Bash(docker ps:*)",
+      "Bash(start http://localhost:8080)",
+      "Bash(code docs/SHIP_IT_RUNBOOK.md)",
+      "Bash(geo release:*)",
+      "Bash(curl:*)",
+      "Bash(start http://localhost:3004/analytics)",
+      "Bash(pwsh:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

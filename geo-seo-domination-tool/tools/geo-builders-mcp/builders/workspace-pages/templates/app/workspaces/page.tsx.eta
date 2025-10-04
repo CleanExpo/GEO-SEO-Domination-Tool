@@ -1,0 +1,156 @@
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+
+async function getData(){
+  const cookieStore = cookies();
+  const supa = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          } catch {}
+        }
+      }
+    }
+  );
+
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return { user:null, workspaces:[], active:null };
+
+  const { data } = await supa.from('workspaces')
+    .select('id,name,slug,workspace_memberships(role,user_id)')
+    .order('created_at', { ascending:false });
+
+  return { user, workspaces: data||[], active: cookieStore.get('active_workspace')?.value || null } as const;
+}
+
+export default async function WorkspacesPage(){
+  const { user, workspaces, active } = await getData();
+
+  async function createWorkspace(formData: FormData){
+    'use server';
+    const name = String(formData.get('name')||'').trim();
+    const slug = String(formData.get('slug')||'').trim();
+
+    const cookieStore = cookies();
+    const supa = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+            } catch {}
+          }
+        }
+      }
+    );
+
+    const { data: { user } } = await supa.auth.getUser();
+    if (!user || !name) return;
+
+    const { data } = await supa.from('workspaces')
+      .insert({ name, slug: slug || '<%= DEFAULT_SLUG || "main" %>', owner_id: user.id })
+      .select('id')
+      .maybeSingle();
+
+    if (data?.id){
+      cookieStore.set({ name: 'active_workspace', value: data.id, path: '/', httpOnly: false, sameSite: 'lax' });
+    }
+
+    redirect('/workspaces');
+  }
+
+  async function switchWorkspace(formData: FormData){
+    'use server';
+    const id = String(formData.get('id')||'');
+    if (!id) return;
+
+    cookies().set({ name: 'active_workspace', value: id, path: '/', httpOnly: false, sameSite: 'lax' });
+    redirect('/workspaces');
+  }
+
+  if (!user){
+    return (<div className='p-8'>Please <a className='underline' href='/login'>sign in</a> to manage workspaces.</div>);
+  }
+
+  return (
+    <div className='max-w-4xl mx-auto p-6 space-y-6'>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-2xl font-semibold'>Workspaces</h1>
+        <div className='text-sm text-gray-500'>Active: <span className='font-mono'>{active || 'none'}</span></div>
+      </div>
+
+      <div className='border rounded p-4'>
+        <h2 className='font-medium mb-2'>Create Workspace</h2>
+        <form action={createWorkspace} className='grid grid-cols-1 md:grid-cols-3 gap-2'>
+          <input name='name' className='border rounded px-3 py-2' placeholder='Name (e.g., Client ACME)' required />
+          <input name='slug' className='border rounded px-3 py-2' placeholder='Slug (optional)' />
+          <button type='submit' className='px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>Create</button>
+        </form>
+        <p className='text-xs text-gray-500 mt-2'>Creator becomes <b>owner</b> and is auto-added as a member.</p>
+      </div>
+
+      <div className='border rounded p-4'>
+        <h2 className='font-medium mb-2'>Your Workspaces</h2>
+        <div className='overflow-x-auto'>
+          <table className='w-full text-sm border'>
+            <thead className='bg-gray-50'>
+              <tr>
+                <th className='text-left p-2 border'>Name</th>
+                <th className='text-left p-2 border'>Slug</th>
+                <th className='text-left p-2 border'>Role</th>
+                <th className='text-left p-2 border'>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(workspaces||[]).map((w:any)=> {
+                const role = w.workspace_memberships?.[0]?.role || 'member';
+                const isActive = w.id === active;
+                return (
+                  <tr key={w.id}>
+                    <td className='p-2 border'>{w.name}</td>
+                    <td className='p-2 border font-mono text-xs'>{w.slug || '-'}</td>
+                    <td className='p-2 border'>
+                      <span className={`px-2 py-1 text-xs rounded ${
+                        role === 'owner' ? 'bg-purple-100 text-purple-800' :
+                        role === 'admin' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {role}
+                      </span>
+                    </td>
+                    <td className='p-2 border'>
+                      <form action={switchWorkspace}>
+                        <input type='hidden' name='id' value={w.id} />
+                        <button
+                          type='submit'
+                          className={`px-2 py-1 text-xs border rounded ${isActive?'opacity-60 cursor-not-allowed':'hover:bg-gray-50'}`}
+                          disabled={isActive}
+                        >
+                          {isActive? 'Active':'Set Active'}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!workspaces?.length && (
+                <tr><td className='p-2 border text-gray-500 text-sm' colSpan={4}>No workspaces yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

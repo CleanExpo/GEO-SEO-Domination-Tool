@@ -1,0 +1,321 @@
+{
+  "version": "1.0",
+  "created": "2025-10-02",
+  "compat": {
+    "shell": "powershell",
+    "os": "windows",
+    "editors": ["vscode"],
+    "cli": ["claude-code-cli", "cline", "lighthouse"]
+  },
+  "conventions": {
+    "language": "TypeScript",
+    "frameworks": ["Next.js 15", "Vercel Analytics", "Web Vitals"],
+    "repo_layout": "web-app/**, monitoring in /lib/monitoring"
+  },
+  "name": "Performance Monitor",
+  "id": "performance_monitor",
+  "category": "monitoring-optimization",
+  "summary": "Analyzes application performance, identifies bottlenecks, implements optimizations, and sets up monitoring.",
+  "system_prompt": "⚡ I am an expert in web performance optimization, Core Web Vitals, and monitoring strategies.\n\nI know:\n- Lighthouse performance auditing\n- Core Web Vitals (LCP, FID, CLS, FCP, TTFB)\n- Next.js optimization techniques (Image, Font, Script)\n- Bundle analysis and code splitting\n- Server Component vs Client Component optimization\n- Database query optimization\n- API response time optimization\n- Cache strategies (Redis, CDN, SWR)\n- Performance monitoring setup (Vercel Analytics, Web Vitals)\n- Progressive Web App (PWA) optimization\n\nI will:\n1) Run Lighthouse audit on production and local builds\n2) Analyze Core Web Vitals and identify issues\n3) Review bundle size and suggest code splitting\n4) Optimize images (Next.js Image component)\n5) Implement font optimization strategies\n6) Set up performance monitoring with Web Vitals\n7) Add performance budgets and alerts\n8) Optimize database queries and API calls\n9) Implement caching strategies\n10) Document performance metrics and improvements\n\nI use: Lighthouse CLI, Next.js Analyzer, bundle analysis, Web Vitals API.",
+  "goals": [
+    "Achieve Lighthouse performance score > 90",
+    "Optimize Core Web Vitals to 'Good' thresholds",
+    "Reduce bundle size by at least 20%",
+    "Implement performance monitoring",
+    "Set up performance budgets"
+  ],
+  "stop_conditions": {
+    "max_iterations": 5,
+    "success_checks": [
+      "Lighthouse performance score > 85",
+      "LCP (Largest Contentful Paint) < 2.5s",
+      "FID (First Input Delay) < 100ms",
+      "CLS (Cumulative Layout Shift) < 0.1",
+      "Bundle size within budget",
+      "Web Vitals monitoring implemented"
+    ]
+  },
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "projectPath": { "type": "string" },
+      "targetUrl": {
+        "type": "string",
+        "description": "Production or preview URL to audit"
+      },
+      "runLocal": { "type": "boolean", "default": true },
+      "analyzeBundle": { "type": "boolean", "default": true },
+      "implementMonitoring": { "type": "boolean", "default": true },
+      "optimizeImages": { "type": "boolean", "default": true },
+      "performanceBudget": {
+        "type": "object",
+        "properties": {
+          "maxBundleSize": { "type": "number", "default": 500 },
+          "maxImageSize": { "type": "number", "default": 200 },
+          "maxApiResponseTime": { "type": "number", "default": 500 }
+        }
+      }
+    },
+    "required": ["projectPath"]
+  },
+  "outputs_schema": {
+    "type": "object",
+    "properties": {
+      "lighthouse_scores": {
+        "type": "object",
+        "properties": {
+          "performance": { "type": "number" },
+          "accessibility": { "type": "number" },
+          "best_practices": { "type": "number" },
+          "seo": { "type": "number" }
+        }
+      },
+      "web_vitals": {
+        "type": "object",
+        "properties": {
+          "lcp": { "type": "number" },
+          "fid": { "type": "number" },
+          "cls": { "type": "number" },
+          "fcp": { "type": "number" },
+          "ttfb": { "type": "number" }
+        }
+      },
+      "bundle_analysis": {
+        "type": "object",
+        "properties": {
+          "total_size": { "type": "number" },
+          "largest_chunks": { "type": "array", "items": { "type": "string" } },
+          "duplicate_dependencies": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "optimizations_applied": { "type": "array", "items": { "type": "string" } },
+      "recommendations": { "type": "array", "items": { "type": "string" } },
+      "monitoring_setup": { "type": "boolean" }
+    },
+    "required": ["lighthouse_scores", "web_vitals"]
+  },
+  "tools": {
+    "commands": [
+      {
+        "name": "lighthouse_audit",
+        "description": "Run Lighthouse performance audit",
+        "cmd": "npx lighthouse ${targetUrl} --output=json --output-path=${projectPath}/lighthouse-report.json --chrome-flags=\"--headless\" --only-categories=performance,accessibility,best-practices,seo"
+      },
+      {
+        "name": "bundle_analyzer",
+        "description": "Analyze Next.js bundle size",
+        "cmd": "cd ${projectPath} && npx @next/bundle-analyzer"
+      },
+      {
+        "name": "build_production",
+        "description": "Build for production to analyze output",
+        "cmd": "cd ${projectPath} && npm run build"
+      },
+      {
+        "name": "install_web_vitals",
+        "description": "Install web-vitals package",
+        "cmd": "cd ${projectPath} && npm install web-vitals"
+      }
+    ]
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Performance Audit",
+      "tasks": [
+        "Run Lighthouse audit on target URL",
+        "Extract performance scores",
+        "Identify failing audits",
+        "Measure Core Web Vitals",
+        "Document baseline metrics"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Bundle Analysis",
+      "tasks": [
+        "Build production bundle",
+        "Analyze bundle size breakdown",
+        "Identify largest chunks",
+        "Find duplicate dependencies",
+        "Check for unused code"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Image Optimization",
+      "tasks": [
+        "Find all <img> tags not using next/image",
+        "Replace with Next.js Image component",
+        "Add proper width/height attributes",
+        "Implement lazy loading",
+        "Set up image CDN if needed"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Code Optimization",
+      "tasks": [
+        "Convert unnecessary Client Components to Server Components",
+        "Implement dynamic imports for heavy components",
+        "Add React.lazy for code splitting",
+        "Optimize font loading (next/font)",
+        "Remove unused dependencies"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Monitoring Setup",
+      "tasks": [
+        "Install web-vitals package",
+        "Create performance monitoring utility",
+        "Set up Web Vitals reporting",
+        "Add performance budgets",
+        "Implement alerts for regressions"
+      ]
+    }
+  ],
+  "core_web_vitals_thresholds": {
+    "good": {
+      "lcp": 2500,
+      "fid": 100,
+      "cls": 0.1,
+      "fcp": 1800,
+      "ttfb": 800
+    },
+    "needs_improvement": {
+      "lcp": 4000,
+      "fid": 300,
+      "cls": 0.25,
+      "fcp": 3000,
+      "ttfb": 1800
+    }
+  },
+  "optimization_techniques": [
+    {
+      "category": "Images",
+      "techniques": [
+        "Use Next.js Image component with automatic optimization",
+        "Implement lazy loading for below-fold images",
+        "Use WebP or AVIF format for better compression",
+        "Add width and height to prevent layout shift",
+        "Use responsive images with sizes prop",
+        "Implement blur placeholder for progressive loading"
+      ]
+    },
+    {
+      "category": "JavaScript",
+      "techniques": [
+        "Code splitting with dynamic imports",
+        "Tree shaking to remove dead code",
+        "Minification and compression",
+        "Defer non-critical JavaScript",
+        "Use Server Components by default",
+        "Implement route-based code splitting"
+      ]
+    },
+    {
+      "category": "CSS",
+      "techniques": [
+        "Remove unused CSS with PurgeCSS",
+        "Inline critical CSS",
+        "Use CSS modules for scoping",
+        "Minimize CSS bundle size",
+        "Use Tailwind JIT mode"
+      ]
+    },
+    {
+      "category": "Fonts",
+      "techniques": [
+        "Use next/font for automatic optimization",
+        "Preload critical fonts",
+        "Use font-display: swap",
+        "Subset fonts to reduce file size",
+        "Self-host fonts to avoid external requests"
+      ]
+    },
+    {
+      "category": "API/Database",
+      "techniques": [
+        "Implement API response caching",
+        "Use database query optimization",
+        "Add indexes to frequently queried columns",
+        "Implement pagination for large datasets",
+        "Use SWR or React Query for client-side caching",
+        "Implement rate limiting"
+      ]
+    },
+    {
+      "category": "Rendering",
+      "techniques": [
+        "Use Static Generation where possible",
+        "Implement ISR (Incremental Static Regeneration)",
+        "Use Server Components for data fetching",
+        "Stream content with Suspense",
+        "Implement proper loading states"
+      ]
+    }
+  ],
+  "monitoring_implementation": {
+    "web_vitals_file": "lib/monitoring/web-vitals.ts",
+    "template": "import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';\n\nexport function reportWebVitals() {\n  getCLS(sendToAnalytics);\n  getFID(sendToAnalytics);\n  getFCP(sendToAnalytics);\n  getLCP(sendToAnalytics);\n  getTTFB(sendToAnalytics);\n}\n\nfunction sendToAnalytics(metric: any) {\n  const body = JSON.stringify(metric);\n  const url = '/api/analytics/web-vitals';\n  \n  if (navigator.sendBeacon) {\n    navigator.sendBeacon(url, body);\n  } else {\n    fetch(url, { body, method: 'POST', keepalive: true });\n  }\n}"
+  },
+  "performance_budgets": {
+    "javascript": {
+      "max_initial_bundle": 200,
+      "max_total_bundle": 500,
+      "unit": "KB"
+    },
+    "images": {
+      "max_size": 200,
+      "unit": "KB"
+    },
+    "api_calls": {
+      "max_response_time": 500,
+      "unit": "ms"
+    },
+    "core_web_vitals": {
+      "lcp": 2500,
+      "fid": 100,
+      "cls": 0.1,
+      "unit": "score"
+    }
+  },
+  "alerts": [
+    {
+      "metric": "lighthouse_performance_score",
+      "threshold": 85,
+      "condition": "less_than",
+      "severity": "warning",
+      "message": "Performance score dropped below 85"
+    },
+    {
+      "metric": "lcp",
+      "threshold": 2500,
+      "condition": "greater_than",
+      "severity": "critical",
+      "message": "LCP exceeded 2.5 seconds"
+    },
+    {
+      "metric": "bundle_size",
+      "threshold": 500,
+      "condition": "greater_than",
+      "severity": "warning",
+      "message": "Bundle size exceeded 500KB"
+    }
+  ],
+  "best_practices": [
+    "Run Lighthouse audits on every deployment",
+    "Monitor Core Web Vitals in production",
+    "Set performance budgets and enforce them in CI/CD",
+    "Use Server Components by default in Next.js 15",
+    "Implement proper image optimization",
+    "Use dynamic imports for large components",
+    "Cache API responses where appropriate",
+    "Implement proper loading states",
+    "Use React Suspense for streaming",
+    "Optimize database queries with proper indexes",
+    "Monitor performance regressions",
+    "Document performance metrics over time"
+  ]
+}

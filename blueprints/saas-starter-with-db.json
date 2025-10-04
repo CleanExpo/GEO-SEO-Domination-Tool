@@ -1,0 +1,50 @@
+{
+  "name": "SaaS Starter with Database",
+  "description": "Complete SaaS stack with database schema, auth, usage metering, plan caps, health checks, and CI/CD",
+  "steps": [
+    {
+      "builder": "database-schema",
+      "variables": {
+        "TABLE_NAME": "projects",
+        "COLUMNS": [
+          {"name": "id", "type": "uuid", "primary": true},
+          {"name": "workspace_id", "type": "uuid", "references": "workspaces(id)"},
+          {"name": "name", "type": "text"},
+          {"name": "description", "type": "text"},
+          {"name": "created_at", "type": "timestamptz"},
+          {"name": "updated_at", "type": "timestamptz"}
+        ]
+      }
+    },
+    {
+      "builder": "plan-caps",
+      "variables": {}
+    },
+    {
+      "builder": "usage-schema",
+      "variables": {}
+    },
+    {
+      "builder": "usage-runtime",
+      "variables": {}
+    },
+    {
+      "builder": "supabase-setup",
+      "variables": {}
+    },
+    {
+      "builder": "nextjs-api-route",
+      "variables": {
+        "ROUTE_NAME": "health"
+      }
+    },
+    {
+      "builder": "github-actions-ci",
+      "variables": {}
+    },
+    {
+      "builder": "docker-compose",
+      "variables": {}
+    }
+  ]
+}

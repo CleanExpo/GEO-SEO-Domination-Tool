@@ -1,0 +1,4 @@
+# This file keeps the ssl directory in version control
+# Place your SSL certificates here:
+# - cert.pem
+# - key.pem

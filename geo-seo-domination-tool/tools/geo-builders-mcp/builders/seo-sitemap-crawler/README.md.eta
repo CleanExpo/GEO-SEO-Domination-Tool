@@ -1,0 +1,10 @@
+# SEO • Sitemap Crawler
+
+**Generated files**
+- `<%= OUTPUT_DIR %>/crawl-site.ts` — Node script to crawl sitemap/homepage and emit a JSON inventory.
+
+**Run**
+```bash
+node <%= OUTPUT_DIR %>/crawl-site.ts
+```
+Output will be saved to `<%= OUTPUT_DIR %>/crawl-*.json`.

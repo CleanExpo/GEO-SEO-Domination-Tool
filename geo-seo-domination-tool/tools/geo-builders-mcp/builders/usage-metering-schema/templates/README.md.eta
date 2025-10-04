@@ -1,0 +1,14 @@
+# Builder: usage-metering-schema
+
+Creates usage metering and quota enforcement system with:
+- **quota_limits** table: Defines limits per role/plan
+- **usage_metrics** table: Tracks actual resource consumption
+- **Helper functions**: track_usage(), check_quota(), get_usage_summary()
+- **RLS policies**: Users see own usage, admins see all
+- **Default quotas**: Seeded for free/pro/admin tiers
+
+**Metrics supported**: api_calls, storage_mb, projects, builds, deployments (extensible)
+
+**Periods**: hour, day, month, total
+
+**Apply:** Run the generated SQL in Supabase SQL Editor.

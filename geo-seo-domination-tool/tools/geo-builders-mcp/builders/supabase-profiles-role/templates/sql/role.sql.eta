@@ -1,0 +1,9 @@
+-- Adds role column to profiles with default 'free'.
+-- Safe to run multiple times.
+
+alter table if exists <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'profiles' %>
+  add column if not exists role text not null default 'free';
+
+-- Optional index for role queries
+create index if not exists idx_<%= TABLE_NAME || 'profiles' %>_role
+  on <%= SCHEMA_NAME || 'public' %>.<%= TABLE_NAME || 'profiles' %>(role);

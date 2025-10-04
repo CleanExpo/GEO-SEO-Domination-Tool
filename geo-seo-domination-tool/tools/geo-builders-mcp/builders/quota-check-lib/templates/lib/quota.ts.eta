@@ -1,0 +1,142 @@
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE!;
+
+function svc(){ return createClient(SUPABASE_URL, SERVICE_ROLE); }
+
+export type QuotaCheckResult = {
+  allowed: boolean;
+  currentUsage: bigint;
+  quotaLimit: bigint;
+  remaining: bigint;
+};
+
+export type UsageSummary = {
+  metricType: string;
+  currentUsage: bigint;
+  quotaLimit: bigint;
+  remaining: bigint;
+  allowed: boolean;
+};
+
+/**
+ * Check if user has quota available for a metric
+ */
+export async function checkQuota(
+  userId: string,
+  metricType: string,
+  period: 'hour' | 'day' | 'month' | 'total' = 'month',
+  workspaceId?: string
+): Promise<QuotaCheckResult> {
+  const { data, error } = await svc().rpc('check_quota', {
+    p_user_id: userId,
+    p_metric_type: metricType,
+    p_period: period,
+    p_workspace_id: workspaceId || null
+  });
+
+  if (error) throw error;
+
+  const result = Array.isArray(data) ? data[0] : data;
+  return {
+    allowed: result?.allowed || false,
+    currentUsage: BigInt(result?.current_usage || 0),
+    quotaLimit: BigInt(result?.quota_limit || -1),
+    remaining: BigInt(result?.remaining || 0)
+  };
+}
+
+/**
+ * Track usage for a metric
+ */
+export async function trackUsage(
+  userId: string,
+  metricType: string,
+  value: number = 1,
+  options?: {
+    workspaceId?: string;
+    metadata?: Record<string, any>;
+    period?: 'hour' | 'day' | 'month' | 'total';
+  }
+): Promise<string> {
+  const { data, error } = await svc().rpc('track_usage', {
+    p_user_id: userId,
+    p_metric_type: metricType,
+    p_value: value,
+    p_workspace_id: options?.workspaceId || null,
+    p_metadata: options?.metadata || {},
+    p_period: options?.period || 'month'
+  });
+
+  if (error) throw error;
+  return data as string;
+}
+
+/**
+ * Get usage summary for all metrics
+ */
+export async function getUsageSummary(
+  userId: string,
+  period: 'hour' | 'day' | 'month' | 'total' = 'month',
+  workspaceId?: string
+): Promise<UsageSummary[]> {
+  const { data, error } = await svc().rpc('get_usage_summary', {
+    p_user_id: userId,
+    p_period: period,
+    p_workspace_id: workspaceId || null
+  });
+
+  if (error) throw error;
+
+  return (data || []).map((row: any) => ({
+    metricType: row.metric_type,
+    currentUsage: BigInt(row.current_usage || 0),
+    quotaLimit: BigInt(row.quota_limit || -1),
+    remaining: BigInt(row.remaining || 0),
+    allowed: row.allowed || false
+  }));
+}
+
+/**
+ * Enforce quota check and track usage in one call
+ * Throws error if quota exceeded
+ */
+export async function enforceQuota(
+  userId: string,
+  metricType: string,
+  value: number = 1,
+  options?: {
+    workspaceId?: string;
+    metadata?: Record<string, any>;
+    period?: 'hour' | 'day' | 'month' | 'total';
+  }
+): Promise<void> {
+  const period = options?.period || 'month';
+
+  // Check quota first
+  const quota = await checkQuota(userId, metricType, period, options?.workspaceId);
+
+  if (!quota.allowed) {
+    throw new QuotaExceededError(
+      `Quota exceeded for ${metricType}. Current: ${quota.currentUsage}, Limit: ${quota.quotaLimit}`,
+      metricType,
+      quota
+    );
+  }
+
+  // Track usage
+  await trackUsage(userId, metricType, value, options);
+}
+
+export class QuotaExceededError extends Error {
+  public metricType: string;
+  public quota: QuotaCheckResult;
+
+  constructor(message: string, metricType: string, quota: QuotaCheckResult) {
+    super(message);
+    this.name = 'QuotaExceededError';
+    this.metricType = metricType;
+    this.quota = quota;
+  }
+}

@@ -1,0 +1,51 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml to customize your local development setup
+# This file is gitignored and won't be committed
+#
+# Usage: docker-compose up (automatically uses docker-compose.yml + docker-compose.override.yml)
+
+version: '3.8'
+
+services:
+  # Example: Customize web-app service
+  # web-app:
+  #   ports:
+  #     - "3001:3000"  # Use different port
+  #   environment:
+  #     - DEBUG=true
+  #     - LOG_LEVEL=debug
+
+  # Example: Customize PostgreSQL
+  # postgres:
+  #   ports:
+  #     - "5433:5432"  # Use different port
+  #   environment:
+  #     - POSTGRES_PASSWORD=my_custom_password
+
+  # Example: Customize Redis
+  # redis:
+  #   command: redis-server --appendonly yes --requirepass my_custom_password
+
+  # Example: Add development tools
+  # redis-commander:
+  #   image: rediscommander/redis-commander:latest
+  #   container_name: geo-seo-redis-ui
+  #   restart: unless-stopped
+  #   environment:
+  #     - REDIS_HOSTS=local:redis:6379:0:dev_redis_password
+  #   ports:
+  #     - "8081:8081"
+  #   networks:
+  #     - geo-seo-network
+  #   depends_on:
+  #     - redis
+
+# Example: Add additional networks
+# networks:
+#   external-network:
+#     external: true
+
+# Example: Add additional volumes
+# volumes:
+#   custom-volume:
+#     driver: local

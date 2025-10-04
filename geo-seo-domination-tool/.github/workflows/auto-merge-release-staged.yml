@@ -1,0 +1,177 @@
+name: Auto Merge Release (Staged)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Release branch name (e.g., release/geo-mcp-v1)'
+        required: true
+        default: 'release/geo-mcp-v1'
+      target_branch:
+        description: 'Target branch to merge into (e.g., main)'
+        required: true
+        default: 'main'
+      branches:
+        description: 'Feature branches to merge (one per line)'
+        required: true
+        type: string
+
+jobs:
+  staged-merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Parse branch list
+        id: parse
+        run: |
+          echo "Parsing branches..."
+          echo '${{ inputs.branches }}' | while IFS= read -r branch; do
+            if [ -n "$branch" ]; then
+              echo "  - $branch"
+            fi
+          done
+      
+      - name: Create or checkout release branch
+        run: |
+          if git show-ref --verify --quiet refs/heads/${{ inputs.release_branch }}; then
+            echo "Release branch exists, checking out..."
+            git checkout ${{ inputs.release_branch }}
+            git pull origin ${{ inputs.release_branch }}
+          else
+            echo "Creating new release branch from ${{ inputs.target_branch }}..."
+            git checkout -b ${{ inputs.release_branch }} origin/${{ inputs.target_branch }}
+          fi
+      
+      - name: Merge feature branches
+        id: merge
+        run: |
+          set -e
+          FAILED_MERGES=""
+          SUCCESS_MERGES=""
+          SKIPPED_BRANCHES=""
+          
+          echo '${{ inputs.branches }}' | while IFS= read -r branch; do
+            branch=$(echo "$branch" | xargs)  # Trim whitespace
+            if [ -z "$branch" ]; then
+              continue
+            fi
+            
+            echo "=========================================="
+            echo "Processing: $branch"
+            echo "=========================================="
+            
+            # Check if branch exists
+            if ! git show-ref --verify --quiet refs/remotes/origin/$branch; then
+              echo "⚠️  Branch does not exist: $branch"
+              SKIPPED_BRANCHES="${SKIPPED_BRANCHES}${branch}\n"
+              continue
+            fi
+            
+            # Attempt merge
+            if git merge --no-ff --no-edit origin/$branch; then
+              echo "✓ Successfully merged: $branch"
+              SUCCESS_MERGES="${SUCCESS_MERGES}${branch}\n"
+            else
+              echo "✗ Merge conflict in: $branch"
+              git merge --abort || true
+              FAILED_MERGES="${FAILED_MERGES}${branch}\n"
+            fi
+          done
+          
+          # Save results
+          echo "success_merges<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$SUCCESS_MERGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "failed_merges<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$FAILED_MERGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "skipped_branches<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$SKIPPED_BRANCHES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Push release branch
+        if: success()
+        run: |
+          git push origin ${{ inputs.release_branch }}
+          echo "✓ Pushed ${{ inputs.release_branch }} to origin"
+      
+      - name: Create merge summary
+        if: always()
+        run: |
+          echo "## 📊 Merge Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release Branch:** \`${{ inputs.release_branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Target Branch:** \`${{ inputs.target_branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "${{ steps.merge.outputs.success_merges }}" ]; then
+            echo "### ✅ Successfully Merged" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo -e "${{ steps.merge.outputs.success_merges }}" | sed '/^$/d' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.merge.outputs.failed_merges }}" ]; then
+            echo "### ❌ Failed to Merge (Conflicts)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo -e "${{ steps.merge.outputs.failed_merges }}" | sed '/^$/d' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ These branches require manual conflict resolution" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.merge.outputs.skipped_branches }}" ]; then
+            echo "### ⏭️ Skipped (Branch Not Found)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo -e "${{ steps.merge.outputs.skipped_branches }}" | sed '/^$/d' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "Next: Review the merged changes in \`${{ inputs.release_branch }}\` and create a PR to \`${{ inputs.target_branch }}\`" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Create Pull Request (Optional)
+        if: success()
+        continue-on-error: true
+        run: |
+          gh pr create \
+            --title "🚀 Release: Merge ${{ inputs.release_branch }} into ${{ inputs.target_branch }}" \
+            --body "## Auto-generated Release PR
+
+          This PR merges the staged release branch into ${{ inputs.target_branch }}.
+
+          ### Merged Branches
+          ${{ steps.merge.outputs.success_merges }}
+
+          ### Failed Merges (Need Manual Resolution)
+          ${{ steps.merge.outputs.failed_merges }}
+
+          ### Skipped (Not Found)
+          ${{ steps.merge.outputs.skipped_branches }}
+
+          ---
+          Generated by Auto Merge Release (Staged) workflow" \
+            --base ${{ inputs.target_branch }} \
+            --head ${{ inputs.release_branch }} \
+            || echo "PR may already exist or couldn't be created"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
