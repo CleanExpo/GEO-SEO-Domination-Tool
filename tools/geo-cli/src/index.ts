@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { baseUrl, jget, jpost, pwsh, sh, repoRoot } from './util.js';
+import { runDoctor } from './doctor.js';
 
 const program = new Command();
 program
   .name('geo')
   .description('GEO CRM & MCP CLI (Vercel-like)')
-  .version('0.1.0');
+  .version('0.1.1');
 
 program
   .command('status')
@@ -152,5 +153,11 @@ program
     const r = await jpost(`${b}/api/blueprints`, { id: opts.id, autolink: true, deploy: true, githubOwner: opts.owner, githubRepo: opts.repo, vercelProject: opts.vercel||opts.repo });
     console.log(JSON.stringify(r,null,2));
   });
+
+program
+  .command('doctor')
+  .description('Run local + remote health checks and suggest fixes')
+  .option('--base-url <url>')
+  .action(async (opts)=> runDoctor(opts));
 
 program.parseAsync(process.argv);
