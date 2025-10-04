@@ -50,7 +50,9 @@ export function shutdownScheduler() {
 
 // Auto-initialize in production server environment
 // This runs when the module is first imported
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+if (typeof window === 'undefined' &&
+    process.env.NODE_ENV === 'production' &&
+    process.env.NEXT_PHASE !== 'phase-production-build') {
   // Delay initialization to allow database connections to be ready
   setTimeout(() => {
     initializeScheduler().catch(console.error);

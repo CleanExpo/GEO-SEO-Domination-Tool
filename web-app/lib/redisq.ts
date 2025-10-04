@@ -7,8 +7,20 @@ import { checkQuota, recordUsage } from '@/lib/usage';
 let Redis: any = null;
 function getRedis(){
   if (!process.env.REDIS_URL) return null;
-  if (!Redis) { try { Redis = require('ioredis'); } catch { return null; } }
-  return new Redis(process.env.REDIS_URL, { lazyConnect: false, maxRetriesPerRequest: 2 });
+  if (!Redis) {
+    try {
+      Redis = require('ioredis');
+    } catch (e) {
+      console.warn('ioredis not installed, falling back to file-based storage');
+      return null;
+    }
+  }
+  try {
+    return new Redis(process.env.REDIS_URL, { lazyConnect: false, maxRetriesPerRequest: 2 });
+  } catch (e) {
+    console.error('Failed to initialize Redis:', e);
+    return null;
+  }
 }
 
 export type JobStatus = 'queued'|'running'|'succeeded'|'failed'|'canceled';

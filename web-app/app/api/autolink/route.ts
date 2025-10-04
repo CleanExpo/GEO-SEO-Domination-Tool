@@ -32,16 +32,16 @@ export async function POST(req: NextRequest){
     const logs: string[] = [];
 
     // 1) Create GitHub repo (idempotent behavior handled by /api/link implementation)
-    logs.push(`’ github_create_repo ${owner}/${repo} private=${isPrivate}`);
+    logs.push(`Creating GitHub repo ${owner}/${repo} private=${isPrivate}`);
     const gh = await callLink({ action:'github_create_repo', owner, repo, private: isPrivate });
     if (!gh?.ok) return NextResponse.json({ ok:false, error: gh?.error||'github_create_repo_failed', logs }, { status:502 });
-    logs.push(' GitHub repository ready');
+    logs.push('GitHub repository ready');
 
     // 2) Create Vercel project linked to that repo
-    logs.push(`’ vercel_create_project ${vercelProject} (repo=${owner}/${repo})`);
+    logs.push(`Creating Vercel project ${vercelProject} (repo=${owner}/${repo})`);
     const vp = await callLink({ action:'vercel_create_project', projectName: vercelProject, repoPath: `${owner}/${repo}` });
     if (!vp?.ok) return NextResponse.json({ ok:false, error: vp?.error||'vercel_create_project_failed', logs }, { status:502 });
-    logs.push(' Vercel project linked');
+    logs.push('Vercel project linked');
 
     await recordOk(gate.ws!, 'api_call' as any, 1, { action:'autolink', owner, repo, vercelProject });
     return NextResponse.json({ ok:true, result:{ owner, repo, vercelProject, logs } }, { status:200 });

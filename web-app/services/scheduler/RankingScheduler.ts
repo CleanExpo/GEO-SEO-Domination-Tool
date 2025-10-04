@@ -34,6 +34,12 @@ export class RankingScheduler {
     }
 
     try {
+      // Skip initialization during build time
+      if (process.env.NEXT_PHASE === 'phase-production-build') {
+        console.log('Skipping scheduler initialization during build');
+        return;
+      }
+
       const supabase = await createClient();
       const { data: jobs, error } = await supabase
         .from('scheduled_jobs')
