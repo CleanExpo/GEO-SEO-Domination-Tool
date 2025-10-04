@@ -110,3 +110,6 @@ server/secrets/deploy.local.json
 server/temp/
 .deployignore
 .git-rewrite/
+
+# uptime logs
+server/logs/uptime/

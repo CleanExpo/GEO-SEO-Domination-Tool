@@ -23,7 +23,9 @@
       "Bash(powershell.exe:*)",
       "Bash(docker exec:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
