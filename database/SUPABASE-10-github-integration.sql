@@ -30,25 +30,62 @@ COMMENT ON TABLE github_oauth_tokens IS 'GitHub OAuth access tokens for API auth
 
 -- 2. ENHANCE CRM_GITHUB_PROJECTS TABLE
 -- Add missing columns for enhanced GitHub integration
+-- Note: Do this in separate ALTER TABLE statements to avoid constraint errors
 ALTER TABLE crm_github_projects
-  ADD COLUMN IF NOT EXISTS owner TEXT,
-  ADD COLUMN IF NOT EXISTS repo_name TEXT,
-  ADD COLUMN IF NOT EXISTS github_id INTEGER,
-  ADD COLUMN IF NOT EXISTS default_branch TEXT DEFAULT 'main',
-  ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS is_fork BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS watchers INTEGER DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS open_issues INTEGER DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS size_kb INTEGER DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS license TEXT,
-  ADD COLUMN IF NOT EXISTS topics JSONB DEFAULT '[]'::JSONB,
-  ADD COLUMN IF NOT EXISTS auto_sync BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS sync_frequency TEXT DEFAULT 'daily' CHECK (sync_frequency IN ('hourly', 'daily', 'weekly', 'manual')),
-  ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS sync_status TEXT DEFAULT 'pending' CHECK (sync_status IN ('pending', 'syncing', 'success', 'failed')),
-  ADD COLUMN IF NOT EXISTS sync_error TEXT,
-  ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS owner TEXT;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS repo_name TEXT;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS github_id INTEGER;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS default_branch TEXT DEFAULT 'main';
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS is_fork BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS watchers INTEGER DEFAULT 0;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS open_issues INTEGER DEFAULT 0;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS size_kb INTEGER DEFAULT 0;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS license TEXT;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS topics JSONB DEFAULT '[]'::JSONB;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS auto_sync BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS sync_frequency TEXT DEFAULT 'daily';
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS sync_status TEXT DEFAULT 'pending';
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS sync_error TEXT;
+
+ALTER TABLE crm_github_projects
+  ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id) ON DELETE SET NULL;
+
+ALTER TABLE crm_github_projects
   ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES crm_projects(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS idx_crm_github_projects_company ON crm_github_projects(company_id);
