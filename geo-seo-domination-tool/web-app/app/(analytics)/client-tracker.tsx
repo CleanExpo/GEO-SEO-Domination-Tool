@@ -1,8 +1,8 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export function ClientTracker({ release, color }: { release?: string; color?: 'blue'|'green'|null }){
+function TrackerInner({ release, color }: { release?: string; color?: 'blue'|'green'|null }){
   const pathname = usePathname();
   const search = useSearchParams();
   useEffect(()=>{
@@ -10,4 +10,8 @@ export function ClientTracker({ release, color }: { release?: string; color?: 'b
     fetch('/api/analytics', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).catch(()=>{});
   }, [pathname, search, release, color]);
   return null;
+}
+
+export function ClientTracker(props: { release?: string; color?: 'blue'|'green'|null }){
+  return <Suspense fallback={null}><TrackerInner {...props} /></Suspense>;
 }

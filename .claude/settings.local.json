@@ -28,7 +28,10 @@
       "Bash(cat:*)",
       "Bash(start http://localhost:3004/health)",
       "Read(//c/Users/Disaster Recovery 4/Downloads/**)",
-      "Bash(start http://localhost:3004/settings/integrations)"
+      "Bash(start http://localhost:3004/settings/integrations)",
+      "mcp__vercel__list_deployments",
+      "mcp__vercel__deploy_to_vercel",
+      "Bash(vercel deploy:*)"
     ],
     "deny": [],
     "ask": []
