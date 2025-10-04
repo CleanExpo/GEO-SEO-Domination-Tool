@@ -12,8 +12,21 @@ function secretsPath(){ return join(secretsDir(), 'integrations.local.json'); }
 
 async function readSecrets(){
   const p = secretsPath();
-  if(!existsSync(p)) return { github:{token:''}, vercel:{token:''}, supabase:{url:'', anonKey:''} };
-  try{ return JSON.parse(await readFile(p, 'utf8')); }catch{ return { github:{token:''}, vercel:{token:''}, supabase:{url:'', anonKey:''} }; }
+  let fileSecrets = { github:{token:''}, vercel:{token:''}, supabase:{url:'', anonKey:''} };
+
+  if(existsSync(p)){
+    try{ fileSecrets = JSON.parse(await readFile(p, 'utf8')); }catch{}
+  }
+
+  // Merge with environment variables (env vars take precedence)
+  return {
+    github: { token: process.env.GITHUB_TOKEN || fileSecrets.github?.token || '' },
+    vercel: { token: process.env.VERCEL_TOKEN || fileSecrets.vercel?.token || '' },
+    supabase: {
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL || fileSecrets.supabase?.url || '',
+      anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || fileSecrets.supabase?.anonKey || ''
+    }
+  };
 }
 
 async function writeSecrets(s: any){
