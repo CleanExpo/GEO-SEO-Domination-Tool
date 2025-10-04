@@ -185,4 +185,27 @@ program
     console.log(JSON.stringify(j, null, 2));
   });
 
+program
+  .command('seo')
+  .description('SEO toolkit commands (results)')
+  .argument('[subcommand]', 'Subcommand: results')
+  .option('--base-url <url>')
+  .action(async (subcommand, opts)=>{
+    if (!subcommand || subcommand === 'results'){
+      const b = baseUrl(opts.baseUrl);
+      console.log('Fetching SEO results from', b);
+      const r = await jget(`${b}/api/seo/results`);
+      if (r?.ok){
+        console.log('✓ Found', (r.files||[]).length, 'SEO result files:');
+        (r.files||[]).forEach((f:string)=> console.log('  -', f));
+      } else {
+        console.error('✖ Failed to fetch SEO results:', r?.error || 'Unknown error');
+      }
+    } else {
+      console.error('Unknown subcommand:', subcommand);
+      console.log('Available: results');
+      process.exit(1);
+    }
+  });
+
 program.parseAsync(process.argv);
