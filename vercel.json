@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd geo-seo-domination-tool/web-app && npm run build",
+  "devCommand": "cd geo-seo-domination-tool/web-app && npm run dev",
+  "installCommand": "cd geo-seo-domination-tool/web-app && npm install",
+  "outputDirectory": "geo-seo-domination-tool/web-app/.next",
   "github": {
     "silent": true
   }
