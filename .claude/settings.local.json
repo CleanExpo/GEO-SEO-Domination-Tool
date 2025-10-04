@@ -25,7 +25,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(start http://localhost:3004/health)",
+      "Read(//c/Users/Disaster Recovery 4/Downloads/**)"
     ],
     "deny": [],
     "ask": []

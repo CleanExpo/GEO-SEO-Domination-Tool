@@ -98,6 +98,7 @@ server/backups/
 server/release.env
 
 # Local integration secrets (do not commit)
+server/secrets/
 server/secrets/*.json
 
 # Local env (ensure ignored)
