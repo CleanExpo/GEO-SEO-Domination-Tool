@@ -20,9 +20,13 @@ export async function POST(req: NextRequest){
     const ws = getActiveWorkspace(req);
     if (!ws) return NextResponse.json({ ok:false, error:'workspace_required' }, { status:401 });
 
-    const supa = createServerClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_ANON_KEY as string, {
-      cookies: { get: (n)=> req.cookies.get(n)?.value, set(){}, remove(){} }
-    });
+    const supa = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: { get: (n)=> req.cookies.get(n)?.value, set(){}, remove(){} }
+      }
+    );
     const { data: { user } } = await supa.auth.getUser();
 
     const body = await req.json().catch(()=>({}));

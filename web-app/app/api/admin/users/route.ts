@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE!; // server-only
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!; // server-only (matches .env.local)
 
 function svc(){ return createClient(SUPABASE_URL, SERVICE_ROLE); }
 

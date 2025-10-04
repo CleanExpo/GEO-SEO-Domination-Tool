@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
 
     if (action === 'supabase_status') {
       const s = await loadSecrets();
-      const url = (params?.supabaseUrl ?? s.supabaseUrl ?? process.env.SUPABASE_URL ?? '').toString();
-      const anon = (params?.supabaseAnonKey ?? s.supabaseAnonKey ?? process.env.SUPABASE_ANON_KEY ?? '').toString();
+      const url = (params?.supabaseUrl ?? s.supabaseUrl ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').toString();
+      const anon = (params?.supabaseAnonKey ?? s.supabaseAnonKey ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').toString();
       const st = await supabaseStatus(url, anon);
       return NextResponse.json({ ok: true, result: st }, { status: 200 });
     }
