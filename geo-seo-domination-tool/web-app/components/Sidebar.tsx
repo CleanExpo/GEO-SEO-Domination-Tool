@@ -7,7 +7,8 @@ import { createClient } from '@/lib/auth/supabase-client';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
-  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, GitPullRequest, Activity, FolderSearch
+  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, GitPullRequest, Activity, FolderSearch,
+  Hammer, Package, Layers, LineChart, Plug
 } from 'lucide-react';
 
 const navigation = [
@@ -30,6 +31,8 @@ const crmNavigation = [
 
 const projectsNavigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban, section: 'Projects' },
+  { name: 'Builds', href: '/projects/builds', icon: Hammer, section: 'Projects' },
+  { name: 'Catalog', href: '/projects/catalog', icon: Package, section: 'Projects' },
   { name: 'GitHub Projects', href: '/projects/github', icon: Github, section: 'Projects' },
   { name: 'Notes & Docs', href: '/projects/notes', icon: Notes, section: 'Projects' },
   { name: 'Release Monitor', href: '/release/monitor', icon: GitPullRequest, section: 'Projects' },
@@ -42,9 +45,18 @@ const resourcesNavigation = [
   { name: 'Tutorials', href: '/resources/tutorials', icon: BookOpen, section: 'Resources' },
 ];
 
-const membersNavigation = [
-  { name: 'Support', href: '/support', icon: Headphones, section: 'Members' },
-  { name: 'System Health', href: '/health', icon: Activity, section: 'Members' },
+const deployNavigation = [
+  { name: 'Blue/Green Deploy', href: '/deploy/bluegreen', icon: Layers, section: 'Deploy' },
+];
+
+const analyticsNavigation = [
+  { name: 'Analytics', href: '/analytics', icon: LineChart, section: 'Analytics' },
+];
+
+const systemNavigation = [
+  { name: 'Integrations', href: '/settings/integrations', icon: Plug, section: 'System' },
+  { name: 'System Health', href: '/health', icon: Activity, section: 'System' },
+  { name: 'Support', href: '/support', icon: Headphones, section: 'System' },
 ];
 
 export function Sidebar() {
@@ -118,8 +130,10 @@ export function Sidebar() {
         {renderNavSection('SEO Tools', navigation)}
         {renderNavSection('CRM & Pipeline', crmNavigation)}
         {renderNavSection('Projects', projectsNavigation)}
+        {renderNavSection('Deploy', deployNavigation)}
+        {renderNavSection('Analytics', analyticsNavigation)}
         {renderNavSection('Resources', resourcesNavigation)}
-        {renderNavSection('Members', membersNavigation)}
+        {renderNavSection('System', systemNavigation)}
       </nav>
 
       {/* Settings */}
