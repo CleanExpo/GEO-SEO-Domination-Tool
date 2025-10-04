@@ -1,0 +1,13 @@
+{
+  "id": "seo-keyword-cluster-lite",
+  "title": "SEO • Keyword Cluster (Lite)",
+  "summary": "Cluster a CSV of keywords by normalized root (very light heuristic) and export grouped CSV.",
+  "variables": [
+    { "name": "INPUT_CSV", "required": true, "description": "CSV path with a 'keyword' column" },
+    { "name": "OUTPUT_DIR", "required": false, "default": "server/logs/seo", "description": "Where to store clusters CSV" }
+  ],
+  "templates": [
+    { "from": "cluster.ts.eta", "to": "<%= OUTPUT_DIR %>/cluster-keywords.ts" },
+    { "from": "README.md.eta", "to": "docs/builders/seo-keyword-cluster-lite.md" }
+  ]
+}

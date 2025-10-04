@@ -1,0 +1,48 @@
+/* Lite SEO audit: fetch status, <title>, <meta name="description">, H1. */
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const INPUT = resolve(process.cwd(), '<%= INPUT_JSON %>');
+const OUTDIR = resolve(process.cwd(), '<%= OUTPUT_DIR %>');
+const CONC = Number('<%= CONCURRENCY %>' || '6');
+const OUTJSON = resolve(OUTDIR, `audit-${Date.now()}.json`);
+const OUTCSV = resolve(OUTDIR, `audit-${Date.now()}.csv`);
+
+function pick(s:string, re:RegExp){ const m = s.match(re); return m? m[1].trim() : ''; }
+function firstMeta(s:string, name:string){
+  const re = new RegExp(`<meta[^>]*name=["']${name}["'][^>]*content=["']([^"']+)["'][^>]*>`, 'i');
+  const m = s.match(re); return m? m[1].trim() : '';
+}
+
+async function auditOne(u:string){
+  try{
+    const r = await fetch(u, { headers:{ 'user-agent':'geo-seo-audit/1.0' }});
+    const status = r.status; const html = await r.text();
+    const title = pick(html, /<title>([^<]*)<\/title>/i);
+    const desc = firstMeta(html, 'description');
+    const h1 = pick(html, /<h1[^>]*>(.*?)<\/h1>/is);
+    return { url:u, status, title, description: desc, h1 };
+  }catch(e:any){ return { url:u, status:0, error: String(e?.message||e) } }
+}
+
+async function run(){
+  if (!existsSync(INPUT)) throw new Error('Input crawl JSON not found: '+INPUT);
+  if (!existsSync(OUTDIR)) mkdirSync(OUTDIR, { recursive:true });
+  const report = JSON.parse(readFileSync(INPUT,'utf8'));
+  const urls: string[] = report.urls || [];
+  const out: any[] = [];
+
+  const q = urls.slice();
+  const workers = Array.from({length:CONC}).map(async ()=>{
+    while(q.length){ const u = q.shift()!; out.push(await auditOne(u)); }
+  });
+  await Promise.all(workers);
+
+  writeFileSync(OUTJSON, JSON.stringify(out, null, 2));
+  const header = ['url','status','title','description','h1'];
+  const csv = [header.join(',')].concat(out.map(r=> header.map(k=> JSON.stringify((r as any)[k]??'')).join(','))).join('\n');
+  writeFileSync(OUTCSV, csv);
+  console.log(`✓ Wrote ${OUTJSON}\n✓ Wrote ${OUTCSV}`);
+}
+run();

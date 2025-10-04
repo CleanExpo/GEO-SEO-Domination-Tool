@@ -1,0 +1,41 @@
+/* Heuristic keyword clustering by normalized root (no embeddings required). */
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const INPUT = resolve(process.cwd(), '<%= INPUT_CSV %>');
+const OUTDIR = resolve(process.cwd(), '<%= OUTPUT_DIR %>');
+const OUTCSV = resolve(OUTDIR, `clusters-${Date.now()}.csv`);
+
+function csvParse(s:string){
+  const [head, ...rows] = s.trim().split(/\r?\n/);
+  const cols = head.split(',').map(x=> x.replace(/^"|"$/g,''));
+  return rows.map(line=>{
+    const vals = line.split(',').map(x=> x.replace(/^"|"$/g,''));
+    const obj:any = {}; cols.forEach((c,i)=> obj[c]=vals[i]??''); return obj;
+  });
+}
+
+function normalize(k:string){
+  return k.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim()
+    .replace(/\b(best|top|near me|cheap|free|how to|what is|the|a|an|for|of|in|on|to|with|and)\b/g,'').replace(/\s+/g,' ').trim();
+}
+
+function root(k:string){
+  const n = normalize(k);
+  const parts = n.split(' ');
+  return parts.slice(0, Math.min(2, parts.length)).join(' ');
+}
+
+(async ()=>{
+  if (!existsSync(INPUT)) throw new Error('INPUT_CSV not found: '+INPUT);
+  if (!existsSync(OUTDIR)) mkdirSync(OUTDIR, { recursive:true });
+  const raw = readFileSync(INPUT,'utf8');
+  const rows = csvParse(raw);
+  const clusters: Record<string, string[]> = {};
+  for (const r of rows){ const k = String((r as any).keyword||'').trim(); if(!k) continue; const key = root(k)||k.toLowerCase(); (clusters[key] ||= []).push(k); }
+  const outRows: string[] = ['cluster,keyword_count,keywords'];
+  for (const [c, list] of Object.entries(clusters)) outRows.push([JSON.stringify(c), list.length, JSON.stringify(list.join(' | '))].join(','));
+  writeFileSync(OUTCSV, outRows.join('\n'));
+  console.log(`✓ Wrote ${OUTCSV}`);
+})();

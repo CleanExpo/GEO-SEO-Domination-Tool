@@ -1,0 +1,9 @@
+# SEO • Keyword Cluster (Lite)
+
+**Input**: CSV with a `keyword` column.
+
+**Run**
+```bash
+node <%= OUTPUT_DIR %>/cluster-keywords.ts
+```
+**Output**: `clusters-*.csv` in `<%= OUTPUT_DIR %>`.
