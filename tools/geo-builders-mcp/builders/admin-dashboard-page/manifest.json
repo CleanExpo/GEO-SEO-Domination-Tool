@@ -1,0 +1,25 @@
+{
+  "id": "admin-dashboard-page",
+  "title": "Admin Dashboard Page",
+  "summary": "Protected admin dashboard showing all users with role management.",
+  "engine": "eta",
+  "variables": [
+    {
+      "name": "ADMIN_PATH",
+      "required": false,
+      "example": "admin"
+    }
+  ],
+  "files": [
+    {
+      "from": "templates/app/[path]/page.tsx.eta",
+      "to": "web-app/app/<%= ADMIN_PATH || 'admin' %>/page.tsx",
+      "strategy": "create-or-overwrite"
+    },
+    {
+      "from": "templates/README.md.eta",
+      "to": "docs/builders/admin-dashboard-page.md",
+      "strategy": "create-or-overwrite"
+    }
+  ]
+}

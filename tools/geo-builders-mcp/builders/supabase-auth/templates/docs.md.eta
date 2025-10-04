@@ -1,0 +1,61 @@
+# Supabase Auth Starter
+
+This builder adds a complete authentication system using Supabase SSR with email OTP (magic links).
+
+## What this adds
+
+- **Sign-in page** (`/sign-in`) - Email OTP authentication
+- **Sign-up page** (`/sign-up`) - Email confirmation links
+- **Auth layout** - Centered auth UI wrapper
+- **Session header** (`AuthHeader.tsx`) - Shows user email and sign-out button
+- **Protected routes middleware** - Redirects unauthenticated users to `/sign-in`
+- **API routes**:
+  - `GET /api/auth/user` - Get current user session
+  - `POST /api/auth/signout` - Sign out current user
+- **Account settings page** (`/settings/account`) - Display user email
+
+## Setup
+
+1. **Supabase project**:
+   - Create project at [supabase.com](https://supabase.com)
+   - Copy `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`
+
+2. **Enable email auth**:
+   - In Supabase dashboard → Authentication → Providers
+   - Enable "Email" provider
+   - Configure email templates (optional)
+
+3. **Install dependencies**:
+   ```bash
+   cd web-app && npm i @supabase/ssr @supabase/supabase-js
+   ```
+
+4. **Apply builder**:
+   ```bash
+   # Via MCP
+   { "tool": "apply_builder", "params": { "id": "supabase-auth" } }
+   ```
+
+## Usage
+
+**Sign up**: Navigate to `/sign-up`, enter email, click confirmation link in email
+
+**Sign in**: Navigate to `/sign-in`, enter email, click magic link in email
+
+**Protected routes**: Add paths to `middleware.ts` `protectedPaths` array
+
+**Session check**: Use `AuthHeader` component or call `GET /api/auth/user`
+
+## Customization
+
+- **Protected paths**: Edit `middleware.ts` line 21
+- **Redirect after sign-in**: Edit `middleware.ts` line 34
+- **Email templates**: Configure in Supabase dashboard → Authentication → Email Templates
+- **Styling**: Update Tailwind classes in `sign-in.tsx`, `sign-up.tsx`, `AuthHeader.tsx`
+
+## Notes
+
+- Uses **email OTP** (passwordless authentication)
+- Sessions stored in HTTP-only cookies via `@supabase/ssr`
+- Middleware runs on all routes (see `config.matcher`)
+- For password-based auth, modify API routes to use `supabase.auth.signInWithPassword()`

@@ -1,0 +1,10 @@
+# Builder: workspace-schema
+
+Creates three tables with RLS:
+- `workspaces (id, name, slug, owner_id)`
+- `workspace_memberships (workspace_id, user_id, role)`
+- `projects (id, workspace_id, name, description)`
+
+Policies grant read to members and write to owner/admin as appropriate. Also auto-adds owner to memberships via trigger.
+
+**Apply:** run the generated SQL in Supabase SQL Editor (or your migration system).

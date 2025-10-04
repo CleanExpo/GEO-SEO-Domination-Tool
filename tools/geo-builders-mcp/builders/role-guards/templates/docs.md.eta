@@ -1,0 +1,15 @@
+# Role Guards (free/pro/admin)
+
+**What this adds**
+- `lib/roles.ts` helpers (get role, allowed checks, route map).
+- Unified `middleware.ts` combining auth redirect + role enforcement.
+- Admin-only **/settings/roles** UI to assign roles by email.
+- `GET/PUT /api/roles` (GET returns your role; `?list=1` lists users for admins; PUT sets role for an email).
+- **/403** page for forbidden routes.
+
+**Assumptions**
+- `profiles` table exists with columns: `id uuid primary key`, `email text`, `role text default 'free'`.
+- Auth already wired (Supabase).
+
+**Next**
+- Update the `requiredForPath` map in `lib/roles.ts` to fine-tune what routes require which roles.

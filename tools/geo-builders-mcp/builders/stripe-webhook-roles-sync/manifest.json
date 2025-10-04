@@ -1,0 +1,25 @@
+{
+  "id": "stripe-webhook-roles-sync",
+  "title": "Stripe Webhook → Supabase Roles Sync",
+  "summary": "Webhook route that sets profile.role = 'pro' on active subscription; reverts to 'free' on cancellation/expiry.",
+  "engine": "eta",
+  "variables": [
+    {
+      "name": "WEBHOOK_SEGMENT",
+      "required": false,
+      "example": "stripe-sync"
+    }
+  ],
+  "files": [
+    {
+      "from": "templates/app/api/webhooks/[segment]/route.ts.eta",
+      "to": "web-app/app/api/webhooks/<%= WEBHOOK_SEGMENT || 'stripe-sync' %>/route.ts",
+      "strategy": "create-or-overwrite"
+    },
+    {
+      "from": "templates/README.md.eta",
+      "to": "docs/builders/stripe-webhook-roles-sync.md",
+      "strategy": "create-or-overwrite"
+    }
+  ]
+}

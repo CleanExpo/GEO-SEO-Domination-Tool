@@ -1,0 +1,17 @@
+{
+  "id": "multi-tenant-workspaces",
+  "title": "Multi-Tenant Workspaces",
+  "summary": "Creates workspace schema + RLS and adds pages/API to manage and switch active workspace.",
+  "steps": [
+    {
+      "builder": "workspace-schema",
+      "variables": {}
+    },
+    {
+      "builder": "workspace-pages",
+      "variables": {
+        "DEFAULT_SLUG": "main"
+      }
+    }
+  ]
+}

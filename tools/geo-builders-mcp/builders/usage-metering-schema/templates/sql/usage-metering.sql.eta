@@ -1,0 +1,287 @@
+-- Usage Metering + Quotas Schema
+-- Tracks resource usage and enforces limits per user/workspace
+
+-- Quota Limits Table (defines limits per role/plan)
+create table if not exists <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %> (
+  id uuid primary key default gen_random_uuid(),
+  role text not null,  -- free, pro, admin, enterprise
+  metric_type text not null,  -- api_calls, storage_mb, projects, builds, deployments, etc.
+  limit_value bigint not null,
+  period text not null check (period in ('hour', 'day', 'month', 'total')),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(role, metric_type, period)
+);
+
+-- Usage Metrics Table (tracks actual usage)
+create table if not exists <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %> (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  workspace_id uuid references public.workspaces(id) on delete cascade,
+  metric_type text not null,
+  value bigint not null default 1,
+  metadata jsonb default '{}'::jsonb,
+  period_start timestamptz not null,
+  period_end timestamptz not null,
+  created_at timestamptz default now()
+);
+
+-- Indexes for efficient queries
+create index if not exists idx_<%= USAGE_TABLE || 'usage_metrics' %>_user on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>(user_id, metric_type, period_start desc);
+create index if not exists idx_<%= USAGE_TABLE || 'usage_metrics' %>_workspace on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>(workspace_id, metric_type, period_start desc);
+create index if not exists idx_<%= USAGE_TABLE || 'usage_metrics' %>_period on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>(period_start, period_end);
+
+-- RLS
+alter table <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %> enable row level security;
+alter table <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %> enable row level security;
+
+-- Policy: Everyone can view quota limits
+create policy if not exists "Anyone can view quota limits" on <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %>
+  for select using (true);
+
+-- Policy: Only admins can modify quota limits
+create policy if not exists "Admins can manage quota limits" on <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %>
+  for all using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Policy: Users can view their own usage
+create policy if not exists "Users can view own usage" on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>
+  for select using (user_id = auth.uid());
+
+-- Policy: Workspace members can view workspace usage
+create policy if not exists "Workspace members can view workspace usage" on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>
+  for select using (
+    workspace_id is not null and
+    exists (
+      select 1 from public.workspace_memberships
+      where workspace_id = <%= USAGE_TABLE || 'usage_metrics' %>.workspace_id
+        and user_id = auth.uid()
+    )
+  );
+
+-- Policy: Admins can view all usage
+create policy if not exists "Admins can view all usage" on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>
+  for select using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Policy: Service role can insert usage metrics
+create policy if not exists "Service can insert usage" on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>
+  for insert with check (true);
+
+-- Helper: Calculate period boundaries
+create or replace function <%= SCHEMA_NAME || 'public' %>.get_period_bounds(p_period text, p_timestamp timestamptz default now())
+returns table(period_start timestamptz, period_end timestamptz)
+language sql
+immutable
+as $$
+  select
+    case p_period
+      when 'hour' then date_trunc('hour', p_timestamp)
+      when 'day' then date_trunc('day', p_timestamp)
+      when 'month' then date_trunc('month', p_timestamp)
+      else '1970-01-01'::timestamptz  -- total
+    end as period_start,
+    case p_period
+      when 'hour' then date_trunc('hour', p_timestamp) + interval '1 hour'
+      when 'day' then date_trunc('day', p_timestamp) + interval '1 day'
+      when 'month' then date_trunc('month', p_timestamp) + interval '1 month'
+      else '2099-12-31'::timestamptz  -- total
+    end as period_end;
+$$;
+
+-- Helper: Track usage
+create or replace function <%= SCHEMA_NAME || 'public' %>.track_usage(
+  p_user_id uuid,
+  p_metric_type text,
+  p_value bigint default 1,
+  p_workspace_id uuid default null,
+  p_metadata jsonb default '{}'::jsonb,
+  p_period text default 'month'
+)
+returns uuid
+language plpgsql
+security definer
+as $$
+declare
+  v_period_start timestamptz;
+  v_period_end timestamptz;
+  v_usage_id uuid;
+begin
+  -- Get period boundaries
+  select period_start, period_end
+  into v_period_start, v_period_end
+  from <%= SCHEMA_NAME || 'public' %>.get_period_bounds(p_period);
+
+  -- Insert or update usage metric
+  insert into <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %> (
+    user_id,
+    workspace_id,
+    metric_type,
+    value,
+    metadata,
+    period_start,
+    period_end
+  ) values (
+    p_user_id,
+    p_workspace_id,
+    p_metric_type,
+    p_value,
+    p_metadata,
+    v_period_start,
+    v_period_end
+  )
+  on conflict (user_id, metric_type, period_start)
+  where workspace_id is null
+  do update set
+    value = <%= USAGE_TABLE || 'usage_metrics' %>.value + excluded.value,
+    metadata = <%= USAGE_TABLE || 'usage_metrics' %>.metadata || excluded.metadata
+  returning id into v_usage_id;
+
+  return v_usage_id;
+end;
+$$;
+
+-- Add unique constraint for upserts
+create unique index if not exists idx_<%= USAGE_TABLE || 'usage_metrics' %>_user_metric_period
+  on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>(user_id, metric_type, period_start)
+  where workspace_id is null;
+
+create unique index if not exists idx_<%= USAGE_TABLE || 'usage_metrics' %>_workspace_metric_period
+  on <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>(workspace_id, metric_type, period_start)
+  where workspace_id is not null;
+
+-- Helper: Check quota
+create or replace function <%= SCHEMA_NAME || 'public' %>.check_quota(
+  p_user_id uuid,
+  p_metric_type text,
+  p_period text default 'month',
+  p_workspace_id uuid default null
+)
+returns table(
+  allowed boolean,
+  current_usage bigint,
+  quota_limit bigint,
+  remaining bigint
+)
+language plpgsql
+security definer
+as $$
+declare
+  v_period_start timestamptz;
+  v_period_end timestamptz;
+  v_current_usage bigint;
+  v_quota_limit bigint;
+  v_user_role text;
+begin
+  -- Get period boundaries
+  select period_start, period_end
+  into v_period_start, v_period_end
+  from <%= SCHEMA_NAME || 'public' %>.get_period_bounds(p_period);
+
+  -- Get user role
+  select role into v_user_role
+  from public.profiles
+  where id = p_user_id;
+
+  v_user_role := coalesce(v_user_role, 'free');
+
+  -- Get quota limit for role
+  select limit_value into v_quota_limit
+  from <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %>
+  where role = v_user_role
+    and metric_type = p_metric_type
+    and period = p_period;
+
+  -- If no limit defined, return unlimited
+  if v_quota_limit is null then
+    return query select true, 0::bigint, -1::bigint, -1::bigint;
+    return;
+  end if;
+
+  -- Get current usage
+  select coalesce(sum(value), 0) into v_current_usage
+  from <%= SCHEMA_NAME || 'public' %>.<%= USAGE_TABLE || 'usage_metrics' %>
+  where user_id = p_user_id
+    and metric_type = p_metric_type
+    and period_start = v_period_start
+    and (p_workspace_id is null or workspace_id = p_workspace_id);
+
+  -- Return quota check result
+  return query select
+    v_current_usage < v_quota_limit,
+    v_current_usage,
+    v_quota_limit,
+    greatest(0, v_quota_limit - v_current_usage);
+end;
+$$;
+
+-- Helper: Get user usage summary
+create or replace function <%= SCHEMA_NAME || 'public' %>.get_usage_summary(
+  p_user_id uuid default null,
+  p_workspace_id uuid default null,
+  p_period text default 'month'
+)
+returns table(
+  metric_type text,
+  current_usage bigint,
+  quota_limit bigint,
+  remaining bigint,
+  allowed boolean
+)
+language plpgsql
+security definer
+as $$
+declare
+  v_user_id uuid;
+begin
+  v_user_id := coalesce(p_user_id, auth.uid());
+
+  return query
+  select
+    q.metric_type,
+    c.current_usage,
+    c.quota_limit,
+    c.remaining,
+    c.allowed
+  from <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %> q
+  cross join lateral <%= SCHEMA_NAME || 'public' %>.check_quota(v_user_id, q.metric_type, p_period, p_workspace_id) c
+  where q.period = p_period
+  order by q.metric_type;
+end;
+$$;
+
+-- Seed default quotas
+insert into <%= SCHEMA_NAME || 'public' %>.<%= QUOTAS_TABLE || 'quota_limits' %> (role, metric_type, limit_value, period)
+values
+  -- Free tier
+  ('free', 'api_calls', 100, 'day'),
+  ('free', 'api_calls', 1000, 'month'),
+  ('free', 'storage_mb', 100, 'total'),
+  ('free', 'projects', 3, 'total'),
+  ('free', 'builds', 10, 'month'),
+  ('free', 'deployments', 5, 'month'),
+
+  -- Pro tier
+  ('pro', 'api_calls', 1000, 'day'),
+  ('pro', 'api_calls', 50000, 'month'),
+  ('pro', 'storage_mb', 10000, 'total'),
+  ('pro', 'projects', 50, 'total'),
+  ('pro', 'builds', 500, 'month'),
+  ('pro', 'deployments', 100, 'month'),
+
+  -- Admin (unlimited)
+  ('admin', 'api_calls', 999999999, 'day'),
+  ('admin', 'api_calls', 999999999, 'month'),
+  ('admin', 'storage_mb', 999999999, 'total'),
+  ('admin', 'projects', 999999999, 'total'),
+  ('admin', 'builds', 999999999, 'month'),
+  ('admin', 'deployments', 999999999, 'month')
+on conflict (role, metric_type, period) do nothing;
