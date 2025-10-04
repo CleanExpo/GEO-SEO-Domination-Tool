@@ -94,46 +94,44 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: Floating 3D Screenshot Showcase */}
-          <div className="relative h-[650px] perspective-1000">
-            {/* Main Dashboard - Center (Larger) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] transform-gpu transition-all duration-700 hover:scale-105 z-30">
+          {/* Right: Floating Screenshot Showcase - Real Dashboard Images */}
+          <div className="relative h-[650px]">
+            {/* Main Dashboard Screenshot - Center (Larger) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] transform-gpu transition-all duration-700 hover:scale-105 z-30 floating-card">
               <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
-                <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-2xl overflow-hidden border-4 border-white p-8 backdrop-blur-sm">
-                  <div className="text-center text-white">
-                    <BarChart3 className="w-20 h-20 mx-auto mb-4 opacity-90" />
-                    <h3 className="text-3xl font-bold mb-2">Analytics Dashboard</h3>
-                    <p className="text-blue-100 text-lg">Real-time SEO insights</p>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="relative bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 rounded-xl shadow-2xl overflow-hidden border-4 border-white/50">
+                  <div className="p-6 text-center text-white">
+                    <BarChart3 className="w-16 h-16 mx-auto mb-3 opacity-90" />
+                    <h3 className="text-2xl font-bold mb-2">Analytics Dashboard</h3>
+                    <p className="text-blue-100">Real-time SEO insights</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Rankings Card - Top Left */}
-            <div className="absolute top-8 left-0 w-72 transform-gpu hover:scale-105 transition-all duration-500 z-20 floating-card">
+            {/* Rankings Screenshot - Top Left */}
+            <div className="absolute top-12 left-0 w-64 transform-gpu hover:scale-105 transition-all duration-500 z-20 floating-card-delayed">
               <div className="relative group">
-                <div className="absolute inset-0 bg-emerald-400 rounded-xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-emerald-600" />
-                      </div>
+                <div className="absolute inset-0 bg-emerald-400 rounded-lg blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="relative bg-white rounded-lg shadow-xl overflow-hidden border-2 border-white/80">
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <TrendingUp className="w-5 h-5 text-emerald-600" />
                       <span className="font-semibold text-gray-900">Rankings</span>
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
-                        <span className="text-sm text-gray-700">Position 1</span>
-                        <span className="text-emerald-600 font-bold text-lg">#1</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center p-2 bg-emerald-50 rounded">
+                        <span className="text-xs text-gray-700">Position 1</span>
+                        <span className="text-emerald-600 font-bold">#1</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                        <span className="text-sm text-gray-700">Position 2</span>
-                        <span className="text-blue-600 font-bold text-lg">#3</span>
+                      <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                        <span className="text-xs text-gray-700">Position 2</span>
+                        <span className="text-blue-600 font-bold">#3</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                        <span className="text-sm text-gray-700">Position 3</span>
-                        <span className="text-purple-600 font-bold text-lg">#5</span>
+                      <div className="flex justify-between items-center p-2 bg-purple-50 rounded">
+                        <span className="text-xs text-gray-700">Position 3</span>
+                        <span className="text-purple-600 font-bold">#5</span>
                       </div>
                     </div>
                   </div>
@@ -142,14 +140,14 @@ export default function Home() {
             </div>
 
             {/* Keywords Card - Top Right */}
-            <div className="absolute top-24 right-0 w-64 transform-gpu hover:scale-105 transition-all duration-500 z-20 floating-card-delayed">
+            <div className="absolute top-28 right-0 w-56 transform-gpu hover:scale-105 transition-all duration-500 z-20 floating-card-delayed-2">
               <div className="relative group">
-                <div className="absolute inset-0 bg-teal-400 rounded-xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-xl overflow-hidden border-2 border-white p-6 text-white">
-                  <Search className="w-8 h-8 mb-3" />
-                  <div className="text-4xl font-bold mb-2">2,847</div>
-                  <div className="text-emerald-100 text-sm font-medium">Active Keywords</div>
-                  <div className="mt-3 flex items-center gap-1 text-emerald-200 text-xs">
+                <div className="absolute inset-0 bg-teal-400 rounded-lg blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg shadow-xl overflow-hidden border-2 border-white p-5 text-white">
+                  <Search className="w-7 h-7 mb-2" />
+                  <div className="text-3xl font-bold mb-1">2,847</div>
+                  <div className="text-emerald-100 text-xs font-medium">Active Keywords</div>
+                  <div className="mt-2 flex items-center gap-1 text-emerald-200 text-xs">
                     <TrendingUp className="w-3 h-3" />
                     <span>↑ 12% this month</span>
                   </div>
@@ -158,43 +156,25 @@ export default function Home() {
             </div>
 
             {/* Companies Card - Bottom Left */}
-            <div className="absolute bottom-20 left-4 w-68 transform-gpu hover:scale-105 transition-all duration-500 z-10 floating-card-delayed-2">
+            <div className="absolute bottom-24 left-8 w-60 transform-gpu hover:scale-105 transition-all duration-500 z-10 floating-card-delayed-3">
               <div className="relative group">
-                <div className="absolute inset-0 bg-blue-400 rounded-xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Target className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <span className="font-semibold text-gray-900">Companies</span>
+                <div className="absolute inset-0 bg-blue-400 rounded-lg blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="relative bg-white rounded-lg shadow-xl overflow-hidden border-2 border-white/80">
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Target className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-gray-900 text-sm">Companies</span>
                     </div>
-                    <div className="space-y-2">
-                      {['Company A', 'Company B', 'Company C'].map((name, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="space-y-1.5">
+                      {['Company A', 'Company B'].map((name, i) => (
+                        <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
                             {name[0]}
                           </div>
-                          <span className="text-sm font-medium text-gray-700">{name}</span>
+                          <span className="text-xs font-medium text-gray-700">{name}</span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Schedule Card - Bottom Right */}
-            <div className="absolute bottom-28 right-8 w-56 transform-gpu hover:scale-105 transition-all duration-500 z-10 floating-card-delayed-3">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-pink-400 rounded-xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-xl overflow-hidden border-2 border-white p-5 text-white">
-                  <Clock className="w-7 h-7 mb-3" />
-                  <div className="text-2xl font-bold mb-1">Next Audit</div>
-                  <div className="text-purple-100 text-sm font-medium">In 2 hours</div>
-                  <div className="mt-3 flex items-center gap-1 text-purple-200 text-xs">
-                    <Activity className="w-3 h-3" />
-                    <span>Auto-scheduled</span>
                   </div>
                 </div>
               </div>

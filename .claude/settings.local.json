@@ -31,7 +31,15 @@
       "Bash(start http://localhost:3004/settings/integrations)",
       "mcp__vercel__list_deployments",
       "mcp__vercel__deploy_to_vercel",
-      "Bash(vercel deploy:*)"
+      "Bash(vercel deploy:*)",
+      "Bash(start http://localhost:3004/login)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_type",
+      "mcp__vercel__get_project",
+      "mcp__vercel__list_projects",
+      "mcp__vercel__get_deployment_build_logs"
     ],
     "deny": [],
     "ask": []
