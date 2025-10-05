@@ -148,7 +148,7 @@ export function KeywordDialog({ isOpen, onClose, onSuccess }: KeywordDialogProps
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              SEMrush data (volume, difficulty, CPC) will be fetched automatically
+              Keyword data (volume, difficulty, CPC) will be fetched from DataForSEO
             </p>
           </div>
 

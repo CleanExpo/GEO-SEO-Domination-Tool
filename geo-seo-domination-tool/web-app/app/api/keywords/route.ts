@@ -6,6 +6,7 @@ import { z } from 'zod';
 const keywordSchema = z.object({
   company_id: z.string().uuid(),
   keyword: z.string().min(1, 'Keyword is required'),
+  location: z.string().optional(),
 });
 
 // GET /api/keywords - List all keywords
@@ -53,11 +54,12 @@ export async function POST(request: NextRequest) {
           company_id: validatedData.company_id,
           keyword: keywordData.keyword,
           search_volume: keywordData.search_volume,
-          cpc: keywordData.cpc,
           difficulty: keywordData.difficulty,
-          competition: keywordData.competition,
-          // Store the data source for transparency
+          // Store additional data in metadata (cpc, competition, location, source)
           metadata: {
+            cpc: keywordData.cpc,
+            competition: keywordData.competition,
+            location: validatedData.location,
             source: keywordData.source,
             fetched_at: new Date().toISOString(),
           },
