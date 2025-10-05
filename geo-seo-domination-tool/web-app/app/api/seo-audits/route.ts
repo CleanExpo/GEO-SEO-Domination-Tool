@@ -54,6 +54,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { company_id, url } = body;
 
@@ -75,6 +82,7 @@ export async function POST(request: NextRequest) {
     // Map the audit results to database schema
     const dbRecord = {
       company_id: company_id || null,
+      user_id: user.id,
       url: auditResults.url,
       overall_score: auditResults.score,
       performance_score: auditResults.performance_score,
