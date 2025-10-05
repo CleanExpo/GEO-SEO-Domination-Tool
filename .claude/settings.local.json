@@ -48,7 +48,8 @@
       "Bash(npm run:*)",
       "Bash(npm install:*)",
       "Bash(gh pr create:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
