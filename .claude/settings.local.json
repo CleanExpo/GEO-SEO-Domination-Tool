@@ -55,7 +55,9 @@
       "mcp__vercel__get_deployment",
       "mcp__semrush__semrush_toolkit_info",
       "mcp__semrush__semrush_report_schema",
-      "mcp__semrush__semrush_report"
+      "mcp__semrush__semrush_report",
+      "Bash(npx tsx:*)",
+      "Bash(DATAFORSEO_API_KEY=\"phill@disasterrecovery.com.au:f1f7eebc972699a7\" npx tsx scripts/test-dataforseo.ts)"
     ],
     "deny": [],
     "ask": []
