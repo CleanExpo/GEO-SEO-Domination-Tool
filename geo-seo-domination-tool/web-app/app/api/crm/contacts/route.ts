@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/auth/supabase-server';
+import { createClient, getUser } from '@/lib/auth/supabase-server';
+import { getCurrentOrganisationId } from '@/lib/tenant-context';
+import { getActiveCompanyId } from '@/lib/company-context';
 import { z } from 'zod';
 
 const contactSchema = z.object({
@@ -12,16 +14,27 @@ const contactSchema = z.object({
   notes: z.string().optional(),
 });
 
-// GET /api/crm/contacts - List all contacts
+// GET /api/crm/contacts - List all contacts for the active company
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
+    // Get organisation and company context
+    const organisationId = await getCurrentOrganisationId();
+    const companyId = await getActiveCompanyId();
+
     let query = supabase
       .from('crm_contacts')
       .select('*')
+      .eq('organisation_id', organisationId)
+      .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
     // Filter by status if provided
@@ -44,16 +57,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/crm/contacts - Create a new contact
+// POST /api/crm/contacts - Create a new contact for the active company
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const supabase = await createClient();
     const body = await request.json();
     const validatedData = contactSchema.parse(body);
 
+    // Get organisation and company context
+    const organisationId = await getCurrentOrganisationId();
+    const companyId = await getActiveCompanyId();
+
     const { data, error } = await supabase
       .from('crm_contacts')
-      .insert([validatedData])
+      .insert([{
+        ...validatedData,
+        user_id: user.id,
+        organisation_id: organisationId,
+        company_id: companyId
+      }])
       .select()
       .single();
 
