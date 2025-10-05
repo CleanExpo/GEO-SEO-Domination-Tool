@@ -4,7 +4,7 @@ import { createClient } from '@/lib/auth/supabase-server';
 // DELETE /api/keywords/[id] - Delete a keyword
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -15,7 +15,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Delete the keyword (RLS will ensure user owns it)
     const { error } = await supabase
@@ -40,11 +40,11 @@ export async function DELETE(
 // GET /api/keywords/[id] - Get a single keyword
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from('keywords')
@@ -68,7 +68,7 @@ export async function GET(
 // PUT /api/keywords/[id] - Update a keyword
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -79,7 +79,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Update the keyword (RLS will ensure user owns it)
