@@ -1,0 +1,87 @@
+name: Preflight Checks
+
+on:
+  push:
+    branches: [main, development, deepseek-integration]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check TypeScript compilation
+        run: npx tsc --noEmit
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Run Prettier check
+        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}"
+        continue-on-error: true
+
+      - name: Check environment variables (mock)
+        run: |
+          # Create mock .env for CI
+          cat > .env << EOF
+          NEXT_PUBLIC_SUPABASE_URL=https://mock.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock
+          SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock
+          DATABASE_URL=postgresql://mock:mock@mock:5432/mock
+          SECRETS_MASTER_KEY=mockmockmockmockmockmockmockmock
+          EOF
+          npx tsx scripts/check-env.ts || echo "⚠️  Environment check failed (expected in CI)"
+
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://mock.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock
+          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock
+          DATABASE_URL: postgresql://mock:mock@mock:5432/mock
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-output
+          path: |
+            .next
+            dist
+          retention-days: 7
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for secrets in code
+        run: |
+          if grep -r -E "(password|secret|api_key|token)\s*=\s*['\"][^'\"]{10,}" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" .; then
+            echo "⚠️  Potential hardcoded secrets found!"
+            exit 1
+          else
+            echo "✅ No hardcoded secrets detected"
+          fi

@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run TypeScript type checking
+echo "📝 Checking TypeScript..."
+npx tsc --noEmit || {
+  echo "❌ TypeScript errors found. Please fix them before committing."
+  exit 1
+}
+
+# Run ESLint on staged files
+echo "🔍 Running ESLint..."
+npx lint-staged || {
+  echo "❌ ESLint errors found. Please fix them before committing."
+  exit 1
+}
+
+# Run Prettier on staged files
+echo "✨ Running Prettier..."
+npx prettier --write --ignore-unknown $(git diff --cached --name-only --diff-filter=ACM) || {
+  echo "❌ Prettier formatting failed."
+  exit 1
+}
+
+# Add formatted files back to staging
+git add $(git diff --cached --name-only --diff-filter=ACM)
+
+echo "✅ Pre-commit checks passed!"

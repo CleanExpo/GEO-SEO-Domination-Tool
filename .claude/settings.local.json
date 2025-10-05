@@ -46,7 +46,9 @@
       "Bash(grep:*)",
       "Bash(test:*)",
       "Bash(npm run:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(gh pr create:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
