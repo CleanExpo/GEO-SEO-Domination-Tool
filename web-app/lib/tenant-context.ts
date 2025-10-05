@@ -35,11 +35,13 @@ export async function getCurrentOrganisationId(): Promise<string> {
     throw new Error('Unauthorised: No user session');
   }
 
-  // Get user's organisation membership
-  const { data, error } = await supabase
+  // Get user's organisation membership (prioritize owner role)
+  const { data, error} = await supabase
     .from('organisation_members')
-    .select('organisation_id')
+    .select('organisation_id, role')
     .eq('user_id', user.id)
+    .order('role', { ascending: false }) // owner > admin > member > viewer
+    .limit(1)
     .single();
 
   if (error || !data) {
