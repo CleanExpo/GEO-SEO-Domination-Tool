@@ -41,6 +41,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = keywordSchema.parse(body);
 
@@ -55,6 +62,7 @@ export async function POST(request: NextRequest) {
           keyword: keywordData.keyword,
           search_volume: keywordData.search_volume,
           difficulty: keywordData.difficulty,
+          user_id: user.id,
           // Store additional data in metadata (cpc, competition, location, source)
           metadata: {
             cpc: keywordData.cpc,
