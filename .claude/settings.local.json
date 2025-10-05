@@ -40,7 +40,13 @@
       "mcp__vercel__get_project",
       "mcp__vercel__list_projects",
       "mcp__vercel__get_deployment_build_logs",
-      "WebFetch(domain:api-docs.deepseek.com)"
+      "WebFetch(domain:api-docs.deepseek.com)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(grep:*)",
+      "Bash(test:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

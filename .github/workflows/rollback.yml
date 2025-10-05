@@ -1,0 +1,200 @@
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Deployment ID to rollback to (find in Vercel dashboard, starts with dpl_)'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback (will be posted to Slack)'
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Deployment ID
+        run: |
+          if [[ ! "${{ github.event.inputs.deployment_id }}" =~ ^dpl_[a-zA-Z0-9]+$ ]]; then
+            echo "❌ Invalid deployment ID format. Must start with 'dpl_'"
+            echo "Example: dpl_5rH6g9FjW"
+            exit 1
+          fi
+          echo "✅ Deployment ID format validated"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Rollback Vercel Deployment
+        run: |
+          echo "🔄 Rolling back to deployment: ${{ github.event.inputs.deployment_id }}"
+
+          vercel rollback ${{ github.event.inputs.deployment_id }} \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --yes
+
+          echo "✅ Rollback command executed successfully"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Wait for Deployment Stabilisation
+        run: |
+          echo "⏳ Waiting 30 seconds for deployment to stabilise..."
+          sleep 30
+
+      - name: Verify Rollback - Health Check
+        run: |
+          echo "🔍 Verifying rollback with health check..."
+
+          # Get production URL from environment or use default
+          PROD_URL="${{ secrets.PRODUCTION_URL }}"
+          if [ -z "$PROD_URL" ]; then
+            PROD_URL="https://geo-seo-domination.vercel.app"
+          fi
+
+          # Health check
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/api/health" || echo "000")
+
+          if [ "$STATUS" -eq "200" ] || [ "$STATUS" -eq "404" ]; then
+            echo "✅ Health check passed (Status: $STATUS)"
+            echo "✅ Rollback successful!"
+          else
+            echo "❌ Health check failed (Status: $STATUS)"
+            echo "❌ Rollback may have issues - manual verification required"
+            exit 1
+          fi
+
+      - name: Notify Team - Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅ Production Rollback Successful' || '❌ Production Rollback Failed' }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ job.status == 'success' && '✅ Production Rollback Successful' || '❌ Production Rollback Failed' }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Deployment ID:*\n`${{ github.event.inputs.deployment_id }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Reason:*\n${{ github.event.inputs.reason }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n${{ job.status }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Rollback initiated from GitHub Actions • ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Create Incident Report
+        if: always()
+        run: |
+          REPORT_FILE="incident-reports/rollback-$(date +%Y%m%d-%H%M%S).md"
+          mkdir -p incident-reports
+
+          cat > "$REPORT_FILE" <<EOF
+          # Incident Report: Production Rollback
+
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Triggered by:** ${{ github.actor }}
+          **Deployment ID:** ${{ github.event.inputs.deployment_id }}
+          **Reason:** ${{ github.event.inputs.reason }}
+          **Status:** ${{ job.status }}
+
+          ## Timeline
+
+          - **Rollback Initiated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          - **Rollback Completed:** Pending manual verification
+
+          ## Actions Taken
+
+          1. Verified deployment ID format
+          2. Executed Vercel rollback command
+          3. Waited 30 seconds for stabilisation
+          4. Verified health check endpoint
+
+          ## Next Steps
+
+          - [ ] Verify critical user flows (login, create company, run audit)
+          - [ ] Monitor error logs for 15 minutes
+          - [ ] Post incident summary in Slack #incidents
+          - [ ] Schedule post-mortem meeting within 24 hours
+          - [ ] Update rollback playbook if needed
+
+          ## Root Cause
+
+          **To be determined** - See reason above
+
+          ## Prevention Measures
+
+          - [ ] Add tests to catch this issue
+          - [ ] Update CI/CD pipeline
+          - [ ] Improve monitoring/alerting
+
+          ---
+          **Generated by:** GitHub Actions Rollback Workflow
+          **Run ID:** ${{ github.run_id }}
+          EOF
+
+          echo "📝 Incident report created: $REPORT_FILE"
+
+      - name: Post-Rollback Summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 ROLLBACK SUMMARY"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Deployment ID: ${{ github.event.inputs.deployment_id }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+          echo "Status: ${{ job.status }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Timestamp: $(date -u)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "🔍 Next Steps:"
+          echo "1. Verify production is healthy at your domain"
+          echo "2. Test critical user flows"
+          echo "3. Monitor error logs for 15 minutes"
+          echo "4. Post incident summary in Slack"
+          echo "5. Schedule post-mortem meeting"
+          echo ""
+          echo "📚 Documentation:"
+          echo "- Rollback Playbook: docs/ROLLBACK-PLAYBOOK.md"
+          echo "- Incident Reports: incident-reports/"
+          echo ""
