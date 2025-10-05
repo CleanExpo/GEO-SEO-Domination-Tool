@@ -50,7 +50,9 @@
       "Bash(gh pr create:*)",
       "Bash(npx tsc:*)",
       "Bash(git push:*)",
-      "Bash(docker:*)"
+      "Bash(docker:*)",
+      "mcp__vercel__list_teams",
+      "mcp__vercel__get_deployment"
     ],
     "deny": [],
     "ask": []
