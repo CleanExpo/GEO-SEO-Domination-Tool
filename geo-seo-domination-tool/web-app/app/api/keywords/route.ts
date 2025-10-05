@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/supabase-server';
-import { SEMrushClient } from '@/lib/api-clients';
+import { keywordService } from '@/services/keyword-research';
 import { z } from 'zod';
 
 const keywordSchema = z.object({
@@ -43,39 +43,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = keywordSchema.parse(body);
 
-    // Optionally fetch keyword data from SEMrush if API key is available
-    let keywordData = {};
-    const semrushApiKey = process.env.SEMRUSH_API_KEY;
-
-    if (semrushApiKey) {
-      try {
-        const semrush = new SEMrushClient(semrushApiKey);
-        const apiData = await semrush.getKeywordData(validatedData.keyword);
-
-        // Parse SEMrush response (format: keyword;volume;cpc;difficulty)
-        if (apiData) {
-          const lines = apiData.split('\n');
-          if (lines.length > 1) {
-            const values = lines[1].split(';');
-            keywordData = {
-              search_volume: parseInt(values[1]) || undefined,
-              cpc: parseFloat(values[2]) || undefined,
-              difficulty: parseFloat(values[3]) || undefined,
-            };
-          }
-        }
-      } catch (err) {
-        console.error('SEMrush API error:', err);
-        // Continue without SEMrush data
-      }
-    }
+    // Fetch keyword data using multi-source fallback service
+    const keywordData = await keywordService.getKeywordData(validatedData.keyword);
 
     const { data, error } = await supabase
       .from('keywords')
       .insert([
         {
-          ...validatedData,
-          ...keywordData,
+          company_id: validatedData.company_id,
+          keyword: keywordData.keyword,
+          search_volume: keywordData.search_volume,
+          cpc: keywordData.cpc,
+          difficulty: keywordData.difficulty,
+          competition: keywordData.competition,
+          // Store the data source for transparency
+          metadata: {
+            source: keywordData.source,
+            fetched_at: new Date().toISOString(),
+          },
         },
       ])
       .select()
@@ -85,7 +70,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ keyword: data }, { status: 201 });
+    return NextResponse.json({
+      keyword: data,
+      meta: {
+        source: keywordData.source,
+        note: keywordData.source === 'mock' ? 'Using mock data - configure API keys for real data' : undefined,
+      },
+    }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -52,7 +52,10 @@
       "Bash(git push:*)",
       "Bash(docker:*)",
       "mcp__vercel__list_teams",
-      "mcp__vercel__get_deployment"
+      "mcp__vercel__get_deployment",
+      "mcp__semrush__semrush_toolkit_info",
+      "mcp__semrush__semrush_report_schema",
+      "mcp__semrush__semrush_report"
     ],
     "deny": [],
     "ask": []
