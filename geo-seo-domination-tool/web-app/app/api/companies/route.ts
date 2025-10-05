@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, getUser } from '@/lib/auth/supabase-server';
+import { getCurrentOrganisationId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const companySchema = z.object({
@@ -41,12 +42,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get user's organisation ID
+    const organisationId = await getCurrentOrganisationId();
+
     const body = await request.json();
     const validatedData = companySchema.parse(body);
 
     const { data, error } = await supabase
       .from('companies')
-      .insert([{ ...validatedData, user_id: user.id }])
+      .insert([{
+        ...validatedData,
+        user_id: user.id,
+        organisation_id: organisationId
+      }])
       .select()
       .single();
 
