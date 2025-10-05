@@ -30,6 +30,18 @@ export class RankingChecker {
     location?: string,
     maxResults: number = 100
   ): Promise<RankingCheckResult> {
+    // Check if Google Custom Search API is configured
+    const googleApiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_SEARCH_API_KEY;
+    const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || process.env.GOOGLE_CSE_ID;
+
+    // If API keys are available, use Google Custom Search API
+    if (googleApiKey && searchEngineId) {
+      return this.checkGoogleRankingWithAPI(keyword, targetUrl, location, maxResults, googleApiKey, searchEngineId);
+    }
+
+    // Otherwise, fall back to web scraping (less reliable, may be blocked)
+    console.warn('[RankingChecker] Google API not configured - using web scraping fallback (may be unreliable)');
+
     try {
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&num=${maxResults}`;
 
@@ -62,6 +74,12 @@ export class RankingChecker {
         }
       });
 
+      if (found) {
+        console.log(`[RankingChecker] Found ${targetUrl} at position ${position} for keyword "${keyword}"`);
+      } else {
+        console.warn(`[RankingChecker] ${targetUrl} not found in top ${maxResults} results for keyword "${keyword}"`);
+      }
+
       return {
         keyword,
         url: targetUrl,
@@ -71,8 +89,12 @@ export class RankingChecker {
         timestamp: new Date(),
         found,
       };
-    } catch (error) {
-      console.error('Google ranking check error:', error);
+    } catch (error: any) {
+      console.error('[RankingChecker] Google ranking check error:', {
+        keyword,
+        error: error.message || 'Unknown error',
+        status: error.response?.status
+      });
       return {
         keyword,
         url: targetUrl,
@@ -82,6 +104,73 @@ export class RankingChecker {
         timestamp: new Date(),
         found: false,
       };
+    }
+  }
+
+  private async checkGoogleRankingWithAPI(
+    keyword: string,
+    targetUrl: string,
+    location: string | undefined,
+    maxResults: number,
+    apiKey: string,
+    searchEngineId: string
+  ): Promise<RankingCheckResult> {
+    try {
+      // Google Custom Search API endpoint
+      const apiUrl = 'https://www.googleapis.com/customsearch/v1';
+
+      const response = await axios.get(apiUrl, {
+        params: {
+          key: apiKey,
+          cx: searchEngineId,
+          q: keyword,
+          num: Math.min(maxResults, 10), // API limit is 10 per request
+        },
+        timeout: 10000,
+      });
+
+      const normalizedTarget = this.normalizeUrl(targetUrl);
+      let position = null;
+      let found = false;
+
+      // Search through results
+      if (response.data.items) {
+        for (let i = 0; i < response.data.items.length; i++) {
+          const item = response.data.items[i];
+          if (this.urlMatches(item.link, normalizedTarget)) {
+            position = i + 1;
+            found = true;
+            break;
+          }
+        }
+      }
+
+      if (found) {
+        console.log(`[RankingChecker] [Google API] Found ${targetUrl} at position ${position} for keyword "${keyword}"`);
+      } else {
+        console.warn(`[RankingChecker] [Google API] ${targetUrl} not found in results for keyword "${keyword}"`);
+      }
+
+      return {
+        keyword,
+        url: targetUrl,
+        position,
+        searchEngine: 'google',
+        location,
+        timestamp: new Date(),
+        found,
+      };
+    } catch (error: any) {
+      console.error('[RankingChecker] Google API ranking check error:', {
+        keyword,
+        error: error.message || 'Unknown error',
+        status: error.response?.status,
+        details: error.response?.data
+      });
+
+      // Fall back to scraping if API fails
+      console.warn('[RankingChecker] Falling back to web scraping after API failure');
+      return this.checkGoogleRanking(keyword, targetUrl, location, maxResults);
     }
   }
 

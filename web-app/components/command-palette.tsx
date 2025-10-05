@@ -56,7 +56,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   // Define all commands
   const commands: Command[] = React.useMemo(() => [
-    // Navigation commands (5)
+    // Navigation commands
     {
       id: 'nav-dashboard',
       name: 'Go to Dashboard',
@@ -106,6 +106,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       section: 'navigation',
       action: () => router.push('/reports'),
       shortcut: 'g p',
+    },
+    {
+      id: 'nav-audits',
+      name: 'Go to SEO Audits',
+      description: 'View SEO audit results',
+      icon: SearchIcon,
+      keywords: ['audits', 'seo', 'analysis'],
+      section: 'navigation',
+      action: () => router.push('/audits'),
+      shortcut: 'g a',
     },
 
     // Search commands (3)

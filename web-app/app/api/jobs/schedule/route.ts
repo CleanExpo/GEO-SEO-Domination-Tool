@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { createClient } from '@/lib/auth/supabase-server';
 import cron from 'node-cron';
-
-// Initialize database pool
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'geo_seo_db',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD,
-  max: 10,
-  idleTimeoutMillis: 30000,
-});
 
 // Verify API key
 function verifyApiKey(request: NextRequest): boolean {
@@ -62,44 +51,43 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const jobName = searchParams.get('job');
 
-    // Get schedules from database
-    let query = `
-      SELECT
-        job_name,
-        schedule,
-        enabled,
-        description,
-        metadata,
-        updated_at
-      FROM job_schedules
-    `;
+    console.log('[Jobs/Schedule] Fetching job schedules', { jobName });
 
-    const queryParams: any[] = [];
+    // Get schedules from database
+    let query = supabase
+      .from('job_schedules')
+      .select('job_name, schedule, enabled, description, metadata, updated_at')
+      .order('job_name');
 
     if (jobName) {
-      query += ' WHERE job_name = $1';
-      queryParams.push(jobName);
+      query = query.eq('job_name', jobName);
     }
 
-    query += ' ORDER BY job_name';
+    const { data: schedules, error } = await query;
 
-    const result = await pool.query(query, queryParams);
+    if (error) {
+      console.error('[Jobs/Schedule] Database error:', error);
+      throw error;
+    }
 
     // If no schedules in database, return defaults
-    if (result.rows.length === 0) {
-      const schedules = jobName
+    if (!schedules || schedules.length === 0) {
+      const defaultSchedules = jobName
         ? DEFAULT_SCHEDULES[jobName as keyof typeof DEFAULT_SCHEDULES]
           ? [DEFAULT_SCHEDULES[jobName as keyof typeof DEFAULT_SCHEDULES]]
           : []
         : Object.values(DEFAULT_SCHEDULES);
 
+      console.log('[Jobs/Schedule] No schedules in database, returning defaults');
+
       return NextResponse.json({
         success: true,
         data: {
-          schedules,
+          schedules: defaultSchedules,
           source: 'defaults',
         },
         timestamp: new Date().toISOString(),
@@ -107,7 +95,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Add human-readable cron descriptions
-    const schedulesWithDescriptions = result.rows.map((row) => ({
+    const schedulesWithDescriptions = schedules.map((row) => ({
       ...row,
       cronDescription: describeCronPattern(row.schedule),
     }));
@@ -120,7 +108,7 @@ export async function GET(request: NextRequest) {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Jobs/Schedule] Error fetching schedules:', error);
     return NextResponse.json(
       {
@@ -140,6 +128,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { jobName, schedule, enabled, description, metadata } = body;
 
@@ -159,46 +148,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert or update schedule
-    const query = `
-      INSERT INTO job_schedules (
-        job_name,
-        schedule,
-        enabled,
-        description,
-        metadata,
-        updated_at
-      ) VALUES ($1, $2, $3, $4, $5, NOW())
-      ON CONFLICT (job_name)
-      DO UPDATE SET
-        schedule = EXCLUDED.schedule,
-        enabled = EXCLUDED.enabled,
-        description = EXCLUDED.description,
-        metadata = EXCLUDED.metadata,
-        updated_at = NOW()
-      RETURNING *
-    `;
+    console.log('[Jobs/Schedule] Creating/updating job schedule:', jobName);
 
-    const result = await pool.query(query, [
-      jobName,
-      schedule,
-      enabled !== undefined ? enabled : true,
-      description || null,
-      metadata ? JSON.stringify(metadata) : null,
-    ]);
+    // Check if schedule already exists
+    const { data: existing } = await supabase
+      .from('job_schedules')
+      .select('id')
+      .eq('job_name', jobName)
+      .single();
+
+    let result;
+    if (existing) {
+      // Update existing schedule
+      const { data, error } = await supabase
+        .from('job_schedules')
+        .update({
+          schedule,
+          enabled: enabled !== undefined ? enabled : true,
+          description: description || null,
+          metadata: metadata || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('job_name', jobName)
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // Insert new schedule
+      const { data, error } = await supabase
+        .from('job_schedules')
+        .insert([{
+          job_name: jobName,
+          schedule,
+          enabled: enabled !== undefined ? enabled : true,
+          description: description || null,
+          metadata: metadata || null,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Job schedule updated successfully',
       data: {
         schedule: {
-          ...result.rows[0],
+          ...result,
           cronDescription: describeCronPattern(schedule),
         },
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Jobs/Schedule] Error updating schedule:', error);
     return NextResponse.json(
       {
@@ -218,6 +224,7 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { jobName, schedule, enabled } = body;
 
@@ -229,9 +236,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Build update query dynamically
-    const updates: string[] = [];
-    const queryParams: any[] = [jobName];
+    // Build update object dynamically
+    const updates: any = {};
 
     if (schedule !== undefined) {
       // Validate cron pattern
@@ -241,38 +247,39 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         );
       }
-      updates.push(`schedule = $${queryParams.length + 1}`);
-      queryParams.push(schedule);
+      updates.schedule = schedule;
     }
 
     if (enabled !== undefined) {
-      updates.push(`enabled = $${queryParams.length + 1}`);
-      queryParams.push(enabled);
+      updates.enabled = enabled;
     }
 
-    if (updates.length === 0) {
+    if (Object.keys(updates).length === 0) {
       return NextResponse.json(
         { error: 'No fields to update' },
         { status: 400 }
       );
     }
 
-    updates.push('updated_at = NOW()');
+    updates.updated_at = new Date().toISOString();
 
-    const query = `
-      UPDATE job_schedules
-      SET ${updates.join(', ')}
-      WHERE job_name = $1
-      RETURNING *
-    `;
+    console.log('[Jobs/Schedule] Updating job schedule:', jobName);
 
-    const result = await pool.query(query, queryParams);
+    const { data, error } = await supabase
+      .from('job_schedules')
+      .update(updates)
+      .eq('job_name', jobName)
+      .select()
+      .single();
 
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { error: 'Job schedule not found' },
-        { status: 404 }
-      );
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Job schedule not found' },
+          { status: 404 }
+        );
+      }
+      throw error;
     }
 
     return NextResponse.json({
@@ -280,13 +287,13 @@ export async function PUT(request: NextRequest) {
       message: 'Job schedule updated successfully',
       data: {
         schedule: {
-          ...result.rows[0],
-          cronDescription: describeCronPattern(result.rows[0].schedule),
+          ...data,
+          cronDescription: describeCronPattern(data.schedule),
         },
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Jobs/Schedule] Error updating schedule:', error);
     return NextResponse.json(
       {
@@ -306,6 +313,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const jobName = searchParams.get('job');
 
@@ -316,31 +324,35 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const query = `
-      DELETE FROM job_schedules
-      WHERE job_name = $1
-      RETURNING *
-    `;
+    console.log('[Jobs/Schedule] Deleting job schedule:', jobName);
 
-    const result = await pool.query(query, [jobName]);
+    const { data, error } = await supabase
+      .from('job_schedules')
+      .delete()
+      .eq('job_name', jobName)
+      .select()
+      .single();
 
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { error: 'Job schedule not found' },
-        { status: 404 }
-      );
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Job schedule not found' },
+          { status: 404 }
+        );
+      }
+      throw error;
     }
 
     return NextResponse.json({
       success: true,
       message: 'Job schedule deleted (reverted to default)',
       data: {
-        deleted: result.rows[0],
+        deleted: data,
         default: DEFAULT_SCHEDULES[jobName as keyof typeof DEFAULT_SCHEDULES] || null,
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Jobs/Schedule] Error deleting schedule:', error);
     return NextResponse.json(
       {

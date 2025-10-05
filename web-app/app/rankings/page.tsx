@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, MapPin, Globe, Calendar, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, MapPin, Globe, Calendar, Loader2, Download } from 'lucide-react';
 import { RankingDialog } from '@/components/RankingDialog';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Keyword {
   id: string;
@@ -32,9 +34,10 @@ interface RankingData {
   }[];
 }
 
-export default function RankingsPage() {
+function RankingsContent() {
   const [rankings, setRankings] = useState<RankingData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -43,8 +46,12 @@ export default function RankingsPage() {
 
   const fetchRankings = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/rankings');
+      if (!res.ok) {
+        throw new Error('Failed to fetch rankings');
+      }
       const data = await res.json();
 
       // Transform the API data into the format expected by the UI
@@ -52,9 +59,47 @@ export default function RankingsPage() {
       setRankings(transformedData);
     } catch (err) {
       console.error('Failed to fetch rankings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch rankings');
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    if (rankings.length === 0) return;
+
+    const headers = ['Keyword', 'Company', 'Location', 'Current Position', 'Previous Position', 'Change', 'Last Checked'];
+    const csvData = rankings.map(ranking => {
+      const trend = getTrendDirection(ranking);
+      const currentPosition = ranking.rankings[ranking.rankings.length - 1].position;
+      const previousPosition = ranking.rankings[0].position;
+      const lastChecked = ranking.rankings[ranking.rankings.length - 1].date;
+
+      return [
+        ranking.keyword,
+        ranking.company,
+        ranking.location,
+        currentPosition.toString(),
+        previousPosition.toString(),
+        `${trend.direction === 'up' ? '+' : trend.direction === 'down' ? '-' : ''}${trend.change}`,
+        new Date(lastChecked).toLocaleDateString()
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rankings-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const transformRankingsData = (apiRankings: Ranking[]): RankingData[] => {
@@ -94,6 +139,23 @@ export default function RankingsPage() {
     return { direction: 'stable', color: 'text-gray-400', change: 0 };
   };
 
+  if (error) {
+    return (
+      <div className="p-8 max-w-7xl">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-semibold mb-2">Error Loading Rankings</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchRankings}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -103,6 +165,15 @@ export default function RankingsPage() {
             <p className="text-gray-600 mt-1">Track keyword position changes over time</p>
           </div>
           <div className="flex items-center gap-2">
+            {rankings.length > 0 && (
+              <button
+                onClick={exportToCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Download className="h-5 w-5" />
+                Export CSV
+              </button>
+            )}
             <select className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <option>Last 7 days</option>
               <option>Last 30 days</option>
@@ -175,24 +246,13 @@ export default function RankingsPage() {
             </div>
           </div>
         ) : rankings.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <BarChart3 className="h-16 w-16 text-gray-300" />
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No ranking data</h3>
-                <p className="text-gray-600 mb-6">
-                  Start tracking keyword rankings to visualize your position changes over time.
-                </p>
-                <button
-                  onClick={() => setIsDialogOpen(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
-                >
-                  <TrendingUp className="h-5 w-5" />
-                  Track Your First Keyword
-                </button>
-              </div>
-            </div>
-          </div>
+          <EmptyState
+            icon={BarChart3}
+            title="No ranking data"
+            description="Start tracking keyword rankings to visualize your position changes over time."
+            actionLabel="Track Your First Keyword"
+            onAction={() => setIsDialogOpen(true)}
+          />
         ) : (
           rankings.map((ranking) => {
             const trend = getTrendDirection(ranking);
@@ -278,5 +338,13 @@ export default function RankingsPage() {
         onSuccess={() => fetchRankings()}
       />
     </div>
+  );
+}
+
+export default function RankingsPage() {
+  return (
+    <ErrorBoundary>
+      <RankingsContent />
+    </ErrorBoundary>
   );
 }

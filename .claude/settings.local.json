@@ -60,7 +60,11 @@
       "Bash(DATAFORSEO_API_KEY=\"phill@disasterrecovery.com.au:f1f7eebc972699a7\" npx tsx scripts/test-dataforseo.ts)",
       "Bash(git log:*)",
       "WebFetch(domain:gridmybusiness.com)",
-      "Bash(vercel env:*)"
+      "Bash(vercel env:*)",
+      "Bash(npx supabase:*)",
+      "Bash(powershell:*)",
+      "Bash(timeout 180 npm run build)",
+      "Bash(vercel link:*)"
     ],
     "deny": [],
     "ask": []

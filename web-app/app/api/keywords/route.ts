@@ -45,9 +45,13 @@ export async function POST(request: NextRequest) {
 
     // Optionally fetch keyword data from SEMrush if API key is available
     let keywordData = {};
+    let enrichmentStatus = 'not_attempted';
     const semrushApiKey = process.env.SEMRUSH_API_KEY;
 
-    if (semrushApiKey) {
+    if (!semrushApiKey) {
+      console.warn('[Keywords API] SEMRUSH_API_KEY not configured - keyword will be created without enrichment data');
+      enrichmentStatus = 'no_api_key';
+    } else {
       try {
         const semrush = new SEMrushClient(semrushApiKey);
         const apiData = await semrush.getKeywordData(validatedData.keyword);
@@ -62,11 +66,21 @@ export async function POST(request: NextRequest) {
               cpc: parseFloat(values[2]) || undefined,
               difficulty: parseFloat(values[3]) || undefined,
             };
+            enrichmentStatus = 'success';
+            console.log(`[Keywords API] Successfully enriched keyword "${validatedData.keyword}" with SEMrush data`);
+          } else {
+            console.warn(`[Keywords API] SEMrush returned no data for keyword "${validatedData.keyword}"`);
+            enrichmentStatus = 'no_data';
           }
         }
-      } catch (err) {
-        console.error('SEMrush API error:', err);
-        // Continue without SEMrush data
+      } catch (err: any) {
+        console.error('[Keywords API] SEMrush enrichment failed:', {
+          keyword: validatedData.keyword,
+          error: err.message || 'Unknown error',
+          code: err.response?.status,
+        });
+        enrichmentStatus = 'failed';
+        // Continue without SEMrush data - this is a graceful fallback
       }
     }
 
@@ -82,10 +96,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error('[Keywords API] Database insert failed:', error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ keyword: data }, { status: 201 });
+    // Include enrichment status in response for debugging
+    return NextResponse.json({
+      keyword: data,
+      enrichment: {
+        status: enrichmentStatus,
+        hasData: Object.keys(keywordData).length > 0,
+      }
+    }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -93,6 +115,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    console.error('[Keywords API] Unexpected error:', error);
     return NextResponse.json(
       { error: 'Failed to create keyword' },
       { status: 500 }

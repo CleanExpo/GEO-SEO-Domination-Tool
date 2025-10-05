@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, Plus, Search, ArrowUp, ArrowDown, Minus, Target, Loader2 } from 'lucide-react';
+import { TrendingUp, Plus, Search, ArrowUp, ArrowDown, Minus, Target, Loader2, Download } from 'lucide-react';
 import { KeywordDialog } from '@/components/KeywordDialog';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Keyword {
   id: string;
@@ -15,9 +17,10 @@ interface Keyword {
   created_at: string;
 }
 
-export default function KeywordsPage() {
+function KeywordsContent() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -26,15 +29,49 @@ export default function KeywordsPage() {
 
   const fetchKeywords = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/keywords');
+      if (!res.ok) {
+        throw new Error('Failed to fetch keywords');
+      }
       const data = await res.json();
       setKeywords(data.keywords || []);
     } catch (err) {
       console.error('Failed to fetch keywords:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch keywords');
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    if (keywords.length === 0) return;
+
+    const headers = ['Keyword', 'Search Volume', 'Difficulty', 'CPC', 'Location', 'Created At'];
+    const csvData = keywords.map(kw => [
+      kw.keyword,
+      kw.search_volume?.toString() || '',
+      kw.difficulty?.toString() || '',
+      kw.cpc?.toString() || '',
+      kw.location || '',
+      new Date(kw.created_at).toLocaleDateString()
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `keywords-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,6 +98,23 @@ export default function KeywordsPage() {
     ? Math.round(keywords.reduce((sum, kw) => sum + (kw.difficulty || 0), 0) / keywords.length)
     : 0;
 
+  if (error) {
+    return (
+      <div className="p-8 max-w-7xl">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-semibold mb-2">Error Loading Keywords</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchKeywords}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -69,13 +123,24 @@ export default function KeywordsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Keyword Tracking</h1>
             <p className="text-gray-600 mt-1">Monitor your keyword rankings and performance</p>
           </div>
-          <button
-            onClick={() => setIsDialogOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-          >
-            <Plus className="h-5 w-5" />
-            Add Keywords
-          </button>
+          <div className="flex gap-3">
+            {keywords.length > 0 && (
+              <button
+                onClick={exportToCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Download className="h-5 w-5" />
+                Export CSV
+              </button>
+            )}
+            <button
+              onClick={() => setIsDialogOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              Add Keywords
+            </button>
+          </div>
         </div>
       </div>
 
@@ -150,24 +215,13 @@ export default function KeywordsPage() {
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           </div>
         ) : filteredKeywords.length === 0 && keywords.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <Target className="h-16 w-16 text-gray-300" />
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No keywords tracked</h3>
-                <p className="text-gray-600 mb-6">
-                  Start tracking your keyword rankings to monitor your SEO performance over time.
-                </p>
-                <button
-                  onClick={() => setIsDialogOpen(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors mx-auto"
-                >
-                  <Plus className="h-5 w-5" />
-                  Add Your First Keywords
-                </button>
-              </div>
-            </div>
-          </div>
+          <EmptyState
+            icon={Target}
+            title="No keywords tracked"
+            description="Start tracking your keyword rankings to monitor your SEO performance over time."
+            actionLabel="Add Your First Keywords"
+            onAction={() => setIsDialogOpen(true)}
+          />
         ) : filteredKeywords.length === 0 ? (
           <div className="p-12 text-center">
             <div className="flex flex-col items-center gap-4">
@@ -244,5 +298,13 @@ export default function KeywordsPage() {
         onSuccess={() => fetchKeywords()}
       />
     </div>
+  );
+}
+
+export default function KeywordsPage() {
+  return (
+    <ErrorBoundary>
+      <KeywordsContent />
+    </ErrorBoundary>
   );
 }

@@ -64,13 +64,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'Invalid URL format' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`[SEO Audits API] Starting audit for ${url}`);
+
+    // Check API key availability
+    const hasLighthouse = !!(process.env.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY);
+    const hasFirecrawl = !!process.env.FIRECRAWL_API_KEY;
+
+    if (!hasLighthouse && !hasFirecrawl) {
+      console.warn('[SEO Audits API] No API keys configured - using basic audit only');
+    }
+
     // Run the enhanced SEO audit with Lighthouse and Firecrawl
     const auditor = new EnhancedSEOAuditor();
-    const auditResults = await auditor.auditWebsite(url, {
-      includeLighthouse: true,
-      includeFirecrawl: true,
-      strategy: 'mobile',
-    });
+    let auditResults;
+
+    try {
+      auditResults = await auditor.auditWebsite(url, {
+        includeLighthouse: hasLighthouse,
+        includeFirecrawl: hasFirecrawl,
+        strategy: 'mobile',
+      });
+    } catch (auditError: any) {
+      console.error('[SEO Audits API] Audit execution failed:', auditError.message || auditError);
+      return NextResponse.json(
+        {
+          error: 'Failed to complete SEO audit',
+          details: auditError.message || 'Unknown error during audit execution',
+          hasLighthouse,
+          hasFirecrawl
+        },
+        { status: 500 }
+      );
+    }
 
     // Map the audit results to database schema
     const dbRecord = {
@@ -92,6 +127,10 @@ export async function POST(request: NextRequest) {
         crawl_data: auditResults.extended_data?.crawl_data,
         critical_issues: auditResults.extended_data?.critical_issues,
         warnings: auditResults.extended_data?.warnings,
+        api_status: {
+          lighthouse: hasLighthouse ? (auditResults.extended_data?.lighthouse_data ? 'success' : 'failed') : 'not_configured',
+          firecrawl: hasFirecrawl ? (auditResults.extended_data?.crawl_data ? 'success' : 'failed') : 'not_configured',
+        }
       }
     };
 
@@ -103,13 +142,23 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error('[SEO Audits API] Database insert failed:', error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ audit: data }, { status: 201 });
-  } catch (error) {
+    console.log(`[SEO Audits API] Audit completed successfully for ${url}, ID: ${data.id}`);
+
+    return NextResponse.json({
+      audit: data,
+      integrations: {
+        lighthouse: hasLighthouse,
+        firecrawl: hasFirecrawl
+      }
+    }, { status: 201 });
+  } catch (error: any) {
+    console.error('[SEO Audits API] Unexpected error:', error.message || error);
     return NextResponse.json(
-      { error: `Failed to create SEO audit: ${error}` },
+      { error: `Failed to create SEO audit: ${error.message || 'Unknown error'}` },
       { status: 500 }
     );
   }

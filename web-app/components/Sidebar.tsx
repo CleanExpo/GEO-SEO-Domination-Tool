@@ -7,7 +7,8 @@ import { createClient } from '@/lib/auth/supabase-client';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
-  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut
+  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, Menu, X,
+  Activity, Heart, GitBranch
 } from 'lucide-react';
 
 const navigation = [
@@ -40,6 +41,12 @@ const resourcesNavigation = [
   { name: 'Tutorials', href: '/resources/tutorials', icon: BookOpen, section: 'Resources' },
 ];
 
+const systemNavigation = [
+  { name: 'Analytics', href: '/analytics', icon: Activity, section: 'System' },
+  { name: 'Health', href: '/health', icon: Heart, section: 'System' },
+  { name: 'Release Monitor', href: '/release/monitor', icon: GitBranch, section: 'System' },
+];
+
 const membersNavigation = [
   { name: 'Support', href: '/support', icon: Headphones, section: 'Members' },
 ];
@@ -48,6 +55,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<{ email?: string; user_metadata?: { full_name?: string; name?: string } } | null>(null);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -98,16 +106,50 @@ export function Sidebar() {
   );
 
   return (
-    <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 flex flex-col overflow-hidden">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu className="h-6 w-6 text-gray-900" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50
+        flex flex-col overflow-hidden
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200/50">
+      <div className="p-6 border-b border-gray-200/50 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
             <Home className="h-5 w-5 text-white" />
           </div>
-          <span className="font-semibold text-gray-900">SEO Master</span>
+          <div>
+            <span className="font-semibold text-gray-900">SEO Master</span>
+            <p className="text-xs text-gray-500">Free plan</p>
+          </div>
         </Link>
-        <p className="text-xs text-gray-500 mt-1">Free plan</p>
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5 text-gray-600" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -116,6 +158,7 @@ export function Sidebar() {
         {renderNavSection('CRM & Pipeline', crmNavigation)}
         {renderNavSection('Projects', projectsNavigation)}
         {renderNavSection('Resources', resourcesNavigation)}
+        {renderNavSection('System', systemNavigation)}
         {renderNavSection('Members', membersNavigation)}
       </nav>
 
@@ -156,5 +199,6 @@ export function Sidebar() {
         </div>
       </div>
     </div>
+    </>
   );
 }

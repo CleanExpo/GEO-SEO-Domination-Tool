@@ -16,15 +16,22 @@ export class EnhancedSEOAuditor {
 
   constructor() {
     // Initialize services if API keys are available
-    const googleApiKey = process.env.GOOGLE_API_KEY;
+    // Try multiple env var names for Google API key
+    const googleApiKey = process.env.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY;
     const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
 
     if (googleApiKey) {
       this.lighthouseService = new LighthouseService(googleApiKey);
+      console.log('[EnhancedSEOAuditor] Lighthouse service initialized successfully');
+    } else {
+      console.warn('[EnhancedSEOAuditor] GOOGLE_PAGESPEED_API_KEY or GOOGLE_API_KEY not configured - Lighthouse audits will be skipped');
     }
 
     if (firecrawlApiKey) {
       this.firecrawlService = new FirecrawlService({ apiKey: firecrawlApiKey });
+      console.log('[EnhancedSEOAuditor] Firecrawl service initialized successfully');
+    } else {
+      console.warn('[EnhancedSEOAuditor] FIRECRAWL_API_KEY not configured - Firecrawl audits will be skipped');
     }
   }
 
@@ -264,26 +271,48 @@ export class EnhancedSEOAuditor {
   }
 
   private async runLighthouseAudit(url: string, strategy: 'mobile' | 'desktop') {
-    if (!this.lighthouseService) return null;
+    if (!this.lighthouseService) {
+      console.warn('[EnhancedSEOAuditor] Lighthouse service not available - skipping audit');
+      return null;
+    }
 
     try {
       const scores = await this.lighthouseService.auditPage(url, strategy);
+      console.log(`[EnhancedSEOAuditor] Lighthouse audit completed for ${url}`);
       return scores;
-    } catch (error) {
-      console.error('Lighthouse audit failed:', error);
-      return null;
+    } catch (error: any) {
+      // Check for rate limiting
+      if (error.response?.status === 429) {
+        console.error('[EnhancedSEOAuditor] Lighthouse API rate limit exceeded - falling back to basic audit');
+      } else if (error.response?.status === 403) {
+        console.error('[EnhancedSEOAuditor] Lighthouse API authentication failed - check GOOGLE_PAGESPEED_API_KEY');
+      } else {
+        console.error('[EnhancedSEOAuditor] Lighthouse audit failed:', error.message || error);
+      }
+      return null; // Graceful fallback to basic audit
     }
   }
 
   private async runFirecrawlAudit(url: string) {
-    if (!this.firecrawlService) return null;
+    if (!this.firecrawlService) {
+      console.warn('[EnhancedSEOAuditor] Firecrawl service not available - skipping crawl');
+      return null;
+    }
 
     try {
       const data = await this.firecrawlService.scrapForSEO(url);
+      console.log(`[EnhancedSEOAuditor] Firecrawl completed for ${url}`);
       return data;
-    } catch (error) {
-      console.error('Firecrawl audit failed:', error);
-      return null;
+    } catch (error: any) {
+      // Check for rate limiting or API errors
+      if (error.response?.status === 429) {
+        console.error('[EnhancedSEOAuditor] Firecrawl API rate limit exceeded - falling back to basic crawl');
+      } else if (error.response?.status === 403) {
+        console.error('[EnhancedSEOAuditor] Firecrawl API authentication failed - check FIRECRAWL_API_KEY');
+      } else {
+        console.error('[EnhancedSEOAuditor] Firecrawl failed:', error.message || error);
+      }
+      return null; // Graceful fallback to basic audit
     }
   }
 

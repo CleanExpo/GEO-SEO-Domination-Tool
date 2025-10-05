@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, getUser } from '@/lib/auth/supabase-server';
+import { getCurrentOrganisationId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const companySchema = z.object({
@@ -9,10 +10,12 @@ const companySchema = z.object({
   location: z.string().optional(),
 });
 
-// GET /api/companies - List all companies
+// GET /api/companies - List all companies (scoped to current organisation)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+
+    // Get companies filtered by RLS policies (organisation_id is handled automatically)
     const { data, error } = await supabase
       .from('companies')
       .select('*')
@@ -41,12 +44,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get the current organisation ID for the user
+    const organisationId = await getCurrentOrganisationId();
+
     const body = await request.json();
     const validatedData = companySchema.parse(body);
 
     const { data, error } = await supabase
       .from('companies')
-      .insert([{ ...validatedData, user_id: user.id }])
+      .insert([{ ...validatedData, organisation_id: organisationId, user_id: user.id }])
       .select()
       .single();
 

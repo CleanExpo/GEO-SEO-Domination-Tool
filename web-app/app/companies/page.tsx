@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Building2, Globe, MapPin, Briefcase, X } from 'lucide-react';
+import { Plus, Building2, Globe, MapPin, Briefcase, X, Download } from 'lucide-react';
 import Link from 'next/link';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { TableSkeleton } from '@/components/LoadingState';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Company {
   id: string;
@@ -13,9 +16,10 @@ interface Company {
   created_at: string;
 }
 
-export default function CompaniesPage() {
+function CompaniesContent() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -30,14 +34,50 @@ export default function CompaniesPage() {
 
   const fetchCompanies = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch('/api/companies');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch companies');
+      }
+
       const data = await response.json();
       setCompanies(data.companies || []);
     } catch (error) {
       console.error('Failed to fetch companies:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch companies');
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    if (companies.length === 0) return;
+
+    const headers = ['Name', 'Website', 'Industry', 'Location', 'Created At'];
+    const csvData = companies.map(company => [
+      company.name,
+      company.website,
+      company.industry || '',
+      company.location || '',
+      new Date(company.created_at).toLocaleDateString()
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `companies-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,8 +117,29 @@ export default function CompaniesPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="text-gray-600">Loading...</div>
+      <div className="p-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="h-10 w-48 bg-gray-200 animate-pulse rounded mb-2"></div>
+          <div className="h-6 w-96 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+        <TableSkeleton rows={6} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 max-w-7xl">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-semibold mb-2">Error Loading Companies</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchCompanies}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -91,13 +152,24 @@ export default function CompaniesPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Companies</h1>
           <p className="text-gray-600">Manage your company profiles and SEO projects</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
-        >
-          <Plus className="h-5 w-5" />
-          Create campaign
-        </button>
+        <div className="flex gap-3">
+          {companies.length > 0 && (
+            <button
+              onClick={exportToCSV}
+              className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <Download className="h-5 w-5" />
+              Export CSV
+            </button>
+          )}
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+          >
+            <Plus className="h-5 w-5" />
+            Create campaign
+          </button>
+        </div>
       </div>
 
       {/* Add Company Modal */}
@@ -186,7 +258,7 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {/* Companies Grid */}
+      {/* Companies Grid or Empty State */}
       {companies.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {companies.map((company) => (
@@ -258,23 +330,22 @@ export default function CompaniesPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Building2 className="h-10 w-10 text-white" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No companies yet</h3>
-          <p className="text-gray-600 mb-6">
-            Get started by adding your first company to track SEO performance
-          </p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
-          >
-            <Plus className="h-5 w-5" />
-            Add Your First Company
-          </button>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="No companies yet"
+          description="Get started by adding your first company to track SEO performance and rankings"
+          actionLabel="Add Your First Company"
+          onAction={() => setShowForm(true)}
+        />
       )}
     </div>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <ErrorBoundary>
+      <CompaniesContent />
+    </ErrorBoundary>
   );
 }

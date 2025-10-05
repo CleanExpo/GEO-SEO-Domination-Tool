@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-
-// Initialize database pool
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'geo_seo_db',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD,
-  max: 10,
-  idleTimeoutMillis: 30000,
-});
+import { createClient } from '@/lib/auth/supabase-server';
 
 // Verify API key
 function verifyApiKey(request: NextRequest): boolean {
@@ -33,89 +22,101 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const jobName = searchParams.get('job');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Build query based on parameters
-    let query = `
-      SELECT
-        job_name,
-        start_time,
-        end_time,
-        duration_ms,
-        status,
-        details,
-        created_at
-      FROM job_executions
-    `;
+    console.log('[Jobs/Status] Fetching job status', { jobName, limit, offset });
 
-    const queryParams: any[] = [];
-    const conditions: string[] = [];
+    // Build query for executions
+    let executionsQuery = supabase
+      .from('job_executions')
+      .select('job_name, start_time, end_time, duration_ms, status, details, created_at')
+      .order('start_time', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (jobName) {
-      conditions.push(`job_name = $${queryParams.length + 1}`);
-      queryParams.push(jobName);
+      executionsQuery = executionsQuery.eq('job_name', jobName);
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+    const { data: executions, error: execError } = await executionsQuery;
 
-    query += ' ORDER BY start_time DESC';
-    query += ` LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
-    queryParams.push(limit, offset);
-
-    const result = await pool.query(query, queryParams);
+    if (execError) throw execError;
 
     // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM job_executions';
-    if (conditions.length > 0) {
-      countQuery += ' WHERE ' + conditions.join(' AND ');
+    let countQuery = supabase
+      .from('job_executions')
+      .select('*', { count: 'exact', head: true });
+
+    if (jobName) {
+      countQuery = countQuery.eq('job_name', jobName);
     }
 
-    const countResult = await pool.query(
-      countQuery,
-      queryParams.slice(0, queryParams.length - 2)
-    );
-    const total = parseInt(countResult.rows[0]?.total || '0');
+    const { count: total, error: countError } = await countQuery;
 
-    // Get summary statistics by job
-    const summaryQuery = `
-      SELECT
-        job_name,
-        COUNT(*) as total_executions,
-        COUNT(CASE WHEN status = 'success' THEN 1 END) as successful,
-        COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed,
-        AVG(duration_ms) as avg_duration_ms,
-        MAX(start_time) as last_execution
-      FROM job_executions
-      ${jobName ? `WHERE job_name = $1` : ''}
-      GROUP BY job_name
-      ORDER BY job_name
-    `;
+    if (countError) throw countError;
 
-    const summaryResult = await pool.query(
-      summaryQuery,
-      jobName ? [jobName] : []
-    );
+    // Get summary statistics - note: Supabase doesn't support complex aggregations easily,
+    // so we'll fetch data and calculate in memory for now
+    let summaryQuery = supabase
+      .from('job_executions')
+      .select('job_name, status, duration_ms, start_time');
+
+    if (jobName) {
+      summaryQuery = summaryQuery.eq('job_name', jobName);
+    }
+
+    const { data: allExecutions, error: summaryError } = await summaryQuery;
+
+    if (summaryError) throw summaryError;
+
+    // Calculate summary statistics
+    const summaryMap = new Map<string, any>();
+    allExecutions?.forEach((exec) => {
+      const name = exec.job_name;
+      if (!summaryMap.has(name)) {
+        summaryMap.set(name, {
+          job_name: name,
+          total_executions: 0,
+          successful: 0,
+          failed: 0,
+          total_duration: 0,
+          last_execution: exec.start_time,
+        });
+      }
+      const summary = summaryMap.get(name);
+      summary.total_executions++;
+      if (exec.status === 'success') summary.successful++;
+      if (exec.status === 'failed') summary.failed++;
+      if (exec.duration_ms) summary.total_duration += exec.duration_ms;
+      if (new Date(exec.start_time) > new Date(summary.last_execution)) {
+        summary.last_execution = exec.start_time;
+      }
+    });
+
+    const summary = Array.from(summaryMap.values()).map((s) => ({
+      ...s,
+      avg_duration_ms: s.total_executions > 0 ? Math.round(s.total_duration / s.total_executions) : 0,
+      total_duration: undefined, // Remove temporary field
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        executions: result.rows,
-        summary: summaryResult.rows,
+        executions: executions || [],
+        summary,
         pagination: {
-          total,
+          total: total || 0,
           limit,
           offset,
-          hasMore: offset + limit < total,
+          hasMore: offset + limit < (total || 0),
         },
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Jobs/Status] Error fetching job status:', error);
     return NextResponse.json(
       {
@@ -135,62 +136,55 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { jobNames, startDate, endDate } = body;
 
-    // Build query for specific jobs and date range
-    let query = `
-      SELECT
-        job_name,
-        start_time,
-        end_time,
-        duration_ms,
-        status,
-        details
-      FROM job_executions
-      WHERE 1=1
-    `;
+    console.log('[Jobs/Status] Fetching executions with filters', { jobNames, startDate, endDate });
 
-    const queryParams: any[] = [];
+    // Build query for specific jobs and date range
+    let query = supabase
+      .from('job_executions')
+      .select('job_name, start_time, end_time, duration_ms, status, details')
+      .order('start_time', { ascending: false })
+      .limit(100);
 
     if (jobNames && Array.isArray(jobNames) && jobNames.length > 0) {
-      query += ` AND job_name = ANY($${queryParams.length + 1})`;
-      queryParams.push(jobNames);
+      query = query.in('job_name', jobNames);
     }
 
     if (startDate) {
-      query += ` AND start_time >= $${queryParams.length + 1}`;
-      queryParams.push(new Date(startDate));
+      query = query.gte('start_time', new Date(startDate).toISOString());
     }
 
     if (endDate) {
-      query += ` AND start_time <= $${queryParams.length + 1}`;
-      queryParams.push(new Date(endDate));
+      query = query.lte('start_time', new Date(endDate).toISOString());
     }
 
-    query += ' ORDER BY start_time DESC LIMIT 100';
+    const { data: executions, error } = await query;
 
-    const result = await pool.query(query, queryParams);
+    if (error) throw error;
 
     // Calculate statistics
     const stats = {
-      total: result.rows.length,
-      successful: result.rows.filter((r) => r.status === 'success').length,
-      failed: result.rows.filter((r) => r.status === 'failed').length,
+      total: executions?.length || 0,
+      successful: executions?.filter((r) => r.status === 'success').length || 0,
+      failed: executions?.filter((r) => r.status === 'failed').length || 0,
       avgDuration:
-        result.rows.reduce((sum, r) => sum + (r.duration_ms || 0), 0) /
-        (result.rows.length || 1),
+        executions && executions.length > 0
+          ? Math.round(executions.reduce((sum, r) => sum + (r.duration_ms || 0), 0) / executions.length)
+          : 0,
     };
 
     return NextResponse.json({
       success: true,
       data: {
-        executions: result.rows,
+        executions: executions || [],
         statistics: stats,
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Jobs/Status] Error processing request:', error);
     return NextResponse.json(
       {

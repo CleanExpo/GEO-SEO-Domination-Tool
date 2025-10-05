@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
   Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, GitPullRequest, Activity, FolderSearch,
-  Hammer, Package, Layers, LineChart, Plug
+  Hammer, Package, Layers, LineChart, Plug, GitBranch
 } from 'lucide-react';
 
 const navigation = [
@@ -55,6 +55,7 @@ const analyticsNavigation = [
 
 const systemNavigation = [
   { name: 'Integrations', href: '/settings/integrations', icon: Plug, section: 'System' },
+  { name: 'GitHub Websites', href: '/settings/websites/github', icon: GitBranch, section: 'System' },
   { name: 'System Health', href: '/health', icon: Activity, section: 'System' },
   { name: 'Support', href: '/support', icon: Headphones, section: 'System' },
 ];
