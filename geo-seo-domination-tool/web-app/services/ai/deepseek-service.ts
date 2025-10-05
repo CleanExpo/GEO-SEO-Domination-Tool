@@ -53,18 +53,29 @@ interface SEOProposal {
 
 class DeepSeekService {
   private apiKey: string;
-  private baseURL = 'https://api.deepseek.com/v1';
+  private baseURL: string;
+  private useOpenRouter: boolean;
 
   constructor() {
-    this.apiKey = process.env.DEEPSEEK_API_KEY || '';
+    // Try OpenRouter first (provides DeepSeek via unified API)
+    this.apiKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY || '';
+    this.useOpenRouter = !!process.env.OPENROUTER_API_KEY;
+    this.baseURL = this.useOpenRouter
+      ? 'https://openrouter.ai/api/v1'
+      : 'https://api.deepseek.com/v1';
 
     if (!this.apiKey) {
-      console.warn('DEEPSEEK_API_KEY not found in environment variables');
+      console.warn('No API key found. Set OPENROUTER_API_KEY or DEEPSEEK_API_KEY in environment variables');
+    }
+
+    if (this.useOpenRouter) {
+      console.log('Using OpenRouter for DeepSeek V3 access');
     }
   }
 
   /**
    * Call DeepSeek API (OpenAI-compatible)
+   * Works with both OpenRouter and direct DeepSeek API
    */
   private async call(
     model: 'deepseek-reasoner' | 'deepseek-chat',
@@ -73,17 +84,32 @@ class DeepSeekService {
     maxTokens = 2000
   ): Promise<DeepSeekResponse> {
     if (!this.apiKey) {
-      throw new Error('DeepSeek API key not configured');
+      throw new Error('API key not configured. Set OPENROUTER_API_KEY or DEEPSEEK_API_KEY');
+    }
+
+    // OpenRouter uses different model names
+    const modelName = this.useOpenRouter
+      ? model === 'deepseek-reasoner'
+        ? 'deepseek/deepseek-r1'
+        : 'deepseek/deepseek-chat'
+      : model;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`,
+    };
+
+    // OpenRouter-specific headers
+    if (this.useOpenRouter) {
+      headers['HTTP-Referer'] = process.env.NEXT_PUBLIC_SITE_URL || 'https://geo-seo-domination-tool.vercel.app';
+      headers['X-Title'] = 'GEO-SEO Domination Tool';
     }
 
     const response = await fetch(`${this.baseURL}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
-        model,
+        model: modelName,
         messages: [
           {
             role: 'user',
@@ -114,16 +140,23 @@ class DeepSeekService {
 
   /**
    * Calculate API cost
+   * OpenRouter pricing may differ slightly from direct DeepSeek
    */
   private calculateCost(
     model: 'deepseek-reasoner' | 'deepseek-chat',
     inputTokens: number,
     outputTokens: number
   ): number {
-    const pricing = {
-      'deepseek-reasoner': { input: 0.55, output: 2.19 },
-      'deepseek-chat': { input: 0.27, output: 1.10 },
-    };
+    // OpenRouter pricing (as of 2025)
+    const pricing = this.useOpenRouter
+      ? {
+          'deepseek-reasoner': { input: 0.55, output: 2.19 }, // DeepSeek R1 via OpenRouter
+          'deepseek-chat': { input: 0.27, output: 1.10 }, // DeepSeek Chat via OpenRouter
+        }
+      : {
+          'deepseek-reasoner': { input: 0.55, output: 2.19 },
+          'deepseek-chat': { input: 0.27, output: 1.10 },
+        };
 
     const rates = pricing[model];
     const inputCost = (inputTokens / 1_000_000) * rates.input;
