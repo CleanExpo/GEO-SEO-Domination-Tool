@@ -1,0 +1,9 @@
+[submodule "integrations/serpbear"]
+	path = integrations/serpbear
+	url = https://github.com/CleanExpo/serpbear
+[submodule "integrations/seo-dashboard"]
+	path = integrations/seo-dashboard
+	url = https://github.com/CleanExpo/SEO-Dashboard
+[submodule "integrations/siteone-crawler"]
+	path = integrations/siteone-crawler
+	url = https://github.com/CleanExpo/siteone-crawler

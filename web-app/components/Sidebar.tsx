@@ -8,13 +8,14 @@ import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
   Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, Menu, X,
-  Activity, Heart, GitBranch, Shield
+  Activity, Heart, GitBranch, Shield, Zap
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, section: 'SEO' },
   { name: 'Companies', href: '/companies', icon: Building2, section: 'SEO' },
   { name: 'SEO Audits', href: '/audits', icon: Search, section: 'SEO' },
+  { name: 'SEO Audit Tools', href: '/seo/audits', icon: Zap, section: 'SEO' },
   { name: 'Keywords', href: '/keywords', icon: TrendingUp, section: 'SEO' },
   { name: 'Rankings', href: '/rankings', icon: BarChart3, section: 'SEO' },
   { name: 'Reports', href: '/reports', icon: FileText, section: 'SEO' },
