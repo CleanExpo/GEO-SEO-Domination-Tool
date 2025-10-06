@@ -51,7 +51,7 @@ export default function RootLayout({
           <SchedulerInit />
           <CommandPaletteProvider>
             <div className="flex min-h-screen">
-              <Sidebar />
+              {/* <Sidebar /> - Temporarily disabled to debug 500 error */}
               <main className="flex-1 lg:ml-0 pt-16 lg:pt-0">
                 {children}
               </main>
