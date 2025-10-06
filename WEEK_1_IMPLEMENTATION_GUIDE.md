@@ -21,13 +21,15 @@
 # 5. Add to .env.local
 ```
 
-**Add to `web-app/.env.local`:**
+**Add to `.env` (ROOT directory, NOT web-app/):**
 ```env
-# Qwen3-Omni via DashScope API
-DASHSCOPE_API_KEY=sk-your-api-key-here
+# Qwen3-Omni via DashScope API - Get key at: https://dashscope.console.aliyun.com/
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
 QWEN_OMNI_MODEL=qwen3-omni-30b-a3b-instruct
 QWEN_OMNI_VOICE_MODEL=qwen3-omni-30b-a3b-talker
 ```
+
+**IMPORTANT:** The `.env` file goes in the **root directory** `D:\GEO_SEO_Domination-Tool\.env`, NOT in `web-app/`!
 
 ### Step 2: Install DashScope SDK (2 minutes)
 
