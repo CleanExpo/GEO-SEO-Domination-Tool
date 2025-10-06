@@ -109,10 +109,22 @@ const response = NextResponse.next({ request })
 
 ## Latest Deployment
 
-**Production URL**: https://web-18afbzpr9-unite-group.vercel.app
+**Production URL**: https://web-7hccqsqz6-unite-group.vercel.app
 **Status**: 200 OK ✅
-**Deployment Date**: Oct 7, 2025 07:28 AEST
+**Deployment Date**: Oct 7, 2025 (Latest)
 
-**Commit**: `48a06c1` - fix: Add Supabase client safety check and re-enable Sidebar
+**Branch**: `main`
+**Commit**: `7cb43b3` - Merged UI/UX-Enhancements branch
 
-**Next Action**: Site is fully functional. Disable deployment protection in Vercel dashboard if you want to make it publicly accessible without authentication.
+**New Features**:
+- ✅ Dynamic theme switching (light/dark mode)
+- ✅ Theme toggle button in Sidebar
+- ✅ HSL-based color system for both themes
+- ✅ Smooth animations and transitions
+- ✅ Full dark mode support across all components
+- ✅ System preference detection
+- ✅ Improved accessibility (ARIA labels, keyboard nav)
+
+**Previous Deployment**: https://web-18afbzpr9-unite-group.vercel.app
+
+**Next Action**: Site is fully functional with enhanced UI/UX. Disable deployment protection in Vercel dashboard if you want to make it publicly accessible without authentication.
