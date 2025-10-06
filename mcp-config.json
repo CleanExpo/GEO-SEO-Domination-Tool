@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "geo-seo-sandbox": {
+      "url": "https://geo-seo-domination-tool.vercel.app/api/mcp",
+      "description": "MetaCoder Sandbox - AI-powered code generation with Claude, GPT-5, Gemini",
+      "tools": [
+        {
+          "name": "create_sandbox_session",
+          "description": "Create a new sandbox session for code generation"
+        },
+        {
+          "name": "submit_coding_task",
+          "description": "Submit a coding task to AI agents (Claude, Codex, Cursor, Gemini)"
+        },
+        {
+          "name": "list_sandbox_sessions",
+          "description": "List all sandbox sessions"
+        },
+        {
+          "name": "get_task_status",
+          "description": "Get status and logs of a coding task"
+        },
+        {
+          "name": "generate_pwa_manifest",
+          "description": "Generate PWA manifest.json for Progressive Web App"
+        }
+      ],
+      "resources": [
+        {
+          "uri": "sandbox://analytics",
+          "description": "Real-time analytics for all sandbox sessions"
+        }
+      ]
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp",
+      "description": "Supabase MCP server for database queries and authentication",
+      "auth": {
+        "type": "oauth",
+        "flow": "browser"
+      }
+    }
+  }
+}
