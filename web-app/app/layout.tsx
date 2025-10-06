@@ -10,6 +10,11 @@ import { generateMetadata as generateSEOMetadata, generateStructuredData } from 
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Force dynamic rendering globally to prevent build-time database access
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
+
 export const metadata: Metadata = generateSEOMetadata({
   title: "Home",
   description: "Advanced local SEO and GEO ranking analysis tool. Track keywords, monitor rankings, analyze competitors, and dominate local search results.",
