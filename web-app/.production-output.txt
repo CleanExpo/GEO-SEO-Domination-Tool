@@ -1,0 +1,17 @@
+Vercel CLI 48.1.0
+WARN! `--confirm` is deprecated, please use `--yes` instead
+Retrieving project…
+Deploying unite-group/web-app
+Uploading [--------------------] (0.0B/5.3KB)
+Uploading [===================-] (5.1KB/5.3KB)
+Uploading [===================-] (5.1KB/5.3KB)
+Uploading [====================] (5.3KB/5.3KB)
+Inspect: https://vercel.com/unite-group/web-app/BNdxG69kWptG1FEH6fe9MsU2jJKE [4s]
+Production: https://web-n37kt8qi5-unite-group.vercel.app [4s]
+https://web-n37kt8qi5-unite-group.vercel.appQueued
+Building
+Completing
+
+Common next commands:
+- `vercel inspect web-n37kt8qi5-unite-group.vercel.app --logs`
+- `vercel redeploy web-n37kt8qi5-unite-group.vercel.app`
