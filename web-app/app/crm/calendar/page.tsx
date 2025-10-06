@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Plus, Clock, Video, MapPin } from 'lucide-react';
 import { EventDialog } from '@/components/EventDialog';
 
+// Force dynamic rendering to avoid build-time API calls
+export const dynamic = 'force-dynamic';
+
 interface Event {
   id: string;
   title: string;
