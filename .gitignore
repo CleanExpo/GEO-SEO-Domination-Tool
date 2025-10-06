@@ -114,3 +114,4 @@ server/temp/
 
 # uptime logs
 server/logs/uptime/
+tools/coding-agent/
