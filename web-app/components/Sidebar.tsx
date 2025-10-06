@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
   Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, Menu, X,
-  Activity, Heart, GitBranch, Shield, Zap
+  Activity, Heart, GitBranch, Shield, Zap, Terminal
 } from 'lucide-react';
 
 const navigation = [
@@ -31,6 +31,7 @@ const crmNavigation = [
 
 const projectsNavigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban, section: 'Projects' },
+  { name: 'Sandbox', href: '/sandbox', icon: Terminal, section: 'Projects', badge: 'NEW' },
   { name: 'GitHub Projects', href: '/projects/github', icon: Github, section: 'Projects' },
   { name: 'Notes & Docs', href: '/projects/notes', icon: Notes, section: 'Projects' },
 ];
@@ -92,14 +93,21 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-emerald-100 text-emerald-900'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <div className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </div>
+              {(item as any).badge && (
+                <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-500 text-white rounded">
+                  {(item as any).badge}
+                </span>
+              )}
             </Link>
           );
         })}
