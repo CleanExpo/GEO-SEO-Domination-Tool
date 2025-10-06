@@ -56,15 +56,31 @@ CREATE INDEX IF NOT EXISTS idx_sandbox_tasks_agent ON sandbox_tasks(selected_age
 CREATE INDEX IF NOT EXISTS idx_sandbox_tasks_created ON sandbox_tasks(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sandbox_tasks_cost ON sandbox_tasks(cost_usd);
 
--- Add constraint for valid status values
-ALTER TABLE sandbox_tasks
-ADD CONSTRAINT sandbox_tasks_status_check
-CHECK (status IN ('pending', 'processing', 'completed', 'error', 'stopped'));
+-- Add constraint for valid status values (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'sandbox_tasks_status_check'
+    ) THEN
+        ALTER TABLE sandbox_tasks
+        ADD CONSTRAINT sandbox_tasks_status_check
+        CHECK (status IN ('pending', 'processing', 'completed', 'error', 'stopped'));
+    END IF;
+END $$;
 
--- Add constraint for valid agent values
-ALTER TABLE sandbox_tasks
-ADD CONSTRAINT sandbox_tasks_agent_check
-CHECK (selected_agent IN ('claude', 'codex', 'cursor', 'gemini', 'opencode'));
+-- Add constraint for valid agent values (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'sandbox_tasks_agent_check'
+    ) THEN
+        ALTER TABLE sandbox_tasks
+        ADD CONSTRAINT sandbox_tasks_agent_check
+        CHECK (selected_agent IN ('claude', 'codex', 'cursor', 'gemini', 'opencode'));
+    END IF;
+END $$;
 
 -- Add trigger to auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_sandbox_task_timestamp()
