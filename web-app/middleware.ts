@@ -157,5 +157,5 @@ export const config = {
   ],
 }
 
-// Force Node.js runtime instead of Edge Runtime
-export const runtime = 'nodejs'
+// Middleware MUST run on Edge Runtime in Vercel
+// Removing runtime declaration lets Next.js use Edge Runtime (default for middleware)
