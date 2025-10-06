@@ -1,62 +1,13 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+  // Supabase SSR package uses Node.js APIs not available in Edge Runtime
+  // Removing Supabase client initialization from middleware
+  // Auth will be handled on page level using client-side Supabase
+
+  const response = NextResponse.next({
     request,
   })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          supabaseResponse.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          supabaseResponse.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
-
-  // IMPORTANT: Supabase auth in Edge Runtime is causing issues
-  // Temporarily disable auth checks to get site working
-  // TODO: Re-enable after fixing Edge Runtime compatibility
-
-  // Skip auth for now - let pages handle their own auth
-  // This prevents MIDDLEWARE_INVOCATION_FAILED errors
-
-  // Add security headers
-  const response = supabaseResponse
 
   // Content Security Policy
   response.headers.set(
