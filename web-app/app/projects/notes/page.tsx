@@ -49,7 +49,8 @@ export default function NotesPage() {
   };
 
   const handleAddNote = () => {
-    console.log('Add note clicked');
+    setSelectedNoteForEdit(null); // null means create mode
+    setIsEditModalOpen(true);
   };
 
   const handleEditNote = (note: Note) => {
@@ -283,17 +284,15 @@ export default function NotesPage() {
       )}
 
       {/* Modals */}
-      {selectedNoteForEdit && (
-        <EditNoteModal
-          note={selectedNoteForEdit}
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedNoteForEdit(null);
-          }}
-          onSuccess={handleEditSuccess}
-        />
-      )}
+      <EditNoteModal
+        note={selectedNoteForEdit}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedNoteForEdit(null);
+        }}
+        onSuccess={handleEditSuccess}
+      />
 
       {selectedNoteForDelete && (
         <DeleteNoteModal

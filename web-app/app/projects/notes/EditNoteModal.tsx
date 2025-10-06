@@ -12,24 +12,34 @@ interface Note {
 }
 
 interface EditNoteModalProps {
-  note: Note;
+  note: Note | null; // null means create mode
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export default function EditNoteModal({ note, isOpen, onClose, onSuccess }: EditNoteModalProps) {
-  const [title, setTitle] = useState(note.title);
-  const [content, setContent] = useState(note.content);
-  const [tags, setTags] = useState(note.tags.join(', '));
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isEditMode = note !== null;
+
   useEffect(() => {
     if (isOpen) {
-      setTitle(note.title);
-      setContent(note.content);
-      setTags(note.tags.join(', '));
+      if (note) {
+        // Edit mode - populate with existing note
+        setTitle(note.title);
+        setContent(note.content);
+        setTags(note.tags.join(', '));
+      } else {
+        // Create mode - clear fields
+        setTitle('');
+        setContent('');
+        setTags('');
+      }
       setError(null);
     }
   }, [isOpen, note]);
@@ -45,8 +55,11 @@ export default function EditNoteModal({ note, isOpen, onClose, onSuccess }: Edit
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
-      const response = await fetch(`/api/projects/notes/${note.id}`, {
-        method: 'PUT',
+      const url = isEditMode ? `/api/projects/notes/${note.id}` : '/api/projects/notes';
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -59,7 +72,7 @@ export default function EditNoteModal({ note, isOpen, onClose, onSuccess }: Edit
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update note');
+        throw new Error(data.error || `Failed to ${isEditMode ? 'update' : 'create'} note`);
       }
 
       onSuccess();
@@ -78,7 +91,7 @@ export default function EditNoteModal({ note, isOpen, onClose, onSuccess }: Edit
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Edit Note</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Edit Note' : 'Create Note'}</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -160,7 +173,7 @@ export default function EditNoteModal({ note, isOpen, onClose, onSuccess }: Edit
             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
+            {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Note')}
           </button>
         </div>
       </div>

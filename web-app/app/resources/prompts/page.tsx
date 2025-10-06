@@ -19,6 +19,7 @@ export default function PromptsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -77,10 +78,15 @@ export default function PromptsPage() {
     }
   };
 
-  const filteredPrompts = prompts.filter(prompt =>
-    prompt.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prompt.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Get all unique categories
+  const categories = Array.from(new Set(prompts.map(p => p.category)));
+
+  const filteredPrompts = prompts.filter(prompt => {
+    const matchesSearch = prompt.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prompt.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = !selectedCategory || prompt.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   if (error) {
     return (
@@ -117,8 +123,8 @@ export default function PromptsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
@@ -129,6 +135,35 @@ export default function PromptsPage() {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
+
+        {/* Category Filter */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                !selectedCategory
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All Categories
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Prompts Grid */}
