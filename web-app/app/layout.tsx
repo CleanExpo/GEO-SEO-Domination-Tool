@@ -6,6 +6,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { SchedulerInit } from "@/components/SchedulerInit";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { generateMetadata as generateSEOMetadata, generateStructuredData } from "@/lib/seo/metadata";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -46,19 +47,26 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
         />
       </head>
-      <body className={`${inter.className} bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 min-h-screen antialiased`}>
-        <ErrorBoundary>
-          <SchedulerInit />
-          <CommandPaletteProvider>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 lg:ml-0 pt-16 lg:pt-0">
-                {children}
-              </main>
-            </div>
-            <Toaster />
-          </CommandPaletteProvider>
-        </ErrorBoundary>
+      <body className={`${inter.className} min-h-screen antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <ErrorBoundary>
+            <SchedulerInit />
+            <CommandPaletteProvider>
+              <div className="flex min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+                <Sidebar />
+                <main className="flex-1 lg:ml-0 pt-16 lg:pt-0">
+                  {children}
+                </main>
+              </div>
+              <Toaster />
+            </CommandPaletteProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );

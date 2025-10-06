@@ -2,110 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #111827; /* Dark gray-900 for maximum contrast */
-
-  /* Force light mode colors */
-  --card: #ffffff;
-  --card-foreground: #111827;
-  --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #059669; /* emerald-600 */
-  --primary-foreground: #ffffff;
-  --secondary: #f3f4f6; /* gray-100 */
-  --secondary-foreground: #111827;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280; /* gray-500 */
-  --accent: #f3f4f6;
-  --accent-foreground: #111827;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #e5e7eb; /* gray-200 */
-  --input: #e5e7eb;
-  --ring: #059669;
-}
-
-/* Override dark mode - force light mode always */
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #111827;
-    --card: #ffffff;
-    --card-foreground: #111827;
-    --popover: #ffffff;
-    --popover-foreground: #111827;
-    --primary: #059669;
-    --primary-foreground: #ffffff;
-    --secondary: #f3f4f6;
-    --secondary-foreground: #111827;
-    --muted: #f3f4f6;
-    --muted-foreground: #6b7280;
-    --accent: #f3f4f6;
-    --accent-foreground: #111827;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: #e5e7eb;
-    --input: #e5e7eb;
-    --ring: #059669;
+    --background: 0 0% 100%;
+    --foreground: 220 13% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 13%;
+
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 95%;
+    --secondary-foreground: 220 13% 13%;
+
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 160 84% 97%;
+    --accent-foreground: 160 84% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 160 84% 39%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 220 13% 9%;
+    --foreground: 220 13% 98%;
+
+    --card: 220 13% 11%;
+    --card-foreground: 220 13% 98%;
+
+    --popover: 220 13% 11%;
+    --popover-foreground: 220 13% 98%;
+
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 16%;
+    --secondary-foreground: 220 13% 98%;
+
+    --muted: 220 13% 16%;
+    --muted-foreground: 220 9% 65%;
+
+    --accent: 160 84% 15%;
+    --accent-foreground: 160 84% 90%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
+    --ring: 160 84% 39%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-/* Ensure placeholder text has proper contrast - dark text on light background */
-input::placeholder,
-textarea::placeholder {
-  color: #4b5563 !important; /* gray-600 for good readability */
-  opacity: 1 !important;
-}
-
-input:focus::placeholder,
-textarea:focus::placeholder {
-  color: #9ca3af !important; /* gray-400 when focused */
-  opacity: 1 !important;
-}
-
-/* Ensure input/textarea text is always dark */
-input,
-textarea {
-  color: #111827 !important; /* gray-900 for maximum readability */
-}
-
-/* Force dark text on all text elements */
-h1, h2, h3, h4, h5, h6 {
-  color: #111827 !important;
-}
-
-label {
-  color: #111827 !important;
-}
-
-p {
-  color: #374151 !important; /* gray-700 */
-}
-
-/* Force all card components to have dark text */
-[class*="card"] {
-  color: #111827 !important;
-}
-
-/* Override any muted text to ensure readability */
-.text-muted-foreground {
-  color: #6b7280 !important; /* gray-500 - still readable */
-}
-
-/* Ensure buttons have proper contrast */
-button {
-  color: inherit;
-}
-
-button:not([class*="bg-"]) {
-  color: #111827;
+  body {
+    @apply bg-background text-foreground;
+    font-family: Arial, Helvetica, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
 @layer utilities {

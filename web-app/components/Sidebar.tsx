@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/auth/supabase-client';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
@@ -83,7 +84,7 @@ export function Sidebar() {
 
   const renderNavSection = (title: string, items: typeof navigation) => (
     <div className="mb-6">
-      <p className="text-xs uppercase tracking-wide text-gray-500 px-3 mb-2 font-semibold">
+      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 px-3 mb-2 font-semibold">
         {title}
       </p>
       <div className="space-y-1">
@@ -93,10 +94,10 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-emerald-100 text-emerald-900'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100 shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -137,28 +138,28 @@ export function Sidebar() {
       {/* Sidebar */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-white/80 backdrop-blur-sm border-r border-gray-200/50
+        w-64 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-r border-gray-200/50 dark:border-gray-700/50
         flex flex-col overflow-hidden
-        transform transition-transform duration-300 ease-in-out
+        transform transition-all duration-300 ease-in-out
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200/50 flex items-center justify-between">
+      <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
             <Home className="h-5 w-5 text-white" />
           </div>
           <div>
-            <span className="font-semibold text-gray-900">SEO Master</span>
-            <p className="text-xs text-gray-500">Free plan</p>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">SEO Master</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Free plan</p>
           </div>
         </Link>
         <button
           onClick={() => setIsMobileOpen(false)}
-          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           aria-label="Close menu"
         >
-          <X className="h-5 w-5 text-gray-600" />
+          <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
         </button>
       </div>
 
@@ -172,22 +173,25 @@ export function Sidebar() {
         {renderNavSection('Members', membersNavigation)}
       </nav>
 
-      {/* Settings */}
-      <div className="p-4 border-t border-gray-200/50">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-        >
-          <Settings className="h-5 w-5" />
-          Settings
-        </Link>
+      {/* Settings & Theme Toggle */}
+      <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-1"
+          >
+            <Settings className="h-5 w-5" />
+            Settings
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Sign Out */}
-      <div className="p-4 border-t border-gray-200/50">
+      <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full"
         >
           <LogOut className="h-5 w-5" />
           Sign Out
@@ -195,16 +199,16 @@ export function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-gray-200/50">
+      <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
             {user?.email?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               {user?.user_metadata?.full_name || user?.user_metadata?.name || 'User'}
             </p>
-            <p className="text-xs text-gray-500 truncate">{user?.email || 'Not signed in'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'Not signed in'}</p>
           </div>
         </div>
       </div>
