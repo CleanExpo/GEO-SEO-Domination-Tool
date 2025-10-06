@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useChat } from 'ai/react'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,46 +34,65 @@ export default function TaskForm({ sessionId, onTaskCreated }: TaskFormProps) {
   const [selectedAgent, setSelectedAgent] = useState('claude')
   const [installDeps, setInstallDeps] = useState(false)
   const [maxDuration, setMaxDuration] = useState('5')
-  const [loading, setLoading] = useState(false)
+  const [taskId, setTaskId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const selectedAgentConfig = agents.find((a) => a.value === selectedAgent)
 
+  // Use Vercel AI SDK for streaming chat
+  const { messages, append, isLoading } = useChat({
+    api: '/api/sandbox/chat',
+    body: {
+      agent: selectedAgent,
+      sessionId,
+      taskId,
+    },
+    onResponse: async (response) => {
+      // Create task record when streaming starts
+      if (!taskId && response.ok) {
+        try {
+          const taskResponse = await fetch('/api/sandbox/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id: sessionId,
+              prompt,
+              repo_url: repoUrl || null,
+              selected_agent: selectedAgent,
+              selected_model: selectedAgentConfig?.model,
+              install_dependencies: installDeps,
+              max_duration: parseInt(maxDuration),
+            }),
+          })
+
+          if (taskResponse.ok) {
+            const data = await taskResponse.json()
+            setTaskId(data.task.id)
+            onTaskCreated(data.task)
+          }
+        } catch (err) {
+          console.error('Failed to create task record:', err)
+        }
+      }
+    },
+    onError: (error) => {
+      setError(error.message)
+    },
+  })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
 
-    try {
-      const response = await fetch('/api/sandbox/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          prompt,
-          repo_url: repoUrl || null,
-          selected_agent: selectedAgent,
-          selected_model: selectedAgentConfig?.model,
-          install_dependencies: installDeps,
-          max_duration: parseInt(maxDuration),
-        }),
-      })
+    // Append user message to start streaming
+    await append({
+      role: 'user',
+      content: prompt,
+    })
 
-      if (!response.ok) {
-        throw new Error('Failed to create task')
-      }
-
-      const data = await response.json()
-      onTaskCreated(data.task)
-
-      // Reset form
-      setPrompt('')
-      setRepoUrl('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
+    // Reset form
+    setPrompt('')
+    setRepoUrl('')
   }
 
   return (
@@ -167,8 +187,8 @@ export default function TaskForm({ sessionId, onTaskCreated }: TaskFormProps) {
         )}
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={loading || !prompt}>
-          {loading ? (
+        <Button type="submit" className="w-full" disabled={isLoading || !prompt}>
+          {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Generating Code...
