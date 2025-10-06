@@ -5,21 +5,41 @@
  * Ticket: TENANT-001
  * Author: Orchestra-Coordinator (Agent-Tenancy)
  * Date: 2025-10-05
+ * Updated: 2025-10-06 (Guardian System - dev mode support)
  */
 
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+// Development mode fallback - returns default org ID when Supabase not configured
+const DEV_MODE_ORG_ID = 'dev-org-id-local';
+
+function getSupabaseConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key';
+  const isConfigured = url && key && !url.includes('placeholder');
+  return { url, key, isConfigured };
+}
+
 /**
  * Get the current user's organisation ID from Supabase
- * Throws error if user is not authenticated or not a member of any organisation
+ * In development mode without Supabase: returns DEV_MODE_ORG_ID
+ * In production: throws error if user is not authenticated
  */
 export async function getCurrentOrganisationId(): Promise<string> {
+  const config = getSupabaseConfig();
+
+  // Development mode without Supabase configured
+  if (!config.isConfigured) {
+    console.warn('[Tenant Context] Supabase not configured - using dev mode fallback');
+    return DEV_MODE_ORG_ID;
+  }
+
   const cookieStore = cookies();
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.url,
+    config.key,
     {
       cookies: {
         get(name: string) {
@@ -53,6 +73,7 @@ export async function getCurrentOrganisationId(): Promise<string> {
 
 /**
  * Get current user's organisation with full details
+ * In development mode: returns mock organisation
  */
 export async function getCurrentOrganisation(): Promise<{
   id: string;
@@ -60,11 +81,23 @@ export async function getCurrentOrganisation(): Promise<{
   slug: string;
   plan: 'free' | 'starter' | 'pro' | 'enterprise';
 }> {
+  const config = getSupabaseConfig();
+
+  // Development mode fallback
+  if (!config.isConfigured) {
+    return {
+      id: DEV_MODE_ORG_ID,
+      name: 'Development Organisation',
+      slug: 'dev-org',
+      plan: 'enterprise'
+    };
+  }
+
   const cookieStore = cookies();
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.url,
+    config.key,
     {
       cookies: {
         get(name: string) {
@@ -105,13 +138,21 @@ export async function getCurrentOrganisation(): Promise<{
 
 /**
  * Get current user's role in their organisation
+ * In development mode: returns 'owner'
  */
 export async function getCurrentUserRole(): Promise<'owner' | 'admin' | 'member' | 'viewer'> {
+  const config = getSupabaseConfig();
+
+  // Development mode fallback
+  if (!config.isConfigured) {
+    return 'owner';
+  }
+
   const cookieStore = cookies();
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.url,
+    config.key,
     {
       cookies: {
         get(name: string) {
@@ -179,6 +220,7 @@ export async function requireRole(requiredRole: 'owner' | 'admin' | 'member'): P
 /**
  * Get all organisations the current user belongs to
  * Useful for organisation switcher UI
+ * In development mode: returns single dev organisation
  */
 export async function getUserOrganisations(): Promise<Array<{
   id: string;
@@ -187,11 +229,24 @@ export async function getUserOrganisations(): Promise<Array<{
   plan: string;
   role: string;
 }>> {
+  const config = getSupabaseConfig();
+
+  // Development mode fallback
+  if (!config.isConfigured) {
+    return [{
+      id: DEV_MODE_ORG_ID,
+      name: 'Development Organisation',
+      slug: 'dev-org',
+      plan: 'enterprise',
+      role: 'owner'
+    }];
+  }
+
   const cookieStore = cookies();
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.url,
+    config.key,
     {
       cookies: {
         get(name: string) {

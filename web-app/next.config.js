@@ -35,10 +35,17 @@ const nextConfig = {
   // Webpack configuration for optional dependencies
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Mark pg as external to avoid bundling it
+      // Mark optional dependencies as external to avoid bundling errors
+      // These will gracefully fallback if not installed
       config.externals = config.externals || [];
-      config.externals.push('pg', 'pg-native');
+      config.externals.push('pg', 'pg-native', 'ioredis');
     }
+
+    // Suppress warnings for optional dependencies
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      /Module not found.*ioredis/,
+    ];
 
     // Optimize bundle size
     config.optimization = {

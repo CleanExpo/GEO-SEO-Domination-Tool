@@ -4,21 +4,25 @@ import { checkQuota, recordUsage } from '@/lib/usage';
 
 // Lightweight client using fetch to Redis REST is out of scope; use ioredis if REDIS_URL is present.
 // We code-split require to avoid ESM issues on Windows.
+// IMPORTANT: ioredis is OPTIONAL - system falls back to file-based storage gracefully
 let Redis: any = null;
 function getRedis(){
+  // If no REDIS_URL configured, use file-based storage (no error)
   if (!process.env.REDIS_URL) return null;
+
   if (!Redis) {
     try {
+      // Dynamic require - if ioredis not installed, gracefully fallback
       Redis = require('ioredis');
     } catch (e) {
-      console.warn('ioredis not installed, falling back to file-based storage');
+      console.warn('[REDISQ] ioredis not installed, using file-based storage (this is fine for dev)');
       return null;
     }
   }
   try {
     return new Redis(process.env.REDIS_URL, { lazyConnect: false, maxRetriesPerRequest: 2 });
   } catch (e) {
-    console.error('Failed to initialize Redis:', e);
+    console.error('[REDISQ] Failed to initialize Redis, falling back to file-based storage:', e);
     return null;
   }
 }

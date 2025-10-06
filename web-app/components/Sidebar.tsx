@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
   Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, Menu, X,
-  Activity, Heart, GitBranch
+  Activity, Heart, GitBranch, Shield
 } from 'lucide-react';
 
 const navigation = [
@@ -42,6 +42,7 @@ const resourcesNavigation = [
 ];
 
 const systemNavigation = [
+  { name: 'Guardian', href: '/guardian', icon: Shield, section: 'System' },
   { name: 'Analytics', href: '/analytics', icon: Activity, section: 'System' },
   { name: 'Health', href: '/health', icon: Heart, section: 'System' },
   { name: 'Release Monitor', href: '/release/monitor', icon: GitBranch, section: 'System' },
