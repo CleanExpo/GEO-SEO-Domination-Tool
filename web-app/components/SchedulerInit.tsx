@@ -13,23 +13,34 @@ export function SchedulerInit() {
     const initScheduler = async () => {
       try {
         const res = await fetch('/api/scheduler', { method: 'GET' });
+
+        // Silently fail if API returns error (don't block page load)
+        if (!res.ok) {
+          console.warn('[SchedulerInit] Scheduler API unavailable, skipping initialization');
+          return;
+        }
+
         const data = await res.json();
 
         // If not initialized, trigger initialization
         if (!data.status?.initialized) {
           console.log('[SchedulerInit] Initializing scheduler...');
-          await fetch('/api/scheduler', {
+          const initRes = await fetch('/api/scheduler', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'initialize' }),
           });
-          setInitialized(true);
+
+          if (initRes.ok) {
+            setInitialized(true);
+          }
         } else {
           console.log('[SchedulerInit] Scheduler already initialized');
           setInitialized(true);
         }
       } catch (error) {
-        console.error('[SchedulerInit] Failed to initialize scheduler:', error);
+        // Silently fail - don't block page load if scheduler fails
+        console.warn('[SchedulerInit] Scheduler unavailable:', error);
       }
     };
 
