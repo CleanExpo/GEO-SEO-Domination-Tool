@@ -104,8 +104,9 @@ FROM sandbox_tasks
 GROUP BY selected_agent, selected_model
 ORDER BY total_tasks DESC;
 
--- Update existing view to include task counts
-CREATE OR REPLACE VIEW active_sandbox_sessions AS
+-- Drop and recreate view to include task counts
+DROP VIEW IF EXISTS active_sandbox_sessions;
+CREATE VIEW active_sandbox_sessions AS
 SELECT
     s.id,
     s.session_name,
@@ -177,3 +178,26 @@ END $$;
 -- DROP TRIGGER IF EXISTS sandbox_tasks_updated_at ON sandbox_tasks;
 -- DROP FUNCTION IF EXISTS update_sandbox_task_timestamp();
 -- DROP TABLE IF EXISTS sandbox_tasks;
+--
+-- -- Restore original active_sandbox_sessions view
+-- DROP VIEW IF EXISTS active_sandbox_sessions;
+-- CREATE VIEW active_sandbox_sessions AS
+-- SELECT
+--     s.id,
+--     s.session_name,
+--     s.company_id,
+--     c.name as company_name,
+--     s.active,
+--     s.last_accessed,
+--     s.git_repo_url,
+--     s.vercel_preview_url,
+--     s.deployment_status,
+--     (SELECT COUNT(*) FROM sandbox_terminal_history WHERE session_id = s.id) as command_count,
+--     (SELECT COUNT(*) FROM sandbox_agent_logs WHERE session_id = s.id) as agent_interaction_count,
+--     (SELECT SUM(cost_usd) FROM sandbox_agent_logs WHERE session_id = s.id) as total_ai_cost,
+--     s.created_at,
+--     s.updated_at
+-- FROM sandbox_sessions s
+-- LEFT JOIN companies c ON c.id = s.company_id
+-- WHERE s.active = true
+-- ORDER BY s.last_accessed DESC;
