@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEmailService } from '@/services/notifications';
 import { generateSupportContactTemplate } from '@/services/notifications/templates/support-contact';
+import { DatabaseClient } from '@/lib/db';
 
 interface ContactFormData {
   name: string;
@@ -24,6 +25,14 @@ function sanitizeInput(input: string): string {
   return input
     .replace(/[<>]/g, '') // Remove < and >
     .trim();
+}
+
+// Generate unique ticket number
+function generateTicketNumber(): string {
+  const date = new Date();
+  const dateStr = date.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
+  const randomNum = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+  return `TICKET-${dateStr}-${randomNum}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -66,6 +75,43 @@ export async function POST(request: NextRequest) {
         timeStyle: 'short',
       }),
     };
+
+    // Save ticket to database
+    const db = new DatabaseClient();
+    let ticketNumber = '';
+    try {
+      await db.initialize();
+
+      // Check if support_tickets table exists
+      const tableExists = await db.tableExists('support_tickets');
+
+      if (tableExists) {
+        ticketNumber = generateTicketNumber();
+
+        // Insert ticket into database
+        const query = `
+          INSERT INTO support_tickets (ticket_number, name, email, subject, message, status, priority)
+          VALUES (?, ?, ?, ?, ?, 'open', 'normal')
+        `;
+
+        await db.run(query, [
+          ticketNumber,
+          sanitizedData.name,
+          sanitizedData.email,
+          sanitizedData.subject,
+          sanitizedData.message
+        ]);
+
+        console.log(`Support ticket created: ${ticketNumber}`);
+      } else {
+        console.warn('support_tickets table does not exist - ticket not saved to database');
+      }
+    } catch (dbError) {
+      console.error('Database error saving support ticket:', dbError);
+      // Continue to send emails even if database save fails
+    } finally {
+      await db.close();
+    }
 
     // Create email service
     const emailService = createEmailService();

@@ -9,9 +9,13 @@
  *   npm run init-db
  */
 
-const fs = require('fs');
-const path = require('path');
-const { DatabaseClient } = require('../web-app/lib/db');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { DatabaseClient } from '../web-app/lib/db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ANSI color codes for terminal output
 const colors = {
@@ -186,6 +190,9 @@ async function verifyTables() {
       'crm_github_projects',
       'crm_prompts',
       'crm_support_tickets',
+      'support_tickets',
+      'support_ticket_responses',
+      'support_ticket_attachments',
     ];
 
     log('\nVerifying tables...', colors.blue);
@@ -216,7 +223,7 @@ async function verifyTables() {
 }
 
 // Run the initialization
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const shouldVerify = args.includes('--verify') || args.includes('-v');
 
@@ -233,4 +240,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { initializeDatabase, verifyTables };
+export { initializeDatabase, verifyTables };
