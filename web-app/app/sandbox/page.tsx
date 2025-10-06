@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Terminal, Code, FileTree as FileTreeIcon, Monitor, Plus } from 'lucide-react'
+import { Terminal, Code, FolderTree as FileTreeIcon, Monitor, Plus } from 'lucide-react'
 import TaskForm from '@/components/sandbox/TaskForm'
 import LogViewer from '@/components/sandbox/LogViewer'
 import FileTree from '@/components/sandbox/FileTree'
