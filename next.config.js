@@ -20,12 +20,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Skip collecting page data for API routes (they don't need it)
-  experimental: {
-    ...config.experimental,
-    isrMemoryCacheSize: 0, // Disable ISR caching
-  },
-
   // Configure image optimization
   images: {
     domains: [],
