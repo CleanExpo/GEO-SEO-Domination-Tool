@@ -11,6 +11,15 @@
         "--github-api-key",
         "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"
       ]
+    },
+    "shadcn": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "shadcn@latest",
+        "mcp"
+      ]
     }
   }
 }
