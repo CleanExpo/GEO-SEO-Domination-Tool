@@ -38,15 +38,15 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Left: Hero Content */}
           <div className="space-y-6 sm:space-y-8 z-10 order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-full text-sm font-medium text-emerald-700 border border-emerald-200">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-full text-sm font-medium text-purple-700 border border-purple-200">
+              <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
               Transform Your SEO Strategy
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               Build SEO success
               <br />
-              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
                 the way your business works
               </span>
             </h1>
