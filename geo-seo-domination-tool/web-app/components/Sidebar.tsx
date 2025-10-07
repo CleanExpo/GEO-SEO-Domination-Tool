@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
   Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, GitPullRequest, Activity, FolderSearch,
-  Hammer, Package, Layers, LineChart, Plug, GitBranch
+  Hammer, Package, Layers, LineChart, Plug, GitBranch, Terminal
 } from 'lucide-react';
 
 const navigation = [
@@ -39,6 +39,7 @@ const projectsNavigation = [
 ];
 
 const resourcesNavigation = [
+  { name: 'Sandbox', href: '/sandbox', icon: Terminal, section: 'Resources' },
   { name: 'Prompts', href: '/resources/prompts', icon: MessageSquare, section: 'Resources' },
   { name: 'Components', href: '/resources/components', icon: Wrench, section: 'Resources' },
   { name: 'AI Tools', href: '/resources/ai-tools', icon: Wrench, section: 'Resources' },
