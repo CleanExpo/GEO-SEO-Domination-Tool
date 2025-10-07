@@ -294,48 +294,6 @@ export class FeatureFlagService {
 }
 
 // ============================================================
-// REACT HOOK (for client-side usage)
-// ============================================================
-
-import { useState, useEffect } from 'react';
-
-export function useFeatureFlag(
-  flagKey: string,
-  context: FeatureFlagContext
-): { enabled: boolean; isLoading: boolean } {
-  const [enabled, setEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function evaluate() {
-      setIsLoading(true);
-
-      try {
-        const response = await fetch('/api/feature-flags/evaluate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ flagKey, context }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          setEnabled(result.enabled);
-        }
-      } catch (error) {
-        console.error('Failed to evaluate feature flag:', error);
-        setEnabled(false);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    evaluate();
-  }, [flagKey, context.userId, context.organisationId]);
-
-  return { enabled, isLoading };
-}
-
-// ============================================================
 // FEATURE FLAG KEYS (for type safety)
 // ============================================================
 
@@ -348,3 +306,6 @@ export const FEATURE_FLAGS = {
   GITHUB_WEBHOOKS: 'github-webhooks',
   OBSERVABILITY_SUITE: 'observability-suite',
 } as const;
+
+// NOTE: Client-side React hook moved to lib/feature-flags-client.ts
+// Import useFeatureFlag from there for client components

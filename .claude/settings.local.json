@@ -64,7 +64,9 @@
       "Bash(npx supabase:*)",
       "Bash(powershell:*)",
       "Bash(timeout 180 npm run build)",
-      "Bash(vercel link:*)"
+      "Bash(vercel link:*)",
+      "Bash(git rm:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

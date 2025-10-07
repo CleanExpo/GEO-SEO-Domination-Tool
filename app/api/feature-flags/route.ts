@@ -9,10 +9,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy-initialize Supabase client to avoid build-time env var requirements
+let supabase: ReturnType<typeof createClient> | null = null;
+
+function getSupabaseClient() {
+  if (!supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required Supabase environment variables');
+    }
+
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabase;
+}
 
 // ============================================================
 // GET - List all feature flags
@@ -23,7 +35,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organisationId = searchParams.get('organisationId');
 
-    const { data: flags, error } = await supabase
+    const { data: flags, error } = await getSupabaseClient()
       .from('feature_flags')
       .select('*')
       .order('name', { ascending: true });
@@ -34,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // If organisationId provided, include overrides
     if (organisationId) {
-      const { data: overrides } = await supabase
+      const { data: overrides } = await getSupabaseClient()
         .from('organisation_feature_overrides')
         .select('feature_flag_id, enabled')
         .eq('organisation_id', organisationId);
@@ -74,7 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: flag, error } = await supabase
+    const { data: flag, error } = await getSupabaseClient()
       .from('feature_flags')
       .insert({
         key,
@@ -111,7 +123,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { data: flag, error } = await supabase
+    const { data: flag, error } = await getSupabaseClient()
       .from('feature_flags')
       .update({
         name: updates.name,

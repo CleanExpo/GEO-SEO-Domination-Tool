@@ -7,10 +7,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FeatureFlagService, FeatureFlagContext } from '@/lib/feature-flags';
 
-const featureFlagService = new FeatureFlagService(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy-initialize feature flag service to avoid build-time env var requirements
+let featureFlagService: FeatureFlagService | null = null;
+
+function getFeatureFlagService(): FeatureFlagService {
+  if (!featureFlagService) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required Supabase environment variables');
+    }
+
+    featureFlagService = new FeatureFlagService(supabaseUrl, supabaseKey);
+  }
+  return featureFlagService;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'flagKey is required' }, { status: 400 });
     }
 
-    const result = await featureFlagService.evaluateFlag(flagKey, context || {});
+    const result = await getFeatureFlagService().evaluateFlag(flagKey, context || {});
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {

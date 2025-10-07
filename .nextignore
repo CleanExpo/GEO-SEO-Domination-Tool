@@ -1,0 +1,4 @@
+# Exclude Electron/Vite app directories from Next.js
+src/**
+electron/**
+web-app/**
