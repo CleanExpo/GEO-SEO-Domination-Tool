@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
   Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, Menu, X,
-  Activity, Heart, GitBranch, Shield, Zap, Terminal
+  Activity, Heart, GitBranch, Shield, Zap, Terminal, Bot
 } from 'lucide-react';
 
 const navigation = [
@@ -32,7 +32,11 @@ const crmNavigation = [
 
 const projectsNavigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban, section: 'Projects' },
-  { name: 'Sandbox', href: '/sandbox', icon: Terminal, section: 'Projects', badge: 'NEW' },
+  { name: 'Tactical Coding', href: '/tactical', icon: Zap, section: 'Projects', badge: 'NEW' },
+  { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Projects', badge: 'NEW' },
+  { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Projects', badge: 'NEW' },
+  { name: 'AI Terminal', href: '/sandbox/terminal', icon: Terminal, section: 'Projects', badge: 'NEW' },
+  { name: 'Sandbox', href: '/sandbox', icon: Terminal, section: 'Projects' },
   { name: 'GitHub Projects', href: '/projects/github', icon: Github, section: 'Projects' },
   { name: 'Notes & Docs', href: '/projects/notes', icon: Notes, section: 'Projects' },
 ];
