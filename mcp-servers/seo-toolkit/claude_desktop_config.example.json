@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "seo-toolkit": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:\\GEO_SEO_Domination-Tool\\mcp-servers\\seo-toolkit",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "GOOGLE_API_KEY": "your_google_api_key_here",
+        "SEMRUSH_API_KEY": "your_semrush_api_key_here",
+        "ANTHROPIC_API_KEY": "your_anthropic_api_key_here",
+        "FIRECRAWL_API_KEY": "your_firecrawl_api_key_here",
+        "SQLITE_PATH": "D:\\GEO_SEO_Domination-Tool\\data\\geo-seo.db"
+      }
+    }
+  }
+}

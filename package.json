@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:init": "node scripts/init-database.js",
+    "db:init:verify": "node scripts/db-init-verify.js",
+    "db:test": "node scripts/test-db-connection.js",
+    "db:test:verbose": "node scripts/test-db-connection-verbose.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:migrate:status": "node scripts/migrate.js status",
+    "check:env": "node scripts/check-env.ts",
+    "check:apis": "node scripts/check-apis.ts",
+    "check:all": "npm run db:test:verbose && npm run check:env && npm run check:apis"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.23",
