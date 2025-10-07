@@ -4,11 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platform with dual applications:
-1. **Electron Desktop App** (`src/`) - React + TypeScript + Vite
-2. **Next.js Web App** (`web-app/`) - Production deployment on Vercel
+GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platform deployed as a **Next.js web application** with production hosting on Vercel.
 
-Both applications share core SEO analysis functionality but serve different deployment contexts.
+**CRITICAL DEPLOYMENT NOTE**:
+
+- **ALL Next.js files are in the ROOT directory** (`app/`, `components/`, `lib/`, `next.config.js`)
+- **DO NOT create or work in a `web-app/` subdirectory** - this causes dual Vercel project deployments
+- The Electron desktop app (`src/`) exists for local development only
+- Production deployments use the Vercel project: `geo-seo-domination-tool` (Project ID: `prj_JxdLiaHoWpnXWEjEhXXpmo0eFBgQ`)
 
 **Current Branch**: `new-life` - Next development phase with build assistant tools integration
 
@@ -30,9 +33,8 @@ npm run lint             # Run ESLint
 npm run format           # Format code with Prettier
 ```
 
-### Next.js Web App
+### Next.js Web App (Root Directory)
 ```bash
-cd web-app
 npm run dev              # Start Next.js dev server (port 3000)
 npm run build            # Build for production (runs TypeScript check first)
 npm start                # Start production server
@@ -83,12 +85,12 @@ database/
 └── notifications-schema.sql     # Email notification system
 ```
 
-### Next.js App Structure
+### Next.js App Structure (Root Directory)
 
-The web app (`web-app/`) uses **Next.js 15 App Router**:
+The application uses **Next.js 15 App Router** at ROOT level:
 
-```
-web-app/
+```text
+<root>/
 ├── app/                    # Next.js App Router pages
 │   ├── api/               # API routes (companies, keywords, rankings, audits)
 │   ├── dashboard/         # Main dashboard
@@ -105,27 +107,31 @@ web-app/
 │   ├── supabase.ts      # Supabase client initialization
 │   ├── api-clients.ts   # API client wrappers
 │   └── seo-audit.ts     # SEO analysis utilities
-└── types/               # TypeScript definitions
+├── types/               # TypeScript definitions
+└── src/                 # Electron desktop app (local dev only)
 ```
 
 ### Service Layer Pattern
 
 The web app uses a service-oriented architecture:
 
-**API Services** (`web-app/services/api/`):
+**API Services** (`services/api/`):
+
 - `claude.ts` - Anthropic Claude AI for content analysis
 - `perplexity.ts` - Perplexity AI for citations
 - `firecrawl.ts` - Firecrawl for web scraping
 - `lighthouse.ts` - Google PageSpeed Insights
 - `semrush.ts` - SEMrush competitor data
 
-**Job Scheduler** (`web-app/services/scheduler/`):
+**Job Scheduler** (`services/scheduler/`):
+
 - Uses `node-cron` for scheduled tasks
 - **Important**: Do NOT use `scheduled` property in `TaskOptions` (doesn't exist in node-cron v3+)
 - **Correct pattern**: Create task, then call `.start()` or `.stop()` explicitly
 - Jobs: audit-runner, ranking-tracker, report-generator
 
-**Notification System** (`web-app/services/notifications/`):
+**Notification System** (`services/notifications/`):
+
 - Email service with template support (Resend or SendGrid)
 - Templates: audit-complete, ranking-alert, weekly-report, system-notification
 - Queue-based delivery with retry logic
