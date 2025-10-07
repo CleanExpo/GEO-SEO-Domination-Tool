@@ -1,9 +1,0 @@
-# SEO • Site Audit (Lite)
-
-**Input**: JSON file from `seo-sitemap-crawler` (`crawl-*.json`).
-
-**Run**
-```bash
-node <%= OUTPUT_DIR %>/audit-site.ts
-```
-**Output**: `audit-*.json` and `audit-*.csv` in `<%= OUTPUT_DIR %>`.

@@ -1,8 +1,0 @@
-# Builder: workspace-pages
-
-Adds:
-- **/workspaces** page (SSR) to create, list, and switch active workspace
-- **/api/workspaces** route: `GET` (list), `POST` (create + set active cookie), `PUT` (switch active)
-- **lib/workspace.ts** helper (`getActiveWorkspaceId`)
-
-**Cookie**: `active_workspace` is used by the UI and can be read server-side.

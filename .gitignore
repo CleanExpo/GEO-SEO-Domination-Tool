@@ -117,3 +117,4 @@ server/logs/uptime/
 tools/coding-agent/
 
 .env*.local
+.vercel
