@@ -7,10 +7,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ThemeManager } from '@/services/theme-manager';
 
-const themeManager = new ThemeManager(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy-initialize Theme Manager to avoid build-time env var requirements
+let themeManager: ThemeManager | null = null;
+
+function getThemeManager(): ThemeManager {
+  if (!themeManager) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required Supabase environment variables');
+    }
+
+    themeManager = new ThemeManager(supabaseUrl, supabaseKey);
+  }
+  return themeManager;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to Supabase Storage
-    const url = await themeManager.uploadBrandAsset(organisationId, file, type);
+    const url = await getThemeManager().uploadBrandAsset(organisationId, file, type);
 
     if (!url) {
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
