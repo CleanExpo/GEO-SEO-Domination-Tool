@@ -122,7 +122,7 @@ export default function Home() {
             </div>
 
             {/* Main Analytics Dashboard - Center */}
-            <div className="absolute top-16 sm:top-24 left-1/2 -translate-x-1/2 w-56 sm:w-72 lg:w-80 transform-gpu transition-all duration-700 hover:scale-105 z-30 floating-card-delayed">
+            <div className="absolute top-32 sm:top-40 lg:top-48 left-1/2 -translate-x-1/2 w-56 sm:w-72 lg:w-80 transform-gpu transition-all duration-700 hover:scale-105 z-30 floating-card-delayed">
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur-xl opacity-25 group-hover:opacity-40 transition-opacity"></div>
                 <div className="relative bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 rounded-xl shadow-2xl overflow-hidden border-2 border-white/70">
@@ -152,7 +152,7 @@ export default function Home() {
             </div>
 
             {/* Companies Card - Bottom Left */}
-            <div className="absolute bottom-8 sm:bottom-16 left-4 sm:left-8 w-36 sm:w-44 lg:w-48 transform-gpu hover:scale-105 transition-all duration-500 z-10 floating-card-delayed-3">
+            <div className="absolute bottom-16 sm:bottom-20 lg:bottom-24 left-4 sm:left-8 w-36 sm:w-44 lg:w-48 transform-gpu hover:scale-105 transition-all duration-500 z-10 floating-card-delayed-3">
               <div className="relative group">
                 <div className="absolute inset-0 bg-blue-400 rounded-lg blur-lg opacity-15 group-hover:opacity-30 transition-opacity"></div>
                 <div className="relative bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
