@@ -39,6 +39,18 @@
         "type": "oauth",
         "flow": "browser"
       }
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": [
+        "@jpisnice/shadcn-ui-mcp-server",
+        "--framework",
+        "react"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "description": "Shadcn UI v4 MCP Server - AI-powered component integration for React, Svelte, Vue, and React Native"
     }
   }
 }
