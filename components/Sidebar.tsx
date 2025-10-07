@@ -7,13 +7,13 @@ import { createClient } from '@/lib/auth/supabase-client';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
-  Settings, Home, Users, Calendar as CalendarIcon, Target, CheckSquare, FolderKanban,
-  Github, FileText as Notes, MessageSquare, Wrench, BookOpen, Headphones, Clock, LogOut, Menu, X,
-  Activity, Heart, GitBranch, Shield, Zap, Terminal, Bot, Code
+  Settings, Home, FolderKanban, MessageSquare,
+  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, section: 'SEO' },
+  { name: 'New Client', href: '/onboarding/new', icon: UserPlus, section: 'SEO', badge: 'AUTO' },
   { name: 'Companies', href: '/companies', icon: Building2, section: 'SEO' },
   { name: 'SEO Audits', href: '/audits', icon: Search, section: 'SEO' },
   { name: 'SEO Audit Tools', href: '/seo/audits', icon: Zap, section: 'SEO' },
@@ -23,37 +23,15 @@ const navigation = [
   { name: 'Schedule', href: '/schedule', icon: Clock, section: 'SEO' },
 ];
 
-const crmNavigation = [
-  { name: 'Contacts', href: '/crm/contacts', icon: Users, section: 'Pipeline' },
-  { name: 'Deals', href: '/crm/deals', icon: Target, section: 'Pipeline' },
-  { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare, section: 'Pipeline' },
-  { name: 'Calendar', href: '/crm/calendar', icon: CalendarIcon, section: 'Workspace' },
-];
-
-const projectsNavigation = [
-  { name: 'Projects', href: '/projects', icon: FolderKanban, section: 'Projects' },
-  { name: 'Tactical Coding', href: '/tactical', icon: Zap, section: 'Projects', badge: 'NEW' },
-  { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Projects', badge: 'NEW' },
-  { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Projects', badge: 'NEW' },
-  { name: 'Terminal Pro', href: '/sandbox/terminal-pro', icon: Code, section: 'Projects', badge: 'PRO' },
-  { name: 'AI Terminal', href: '/sandbox/terminal', icon: Terminal, section: 'Projects' },
-  { name: 'Sandbox', href: '/sandbox', icon: Terminal, section: 'Projects' },
-  { name: 'GitHub Projects', href: '/projects/github', icon: Github, section: 'Projects' },
-  { name: 'Notes & Docs', href: '/projects/notes', icon: Notes, section: 'Projects' },
+const automationNavigation = [
+  { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Automation', badge: 'NEW' },
+  { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Automation', badge: 'NEW' },
+  { name: 'Terminal Pro', href: '/sandbox/terminal-pro', icon: Code, section: 'Automation', badge: 'PRO' },
+  { name: 'Tactical Coding', href: '/tactical', icon: Zap, section: 'Automation', badge: 'NEW' },
 ];
 
 const resourcesNavigation = [
-  { name: 'Prompts', href: '/resources/prompts', icon: MessageSquare, section: 'Resources' },
-  { name: 'Components', href: '/resources/components', icon: Wrench, section: 'Resources' },
-  { name: 'AI Tools', href: '/resources/ai-tools', icon: Wrench, section: 'Resources' },
-  { name: 'Tutorials', href: '/resources/tutorials', icon: BookOpen, section: 'Resources' },
-];
-
-const systemNavigation = [
-  { name: 'Guardian', href: '/guardian', icon: Shield, section: 'System' },
-  { name: 'Analytics', href: '/analytics', icon: Activity, section: 'System' },
-  { name: 'Health', href: '/health', icon: Heart, section: 'System' },
-  { name: 'Release Monitor', href: '/release/monitor', icon: GitBranch, section: 'System' },
+  { name: 'Prompts Library', href: '/resources/prompts', icon: MessageSquare, section: 'Resources' },
 ];
 
 const membersNavigation = [
@@ -171,11 +149,9 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
         {renderNavSection('SEO Tools', navigation)}
-        {renderNavSection('CRM & Pipeline', crmNavigation)}
-        {renderNavSection('Projects', projectsNavigation)}
+        {renderNavSection('Automation', automationNavigation)}
         {renderNavSection('Resources', resourcesNavigation)}
-        {renderNavSection('System', systemNavigation)}
-        {renderNavSection('Members', membersNavigation)}
+        {renderNavSection('Support', membersNavigation)}
       </nav>
 
       {/* Settings & Theme Toggle */}
