@@ -1,225 +1,129 @@
 /**
- * Structured Logging with Winston
- * Provides log levels, formatting, and transports for production monitoring
- * Phase 3: MONITOR-001
+ * Production-ready logging utility
+ * Provides structured logging with different levels
  */
 
-import winston from 'winston';
-
-// ============================================================
-// LOG LEVELS
-// ============================================================
-
-const LOG_LEVELS = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  debug: 4,
-};
-
-const LOG_COLORS = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'blue',
-};
-
-winston.addColors(LOG_COLORS);
-
-// ============================================================
-// FORMATS
-// ============================================================
-
-/**
- * Production format: JSON with timestamps
- */
-const productionFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.json()
-);
-
-/**
- * Development format: Colourised console output
- */
-const developmentFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'HH:mm:ss' }),
-  winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} [${info.level}]: ${info.message} ${info.stack || ''}`
-  )
-);
-
-// ============================================================
-// TRANSPORTS
-// ============================================================
-
-const transports: winston.transport[] = [];
-
-// Console transport (always enabled)
-transports.push(
-  new winston.transports.Console({
-    format: process.env.NODE_ENV === 'production' ? productionFormat : developmentFormat,
-  })
-);
-
-// File transports (production only)
-if (process.env.NODE_ENV === 'production') {
-  transports.push(
-    new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-      format: productionFormat,
-    }),
-    new winston.transports.File({
-      filename: 'logs/combined.log',
-      format: productionFormat,
-    })
-  );
+export enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
 }
 
-// ============================================================
-// LOGGER INSTANCE
-// ============================================================
-
-export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
-  levels: LOG_LEVELS,
-  format: productionFormat,
-  transports,
-  exceptionHandlers: [
-    new winston.transports.File({ filename: 'logs/exceptions.log' }),
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({ filename: 'logs/rejections.log' }),
-  ],
-});
-
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-
-/**
- * Log with automatic context scrubbing
- */
-export function logWithContext(
-  level: 'error' | 'warn' | 'info' | 'http' | 'debug',
-  message: string,
-  context?: Record<string, any>
-) {
-  const scrubbedContext = context ? scrubbedLogContext(context) : undefined;
-
-  logger.log(level, message, scrubbedContext);
+interface LogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: string;
+  context?: Record<string, unknown>;
+  error?: Error;
 }
 
-/**
- * Scrub sensitive data from log context
- */
-function scrubbedLogContext(context: Record<string, any>): Record<string, any> {
-  const sensitiveKeys = [
-    'password',
-    'secret',
-    'token',
-    'api_key',
-    'apiKey',
-    'access_token',
-    'authorization',
-    'cookie',
-    'session',
-  ];
+class Logger {
+  private minLevel: LogLevel;
 
-  const scrubbed = { ...context };
+  constructor() {
+    // Set minimum log level based on environment
+    this.minLevel =
+      process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
+  }
 
-  for (const key in scrubbed) {
-    const isSensitive = sensitiveKeys.some((sensitiveKey) =>
-      key.toLowerCase().includes(sensitiveKey.toLowerCase())
-    );
+  private shouldLog(level: LogLevel): boolean {
+    return level >= this.minLevel;
+  }
 
-    if (isSensitive) {
-      scrubbed[key] = '[REDACTED]';
-    } else if (typeof scrubbed[key] === 'object' && scrubbed[key] !== null) {
-      scrubbed[key] = scrubbedLogContext(scrubbed[key]);
+  private formatLog(entry: LogEntry): string {
+    const parts = [
+      `[${entry.timestamp}]`,
+      `[${LogLevel[entry.level]}]`,
+      entry.message,
+    ];
+
+    if (entry.context && Object.keys(entry.context).length > 0) {
+      parts.push(JSON.stringify(entry.context));
+    }
+
+    if (entry.error) {
+      parts.push(`\nError: ${entry.error.message}`);
+      if (entry.error.stack) {
+        parts.push(`\nStack: ${entry.error.stack}`);
+      }
+    }
+
+    return parts.join(' ');
+  }
+
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, unknown>,
+    error?: Error
+  ) {
+    if (!this.shouldLog(level)) {
+      return;
+    }
+
+    const entry: LogEntry = {
+      level,
+      message,
+      timestamp: new Date().toISOString(),
+      context,
+      error,
+    };
+
+    const formattedLog = this.formatLog(entry);
+
+    // Output to appropriate console method
+    switch (level) {
+      case LogLevel.DEBUG:
+        console.debug(formattedLog);
+        break;
+      case LogLevel.INFO:
+        console.info(formattedLog);
+        break;
+      case LogLevel.WARN:
+        console.warn(formattedLog);
+        break;
+      case LogLevel.ERROR:
+        console.error(formattedLog);
+        break;
+    }
+
+    // In production, you might want to send logs to a service
+    if (process.env.NODE_ENV === 'production' && level >= LogLevel.ERROR) {
+      // TODO: Send to error tracking service (e.g., Sentry, LogRocket)
+      // this.sendToErrorTracker(entry);
     }
   }
 
-  return scrubbed;
-}
+  debug(message: string, context?: Record<string, unknown>) {
+    this.log(LogLevel.DEBUG, message, context);
+  }
 
-// ============================================================
-// CONVENIENCE METHODS
-// ============================================================
+  info(message: string, context?: Record<string, unknown>) {
+    this.log(LogLevel.INFO, message, context);
+  }
 
-export const log = {
-  error: (message: string, context?: Record<string, any>) => logWithContext('error', message, context),
-  warn: (message: string, context?: Record<string, any>) => logWithContext('warn', message, context),
-  info: (message: string, context?: Record<string, any>) => logWithContext('info', message, context),
-  http: (message: string, context?: Record<string, any>) => logWithContext('http', message, context),
-  debug: (message: string, context?: Record<string, any>) => logWithContext('debug', message, context),
-};
+  warn(message: string, context?: Record<string, unknown>) {
+    this.log(LogLevel.WARN, message, context);
+  }
 
-// ============================================================
-// HTTP REQUEST LOGGING
-// ============================================================
-
-/**
- * Log HTTP request
- */
-export function logHttpRequest(
-  method: string,
-  url: string,
-  statusCode: number,
-  responseTime: number,
-  userId?: string
-) {
-  const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'http';
-
-  logWithContext(level, `${method} ${url} ${statusCode}`, {
-    method,
-    url,
-    statusCode,
-    responseTime,
-    userId,
-  });
-}
-
-// ============================================================
-// PERFORMANCE LOGGING
-// ============================================================
-
-/**
- * Measure and log operation performance
- */
-export async function measureAndLog<T>(
-  operation: string,
-  fn: () => Promise<T>
-): Promise<T> {
-  const startTime = Date.now();
-
-  try {
-    const result = await fn();
-    const duration = Date.now() - startTime;
-
-    logWithContext('info', `${operation} completed`, { duration, success: true });
-
-    return result;
-  } catch (error: any) {
-    const duration = Date.now() - startTime;
-
-    logWithContext('error', `${operation} failed`, {
-      duration,
-      success: false,
-      error: error.message,
-      stack: error.stack,
-    });
-
-    throw error;
+  error(message: string, error?: Error, context?: Record<string, unknown>) {
+    this.log(LogLevel.ERROR, message, context, error);
   }
 }
 
-// ============================================================
-// EXPORT DEFAULT LOGGER
-// ============================================================
+// Export singleton instance
+export const logger = new Logger();
 
-export default logger;
+/**
+ * Error boundary helper for API routes
+ */
+export function withErrorHandling<T>(
+  handler: () => Promise<T>,
+  context?: Record<string, unknown>
+): Promise<T> {
+  return handler().catch((error) => {
+    logger.error('Unhandled error in API handler', error, context);
+    throw error;
+  });
+}
