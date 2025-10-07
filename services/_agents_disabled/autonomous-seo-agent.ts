@@ -14,8 +14,10 @@
 
 import { BaseAgent, AgentConfig, AgentTool, AgentContext } from './base-agent';
 import { agentPool } from './agent-pool';
-import { db } from '@/lib/db';
+import { getDatabase } from '@/lib/db';
 import * as cron from 'node-cron';
+
+const db = getDatabase();
 
 export interface SEOAuditSchedule {
   companyId: string;
@@ -81,7 +83,7 @@ export class AutonomousSEOAgent extends BaseAgent {
   private isRunning: boolean = false;
 
   constructor() {
-    const config: AgentConfig = {
+    super({
       name: 'autonomous-seo',
       description: 'Fully autonomous SEO monitoring agent that runs 24/7',
       model: 'claude-sonnet-4.5-20250929',
@@ -143,10 +145,11 @@ You are trusted to operate independently. Make autonomous decisions about:
 - How to present findings
 
 Work quietly in the background. Only surface important insights.`,
-      tools: this.getTools()
-    };
+      tools: []
+    });
 
-    super(config);
+    // Register tools after super() is called
+    this.config.tools = this.getTools();
   }
 
   /**
@@ -214,7 +217,7 @@ Work quietly in the background. Only surface important insights.`,
     };
 
     // Save to database
-    await db.run(`
+    await db.query(`
       INSERT OR REPLACE INTO seo_audit_schedules (
         company_id, company_name, website, frequency, next_run, active
       ) VALUES (?, ?, ?, ?, ?, ?)
@@ -245,7 +248,7 @@ Work quietly in the background. Only surface important insights.`,
     this.schedules.delete(companyId);
 
     // Delete from database
-    await db.run('DELETE FROM seo_audit_schedules WHERE company_id = ?', [companyId]);
+    await db.query('DELETE FROM seo_audit_schedules WHERE company_id = ?', [companyId]);
 
     console.log(`✅ Removed company ${companyId} from monitoring`);
   }
@@ -254,11 +257,13 @@ Work quietly in the background. Only surface important insights.`,
    * Load schedules from database
    */
   private async loadSchedules(): Promise<void> {
-    const rows = await db.all(`
+    const result = await db.query(`
       SELECT company_id, company_name, website, frequency, next_run, last_run, active
       FROM seo_audit_schedules
       WHERE active = 1
-    `) as any[];
+    `);
+
+    const rows = result.rows;
 
     for (const row of rows) {
       this.schedules.set(row.company_id, {
@@ -345,7 +350,7 @@ Work quietly in the background. Only surface important insights.`,
       schedule.lastRun = new Date();
       schedule.nextRun = this.calculateNextRun(schedule.frequency);
 
-      await db.run(`
+      await db.query(`
         UPDATE seo_audit_schedules
         SET last_run = ?, next_run = ?
         WHERE company_id = ?
@@ -398,13 +403,15 @@ Work quietly in the background. Only surface important insights.`,
     weekEnd: Date
   ): Promise<WeeklyReport> {
     // Fetch audits for the week
-    const audits = await db.all(`
+    const result = await db.query(`
       SELECT * FROM seo_audits
       WHERE company_id = ?
         AND created_at >= ?
         AND created_at <= ?
       ORDER BY created_at DESC
-    `, [companyId, weekStart.toISOString(), weekEnd.toISOString()]) as any[];
+    `, [companyId, weekStart.toISOString(), weekEnd.toISOString()]);
+
+    const audits = result.rows;
 
     // Calculate summary stats
     const latestAudit = audits[0];
@@ -451,7 +458,7 @@ Work quietly in the background. Only surface important insights.`,
    * Save weekly report to database
    */
   private async saveWeeklyReport(report: WeeklyReport): Promise<void> {
-    await db.run(`
+    await db.query(`
       INSERT INTO weekly_seo_reports (
         company_id, week_start, week_end, summary, recommendations, created_at
       ) VALUES (?, ?, ?, ?, ?, ?)

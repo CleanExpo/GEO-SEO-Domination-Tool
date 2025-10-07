@@ -10,7 +10,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { autonomousSEOAgent } from '@/services/agents/autonomous-seo-agent';
-import { db } from '@/lib/db';
+import { getDatabase } from '@/lib/db';
+
+const db = getDatabase();
 
 /**
  * GET /api/agents/autonomous-seo

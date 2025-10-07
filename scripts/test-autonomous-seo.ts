@@ -10,9 +10,12 @@
  */
 
 import { autonomousSEOAgent } from '../services/agents/autonomous-seo-agent';
-import { db } from '../lib/db';
+import { getDatabase } from '../lib/db';
 
 async function testAutonomousSEOAgent() {
+  // Initialize database connection
+  const db = getDatabase();
+  await db.initialize();
   console.log('🧪 Testing Autonomous SEO Agent\n');
   console.log('=' .repeat(60));
 

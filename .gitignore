@@ -118,3 +118,6 @@ tools/coding-agent/
 
 .env*.local
 .vercel
+
+# Integrations (third-party submodules - not part of build)
+integrations/

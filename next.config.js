@@ -46,10 +46,13 @@ const nextConfig = {
     config.ignoreWarnings = [
       ...(config.ignoreWarnings || []),
       /Module not found.*ioredis/,
-      // Ignore Electron/Vite files
+      // Ignore Electron/Vite files and third-party integrations
       /src\//,
       /electron\//,
       /web-app\//,
+      /integrations\//,
+      /_src_electron\//,
+      /_electron\//,
     ];
 
     // Optimize bundle size
