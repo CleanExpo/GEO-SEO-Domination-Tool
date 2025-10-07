@@ -9,11 +9,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ThemeManager, ThemeUpdateInput } from '@/services/theme-manager';
 
-// Initialize Theme Manager
-const themeManager = new ThemeManager(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy-initialize Theme Manager to avoid build-time env var requirements
+let themeManager: ThemeManager | null = null;
+
+function getThemeManager(): ThemeManager {
+  if (!themeManager) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required Supabase environment variables');
+    }
+
+    themeManager = new ThemeManager(supabaseUrl, supabaseKey);
+  }
+  return themeManager;
+}
 
 // ============================================================
 // GET - Fetch Organisation Theme
@@ -31,7 +42,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const theme = await themeManager.getOrganisationTheme(organisationId);
+    const theme = await getThemeManager().getOrganisationTheme(organisationId);
 
     if (!theme) {
       return NextResponse.json(
@@ -76,7 +87,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updatedTheme = await themeManager.updateOrganisationTheme(organisationId, updates);
+    const updatedTheme = await getThemeManager().updateOrganisationTheme(organisationId, updates);
 
     if (!updatedTheme) {
       return NextResponse.json(
@@ -112,7 +123,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const resetTheme = await themeManager.resetOrganisationTheme(organisationId);
+      const resetTheme = await getThemeManager().resetOrganisationTheme(organisationId);
 
       if (!resetTheme) {
         return NextResponse.json(
