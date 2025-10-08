@@ -74,7 +74,12 @@
       "Bash(if [ -d \"_agents_disabled\" ])",
       "Bash(then rm -rf _agents_disabled)",
       "Bash(else echo \"✗ app/sandbox/_agents_disabled not found\")",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(tree:*)",
+      "Bash(node:*)",
+      "Bash(sqlite3:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,34 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: white;
+      padding: 20px;
+    }
+    .mermaid {
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="mermaid">
+flowchart TD
+    A[Start: Fire Damage Occurs] --> B[Initial Assessment]
+    B --> C{Type of Damage}
+    C -->|Smoke Damage| D[Smoke Removal Techniques]
+    C -->|Water Damage| E[Water Extraction & Drying]
+    C -->|Structural Damage| F[Structural Repairs]
+    D --> G[Deodorization]
+    E --> G
+    F --> H[Reconstruction]
+    G --> I[Final Inspection]
+    H --> I
+    I --> J[Completion: Restoration Process Ends]
+  </div>
+</body>
+</html>

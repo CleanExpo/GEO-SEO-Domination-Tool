@@ -121,3 +121,5 @@ tools/coding-agent/
 
 # Integrations (third-party submodules - not part of build)
 integrations/
+
+.env*.local

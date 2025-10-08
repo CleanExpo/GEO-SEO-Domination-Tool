@@ -1,0 +1,14 @@
+# DeepSeek V3 Marketing Intelligence MCP Server Requirements
+
+# MCP SDK
+mcp>=1.1.0
+
+# HTTP client for API calls
+httpx>=0.27.0
+aiohttp>=3.9.0
+
+# JSON handling
+pydantic>=2.5.0
+
+# Environment variables
+python-dotenv>=1.0.0
