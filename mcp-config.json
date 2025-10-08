@@ -53,6 +53,31 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
       },
       "description": "Shadcn UI v4 MCP Server - AI-powered component integration for React, Svelte, Vue, and React Native"
+    },
+    "playwright": {
+      "command": "C:/AI/MCP/playwright-mcp.exe",
+      "args": [],
+      "description": "Global Playwright MCP - Browser automation for autonomous agents"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/AI/GlobalAgents",
+        "D:/GEO_SEO_Domination-Tool"
+      ],
+      "description": "Global Filesystem MCP - Read/write access to global agents and project directory"
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "D:/GEO_SEO_Domination-Tool"
+      ],
+      "description": "Global Git MCP - Version control operations for automated workflows"
     }
   }
 }

@@ -83,7 +83,10 @@
       "Bash(tasklist)",
       "Bash(tee:*)",
       "Bash(start http://localhost:3000/content-opportunities)",
-      "Bash(start http://localhost:3000/task-inbox)"
+      "Bash(start http://localhost:3000/task-inbox)",
+      "Bash(timeout 30 npm run db:init)",
+      "Bash(timeout:*)",
+      "Bash(/dev/null)"
     ],
     "deny": [],
     "ask": []

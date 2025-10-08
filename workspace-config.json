@@ -1,0 +1,285 @@
+{
+  "name": "GEO-SEO Unified AI Dev Workspace",
+  "version": "1.0.0",
+  "description": "Single-source configuration for Claude Code CLI, VS Code, global MCP servers, and LocalLift CRM integration",
+  "globalAgents": {
+    "registryPath": "C:/AI/GlobalAgents/registry",
+    "agents": [
+      {
+        "id": "orchestra-coordinator",
+        "name": "Orchestra Coordinator",
+        "capabilities": [
+          {
+            "id": "swarm-orchestration",
+            "name": "Multi-Agent Swarm Orchestration",
+            "description": "Coordinates multiple specialist agents with dependency resolution",
+            "requiredTools": ["filesystem", "git"]
+          },
+          {
+            "id": "workflow-execution",
+            "name": "Workflow Execution",
+            "description": "Executes complex multi-step workflows with error handling",
+            "requiredTools": ["filesystem"]
+          }
+        ],
+        "mcpTools": ["filesystem", "git"],
+        "autonomy": 0.9,
+        "priority": 100
+      },
+      {
+        "id": "ui-shadcn-generator",
+        "name": "Shadcn UI Generator",
+        "capabilities": [
+          {
+            "id": "component-scaffolding",
+            "name": "Component Scaffolding",
+            "description": "Generates shadcn/ui components with proper imports and styling",
+            "requiredTools": ["shadcn-ui", "filesystem"]
+          }
+        ],
+        "mcpTools": ["shadcn-ui", "filesystem"],
+        "autonomy": 0.7,
+        "priority": 80
+      },
+      {
+        "id": "navigation-links-syncer",
+        "name": "Navigation Links Syncer",
+        "capabilities": [
+          {
+            "id": "route-validation",
+            "name": "Route Validation",
+            "description": "Validates navigation links against actual route files",
+            "requiredTools": ["filesystem"]
+          },
+          {
+            "id": "route-scaffolding",
+            "name": "Route Scaffolding",
+            "description": "Creates missing route files for navigation links",
+            "requiredTools": ["filesystem"]
+          }
+        ],
+        "mcpTools": ["filesystem"],
+        "autonomy": 0.8,
+        "priority": 70
+      },
+      {
+        "id": "site-builder-fullstack",
+        "name": "Full-Stack Site Builder",
+        "capabilities": [
+          {
+            "id": "project-scaffolding",
+            "name": "Project Scaffolding",
+            "description": "Scaffolds complete Next.js projects with database, auth, and deployment",
+            "requiredTools": ["filesystem", "git", "supabase"]
+          }
+        ],
+        "mcpTools": ["filesystem", "git", "supabase"],
+        "autonomy": 0.85,
+        "priority": 90
+      },
+      {
+        "id": "browser-agent",
+        "name": "Browser Automation Agent",
+        "capabilities": [
+          {
+            "id": "web-automation",
+            "name": "Web Automation",
+            "description": "Controls browsers for testing, scraping, and automation",
+            "requiredTools": ["playwright"]
+          }
+        ],
+        "mcpTools": ["playwright"],
+        "autonomy": 0.75,
+        "priority": 60
+      },
+      {
+        "id": "seo-agent",
+        "name": "SEO Optimization Agent",
+        "capabilities": [
+          {
+            "id": "seo-audit",
+            "name": "SEO Audit",
+            "description": "Performs technical SEO audits and generates recommendations",
+            "requiredTools": ["playwright", "filesystem"]
+          }
+        ],
+        "mcpTools": ["playwright", "filesystem"],
+        "autonomy": 0.65,
+        "priority": 70
+      },
+      {
+        "id": "reddit-agent",
+        "name": "Reddit Community Mining Agent",
+        "capabilities": [
+          {
+            "id": "community-gap-mining",
+            "name": "Community Gap Mining",
+            "description": "Discovers content opportunities from Reddit discussions",
+            "requiredTools": ["filesystem"]
+          }
+        ],
+        "mcpTools": ["filesystem"],
+        "autonomy": 0.7,
+        "priority": 65
+      },
+      {
+        "id": "content-agent",
+        "name": "Content Generation Agent",
+        "capabilities": [
+          {
+            "id": "content-generation",
+            "name": "AI Content Generation",
+            "description": "Generates SEO-optimized content for multiple platforms",
+            "requiredTools": ["filesystem"]
+          }
+        ],
+        "mcpTools": ["filesystem"],
+        "autonomy": 0.6,
+        "priority": 60
+      }
+    ]
+  },
+  "globalMcpServers": {
+    "path": "C:/AI/MCP",
+    "servers": [
+      {
+        "name": "playwright",
+        "command": "C:/AI/MCP/playwright-mcp.exe",
+        "args": [],
+        "env": {},
+        "description": "Browser automation for autonomous agents"
+      },
+      {
+        "name": "filesystem",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:/AI/GlobalAgents", "D:/GEO_SEO_Domination-Tool"],
+        "env": {},
+        "description": "File system access for global agents and project"
+      },
+      {
+        "name": "git",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "D:/GEO_SEO_Domination-Tool"],
+        "env": {},
+        "description": "Git operations for automated workflows"
+      }
+    ]
+  },
+  "crmIntegration": {
+    "enabled": true,
+    "provider": "LocalLift",
+    "baseUrl": "https://api.locallift.io",
+    "projectId": "geo-seo-domination-tool",
+    "events": {
+      "commit": true,
+      "branch": true,
+      "preview": true
+    },
+    "webhooks": {
+      "devEvents": "/api/v1/dev-events"
+    }
+  },
+  "livePreview": {
+    "enabled": true,
+    "sandboxDir": "C:/AI/.sandbox",
+    "logsDir": "C:/AI/.logs",
+    "artifactsDir": "C:/AI/.artifacts",
+    "clickToCode": {
+      "enabled": true,
+      "hotkey": "Ctrl+Shift+E",
+      "resolver": {
+        "strategy": "dom-attr",
+        "attribute": "data-source",
+        "fallback": "component-search"
+      },
+      "vscodeCommand": "code -g ${filepath}:${line}:${column}"
+    }
+  },
+  "gitWorkflow": {
+    "autoCommit": {
+      "enabled": false,
+      "conventionalCommits": true
+    },
+    "branchNaming": {
+      "pattern": "{type}/{ticket}-{description}",
+      "types": ["feature", "fix", "docs", "refactor", "test"]
+    },
+    "hooks": {
+      "preCommit": ["lint", "type-check"],
+      "prePush": ["build"],
+      "postCommit": ["crm-track"]
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "autoPR": false
+    },
+    "vercel": {
+      "enabled": true,
+      "autoLinkPreviews": true
+    },
+    "supabase": {
+      "enabled": true,
+      "autoMigrate": false
+    }
+  },
+  "workflows": [
+    {
+      "name": "new-project-scaffold",
+      "description": "Scaffold new Next.js project with database, auth, and deployment",
+      "trigger": {
+        "type": "manual"
+      },
+      "agents": ["site-builder-fullstack", "navigation-links-syncer", "ui-shadcn-generator"],
+      "coordination": "sequential"
+    },
+    {
+      "name": "catalog-on-commit",
+      "description": "Update component catalog and documentation on every commit",
+      "trigger": {
+        "type": "git-hook",
+        "pattern": "post-commit"
+      },
+      "agents": ["ui-shadcn-generator"],
+      "coordination": "sequential"
+    },
+    {
+      "name": "discover-content-opportunities",
+      "description": "Mine Reddit for content gaps and generate article outlines",
+      "trigger": {
+        "type": "manual"
+      },
+      "agents": ["reddit-agent", "seo-agent", "content-agent"],
+      "coordination": "sequential"
+    },
+    {
+      "name": "autonomous-seo-audit",
+      "description": "Crawl website, perform SEO audit, generate report, and create tasks",
+      "trigger": {
+        "type": "manual"
+      },
+      "agents": ["browser-agent", "seo-agent"],
+      "coordination": "sequential"
+    }
+  ],
+  "telemetry": {
+    "enabled": true,
+    "endpoint": "https://api.locallift.io/v1/telemetry",
+    "events": ["agent-start", "agent-complete", "workflow-start", "workflow-complete", "error"]
+  },
+  "vscode": {
+    "extensions": [
+      "ms-vscode.live-server",
+      "streetsidesoftware.code-spell-checker",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint"
+    ],
+    "settings": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+      }
+    }
+  }
+}
