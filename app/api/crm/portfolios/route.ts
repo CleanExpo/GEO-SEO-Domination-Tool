@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create portfolio
-    const portfolio = await db.run(`
+    const result = await db.query(`
       INSERT INTO company_portfolios (
         company_id,
         company_name,
@@ -81,6 +81,8 @@ export async function POST(request: NextRequest) {
       automationLevel,
       JSON.stringify(contentFrequency)
     ]);
+
+    const portfolio = result.rows[0];
 
     // Trigger initial audit (async - don't wait)
     if (websiteUrl) {
@@ -138,7 +140,8 @@ export async function GET(request: NextRequest) {
 
     query += ' ORDER BY created_at DESC';
 
-    const portfolios = await db.all(query, params);
+    const result = await db.query(query, params);
+    const portfolios = result.rows;
 
     return NextResponse.json({
       success: true,
