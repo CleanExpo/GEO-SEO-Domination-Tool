@@ -124,3 +124,4 @@ integrations/
 
 .env*.local
 .env.preview
+.claude/mcp.json
