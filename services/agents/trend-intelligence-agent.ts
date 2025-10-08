@@ -113,16 +113,25 @@ export interface TrendReport {
 
 export class TrendIntelligenceAgent {
   private dbPath: string;
+  private dbInitialized: boolean = false;
 
   constructor() {
     this.dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
-    this.ensureTrendsTable();
   }
 
   /**
    * Create trends table if it doesn't exist
    */
   private ensureTrendsTable(): void {
+    // Skip during build time
+    if (typeof window !== 'undefined' || !process.env.NODE_ENV) {
+      return;
+    }
+
+    if (this.dbInitialized) {
+      return;
+    }
+
     const db = new Database(this.dbPath);
     try {
       db.exec(`
@@ -171,6 +180,7 @@ export class TrendIntelligenceAgent {
         CREATE INDEX IF NOT EXISTS idx_influence_trend ON influence_metrics(trend_id);
         CREATE INDEX IF NOT EXISTS idx_influence_measured ON influence_metrics(measured_at DESC);
       `);
+      this.dbInitialized = true;
     } finally {
       db.close();
     }
@@ -180,6 +190,8 @@ export class TrendIntelligenceAgent {
    * Discover trends in the industry
    */
   async discoverTrends(request: TrendDiscoveryRequest): Promise<TrendReport> {
+    this.ensureTrendsTable();
+
     console.log(`[Trend Intelligence] Discovering trends for ${request.industry}`);
 
     const db = new Database(this.dbPath);
