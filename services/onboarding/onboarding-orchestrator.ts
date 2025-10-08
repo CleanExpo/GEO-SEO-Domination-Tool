@@ -237,43 +237,33 @@ export class OnboardingOrchestrator extends EventEmitter {
    * Step 1: Create company record in database
    */
   private async createCompanyRecord(request: OnboardingRequest): Promise<string> {
-    const companyId = `company_${Date.now()}`;
+    const companyId = `portfolio_${Date.now()}`;
 
+    // Use company_portfolios table (new schema)
     await db.query(`
-      INSERT INTO companies (
-        id, name, industry, website, email, phone, address,
-        primary_goals, target_keywords, target_locations,
-        content_frequency, brand_voice, budget, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO company_portfolios (
+        id, company_name, industry, website_url, email, phone,
+        target_keywords, target_locations, content_preferences,
+        autopilot_enabled, automation_level, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       companyId,
       request.businessName,
-      request.industry,
+      request.industry || null,
       request.website || null,
       request.email,
       request.phone || null,
-      request.address || null,
-      JSON.stringify(request.primaryGoals),
       JSON.stringify(request.targetKeywords),
       JSON.stringify(request.targetLocations),
-      request.contentFrequency,
-      request.brandVoice || null,
-      request.budget || null,
-      new Date().toISOString()
-    ]);
-
-    // Create contact record
-    await db.query(`
-      INSERT INTO contacts (
-        id, company_id, name, email, phone, role, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [
-      `contact_${Date.now()}`,
-      companyId,
-      request.contactName,
-      request.email,
-      request.phone || null,
-      'Primary Contact',
+      JSON.stringify({
+        contentTypes: request.contentTypes,
+        contentFrequency: request.contentFrequency,
+        brandVoice: request.brandVoice,
+        primaryGoals: request.primaryGoals
+      }),
+      true, // autopilot enabled by default
+      'empire', // highest automation level
+      new Date().toISOString(),
       new Date().toISOString()
     ]);
 
@@ -396,34 +386,29 @@ Created: ${new Date().toLocaleDateString()}
       ]
     };
 
-    // Save audit to database
+    // Save audit to database (using portfolio_audits table)
     const auditId = `audit_${Date.now()}`;
     await db.query(`
-      INSERT INTO seo_audits (
-        id, company_id, website, audit_type,
+      INSERT INTO portfolio_audits (
+        id, portfolio_id, audit_type, website_url,
         lighthouse_performance, lighthouse_accessibility, lighthouse_best_practices,
-        lighthouse_seo, lighthouse_overall,
-        eeat_experience, eeat_expertise, eeat_authoritativeness,
-        eeat_trustworthiness, eeat_overall,
-        overall_score, issues_data, report_data, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        lighthouse_seo, overall_score,
+        eeat_score, issues_found, recommendations,
+        audit_data, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       auditId,
       companyId,
+      'initial_onboarding',
       request.website,
-      'initial',
       auditResults.lighthouse.performance,
       auditResults.lighthouse.accessibility,
       auditResults.lighthouse.bestPractices,
       auditResults.lighthouse.seo,
       auditResults.lighthouse.overall,
-      auditResults.eeat.experience,
-      auditResults.eeat.expertise,
-      auditResults.eeat.authoritativeness,
-      auditResults.eeat.trustworthiness,
       auditResults.eeat.overall,
-      auditResults.lighthouse.overall,
-      JSON.stringify(auditResults.issues),
+      auditResults.issues.length,
+      JSON.stringify(auditResults.recommendations),
       JSON.stringify(auditResults),
       new Date().toISOString()
     ]);
