@@ -1,0 +1,182 @@
+{
+  "job": "full_stack_health_check_and_simplify",
+  "goal": "Deep E2E audit + simplification across landing page, frontend, backend, packages, APIs, webhooks, SQL, CI/CD for GEO-SEO-Domination-Tool. Remove redundancy and over-engineering. Produce PR-ready diffs.",
+  "inputs": {
+    "repo_root": "./",
+    "package_manager": "npm",
+    "env_profiles": ["dev", "prod"],
+    "start_scripts": ["dev", "build", "start", "test"],
+    "primary_branch": "main",
+    "target_branch": "audit/refactor-pass-1"
+  },
+  "orchestration": {
+    "planners": ["claude_code"],
+    "code_models": ["openai_codex", "claude_code"],
+    "sdk_agents": [
+      "static-analyzer",
+      "dep-graph-builder",
+      "api-prober",
+      "webhook-verifier",
+      "sql-linter",
+      "perf-profiler",
+      "security-scout",
+      "ux-accessibility-screener"
+    ],
+    "mcps": [
+      "filesystem-mcp",
+      "git-mcp",
+      "docker-mcp",
+      "http-probe-mcp",
+      "sql-mcp",
+      "telemetry-mcp",
+      "playwright-mcp"
+    ],
+    "execution_mode": "plan-then-act",
+    "safety": {
+      "write_scope": ["./", "!node_modules/**", "!**/.git/**"],
+      "allow_exec": true,
+      "changes_via": "git-branch",
+      "require_tests_for_changes": true
+    }
+  },
+  "scope": {
+    "paths": [
+      "app/**",
+      "components/**",
+      "server/**",
+      "services/**",
+      "database/**",
+      "tests/**",
+      "scripts/**",
+      "mcp-servers/**",
+      "infra/docker/**",
+      "nginx/**",
+      "public/**"
+    ],
+    "frontend": {
+      "targets": ["landing page", "routing", "components", "state", "bundling", "tree-shaking", "a11y", "SEO meta"],
+      "checks": ["dead code", "duplicate components", "unused assets", "hydration errors", "LCP/CLS/TTI", "structured data"]
+    },
+    "backend": {
+      "targets": ["api routes", "controllers/services", "webhooks", "workers"],
+      "checks": ["unused endpoints", "N+1 queries", "blocking I/O", "idempotency + retries for webhooks", "error taxonomy", "404/500 hotspots"]
+    },
+    "packages_and_deps": {
+      "checks": ["unused deps", "version conflicts", "transitive bloat", "ESM/CJS mismatch", "polyfill duplication"]
+    },
+    "database_sql": {
+      "targets": ["migrations", "indexes", "constraints", "views", "seed scripts"],
+      "checks": ["missing indexes", "slow queries", "orphan tables", "column type drift", "dangerous casts", "seed leakage"]
+    },
+    "security": {
+      "checks": ["secrets in repo", "CORS policy", "cookie flags", "JWT config", "SSRF risks", "eval/new Function", "rate limiting on hot endpoints"]
+    },
+    "performance": {
+      "checks": ["bundle size budgets", "route cold-starts", "cache keys", "image sizing", "compression", "HTTP hints (preload/prefetch)"]
+    },
+    "ci_cd": {
+      "checks": ["required checks", "test/typecheck/lint gating", "env segregation", "rollback plan", "artifact retention"]
+    },
+    "observability": {
+      "checks": ["structured logs", "error categories + trace IDs", "basic SLIs/SLOs", "uptime probes for key routes"]
+    }
+  },
+  "methods": {
+    "mapping": [
+      "build dependency graph",
+      "enumerate routes/APIs/webhooks",
+      "crawl landing and primary flows",
+      "discover env vars + call sites",
+      "introspect SQL schema + slow queries"
+    ],
+    "static_analysis": [
+      "AST search for anti-patterns",
+      "tree-shake + dead code report",
+      "eslint/tsc strict pass",
+      "sql lint + migration diff"
+    ],
+    "dynamic_analysis": [
+      "spin up dev with seed data",
+      "automated API smoke tests",
+      "webhook replay in sandbox",
+      "Lighthouse run on landing page",
+      "Playwright flows for nav, auth, and key pages",
+      "basic load test on hot endpoints"
+    ]
+  },
+  "redundancy_and_over_engineering_rules": {
+    "prefer": [
+      "single source of truth per concern",
+      "shared util libs over duplicative helpers",
+      "config over code when stable",
+      "remove abstractions with <3 call sites"
+    ],
+    "ban": [
+      "wrappers-of-wrappers without measurable gain",
+      "premature generic factories",
+      "custom re-impl of std/stdlib features"
+    ]
+  },
+  "outputs": {
+    "reports": [
+      {
+        "name": "AUDIT_REPORT.md",
+        "sections": [
+          "System Map",
+          "Findings (ranked by impact/effort)",
+          "Security",
+          "Performance",
+          "DX & Maintainability",
+          "Database",
+          "CI/CD & Observability",
+          "Redundancy & Over-Engineering",
+          "Remediation Plan",
+          "Acceptance Criteria",
+          "Post-Remediation Health Score"
+        ]
+      }
+    ],
+    "changes": {
+      "branch": "audit/refactor-pass-1",
+      "artifacts": [
+        "code diffs",
+        "deleted files list",
+        "new/updated tests",
+        "eslint/tsconfig updates",
+        "sql migrations or index adds",
+        "GitHub Actions pipeline patch"
+      ],
+      "guardrails": [
+        "all tests green",
+        "no bundle budget regressions",
+        "no new eslint/ts errors",
+        "webhook replay success",
+        "Lighthouse thresholds met"
+      ]
+    }
+  },
+  "budgets": {
+    "frontend_bundle_kb": 260,
+    "route_ttfb_ms": 300,
+    "p95_api_ms": 250,
+    "lighthouse_min": {
+      "performance": 90,
+      "accessibility": 92,
+      "seo": 92,
+      "best_practices": 92
+    }
+  },
+  "acceptance_criteria": [
+    "Critical/security issues fixed or ticketed with owner and due date",
+    "Dead code removed; unused deps pruned",
+    "Webhooks idempotent with retries configured",
+    "Top N slow queries optimized or indexed with before/after evidence",
+    "CI requires test + typecheck + lint; rollback plan documented",
+    "AUDIT_REPORT.md approved"
+  ],
+  "finalize": {
+    "create_prs": true,
+    "request_reviewers": ["@CleanExpo/maintainers"],
+    "post_summary_comment": true
+  }
+}
