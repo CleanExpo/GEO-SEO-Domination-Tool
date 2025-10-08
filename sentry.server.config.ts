@@ -1,53 +1,58 @@
-/**
- * Sentry Server-Side Configuration
- * This file configures Sentry for server-side errors (API routes, SSR)
- */
-
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Adjust this value in production, or use tracesSampler for greater control
+  // Environment
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || 'development',
+  release: process.env.NEXT_PUBLIC_RELEASE_VERSION,
+
+  // Performance Monitoring
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
+  // Enable profiling
+  profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 
-  // Server-side integrations
+  // Server-specific integrations
   integrations: [
-    new Sentry.Integrations.Http({ tracing: true }),
+    Sentry.httpIntegration({
+      tracing: true,
+      breadcrumbs: true,
+    }),
   ],
 
+  // Error filtering
   beforeSend(event, hint) {
-    // Remove sensitive server-side data
-    if (event.request) {
-      // Remove authorization headers
-      if (event.request.headers) {
-        delete event.request.headers['authorization'];
-        delete event.request.headers['cookie'];
-        delete event.request.headers['x-api-key'];
+    // Filter out non-critical errors
+    if (event.exception) {
+      const error = hint.originalException as Error | undefined;
+
+      // Don't send expected 404s
+      if (error?.message?.includes('404')) {
+        return null;
       }
 
-      // Remove sensitive environment variables from context
-      if (event.contexts?.runtime?.env) {
-        const sensitiveKeys = [
-          'ANTHROPIC_API_KEY',
-          'OPENAI_API_KEY',
-          'SEMRUSH_API_KEY',
-          'POSTGRES_URL',
-          'DATABASE_PASSWORD',
-          'SENTRY_AUTH_TOKEN',
-        ];
-
-        sensitiveKeys.forEach((key) => {
-          if (event.contexts?.runtime?.env?.[key]) {
-            event.contexts.runtime.env[key] = '[REDACTED]';
-          }
-        });
+      // Don't send expected auth redirects
+      if (error?.message?.includes('NEXT_REDIRECT')) {
+        return null;
       }
     }
 
     return event;
+  },
+
+  // Breadcrumb filtering
+  beforeBreadcrumb(breadcrumb, hint) {
+    // Don't send breadcrumbs for health checks
+    if (breadcrumb.category === 'http' && breadcrumb.data?.url?.includes('/health')) {
+      return null;
+    }
+
+    // Don't send breadcrumbs for static assets
+    if (breadcrumb.category === 'http' && breadcrumb.data?.url?.match(/\.(js|css|png|jpg|svg|woff2?)$/)) {
+      return null;
+    }
+
+    return breadcrumb;
   },
 });
