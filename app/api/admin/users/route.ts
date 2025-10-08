@@ -14,12 +14,15 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!; // server-only (mat
 function svc(){ return createClient(SUPABASE_URL, SERVICE_ROLE); }
 
 async function getUserInfo(){
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supa = createServerClient(SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, {
     cookies: {
-      get: (n)=> cookieStore.get(n)?.value,
-      set: (n,v,o)=> cookieStore.set({ name:n, value:v, ...o }),
-      remove: (n,o)=> cookieStore.set({ name:n, value:'', ...o, maxAge:0 })
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+      },
     }
   });
   const { data: { user } } = await supa.auth.getUser();
@@ -32,7 +35,7 @@ async function getUserInfo(){
   return { id, email, role } as const;
 }
 
-function clientIp(req: NextRequest){ return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.ip || 'unknown'; }
+function clientIp(req: NextRequest){ return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'; }
 
 export async function GET(req: NextRequest){
   const t0 = Date.now();

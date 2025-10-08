@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/database/init';
+import { getDatabase } from '@/lib/db';
 import { seoAuditAgent } from '@/services/agents/seo-audit-agent';
 import { socialMediaAuditAgent } from '@/services/agents/social-media-audit-agent';
+
+const db = getDatabase();
 
 /**
  * POST /api/crm/audit/full

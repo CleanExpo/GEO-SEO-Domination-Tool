@@ -7,12 +7,15 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function requireAdmin(req: NextRequest){
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supa = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL as string, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, {
     cookies: {
-      get: (n)=> cookieStore.get(n)?.value,
-      set: (n,v,o)=> cookieStore.set({ name:n, value:v, ...o }),
-      remove: (n,o)=> cookieStore.set({ name:n, value:'', ...o, maxAge:0 })
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+      },
     }
   });
   const { data: { user } } = await supa.auth.getUser();

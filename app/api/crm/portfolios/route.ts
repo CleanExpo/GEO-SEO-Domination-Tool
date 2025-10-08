@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/database/init';
+import { getDatabase } from '@/lib/db';
+
+const db = getDatabase();
 
 /**
  * POST /api/crm/portfolios

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Set the active company cookie
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('active_company_id', companyId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -76,7 +76,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const activeCompanyId = cookieStore.get('active_company_id')?.value;
 
     if (!activeCompanyId) {

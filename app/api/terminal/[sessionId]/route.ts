@@ -68,9 +68,9 @@ function getWebSocketServer(): WebSocketServer {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = params;
+  const { sessionId } = await params;
 
   // Check if this is a WebSocket upgrade request
   const upgrade = request.headers.get('upgrade');
@@ -126,9 +126,9 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = params;
+  const { sessionId } = await params;
 
   try {
     const { command } = await request.json();
@@ -159,9 +159,9 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = params;
+  const { sessionId } = await params;
 
   try {
     const success = terminalService.closeSession(sessionId);

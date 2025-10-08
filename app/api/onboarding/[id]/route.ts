@@ -12,10 +12,11 @@ const db = getDatabase();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const onboardingId = params.id;
+    const { id } = await params;
+    const onboardingId = id;
 
     // Try to get from memory first
     let progress = onboardingOrchestrator.getProgress(onboardingId);
