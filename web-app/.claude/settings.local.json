@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/GEO_SEO_Domination-Tool/**)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Add Client Autopilot System with Global MCP Integration\n\n- Add client-autopilot-agent.ts with autonomous workflow management\n- Add CircularTaskOrchestrator.tsx UI component for task visualization\n- Create client API endpoints (/api/clients, /api/v1)\n- Add client-subscriptions-schema.sql for subscription tracking\n- Implement global agent registry for coordinated multi-agent workflows\n- Add workspace configuration and development scripts (dev.ps1, setup.ps1)\n- Configure global MCP servers (Playwright, Filesystem, Git) for automation\n- Update Claude settings with additional Bash command permissions\n- Add comprehensive documentation (CLIENT_AUTOPILOT_IMPLEMENTATION.md, GO_LIVE_STATUS.md, UNIFIED_WORKSPACE_SETUP.md)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
