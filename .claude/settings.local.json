@@ -86,9 +86,34 @@
       "Bash(start http://localhost:3000/task-inbox)",
       "Bash(timeout 30 npm run db:init)",
       "Bash(timeout:*)",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "Bash(awk:*)",
+      "Bash(npm:*)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then grep -E \"(DATABASE_URL|POSTGRES_URL)\" .env.local)",
+      "Bash(else echo \".env.local not found\")",
+      "Bash(if [ -f .env.development ])",
+      "Bash(then grep -E \"(DATABASE_URL|POSTGRES_URL)\" .env.development)",
+      "Bash(else echo \".env.development not found\")",
+      "Bash(if [ -d \".next\" ])",
+      "Bash(then rm -rf .next)",
+      "Bash(else echo \".next directory not found\")",
+      "Bash(while read pid)",
+      "Bash(do taskkill //F //PID $pid)",
+      "Bash(done)",
+      "Bash(if [ -f .env ])",
+      "Bash(then cat .env)",
+      "Bash(else echo \".env file does not exist\")",
+      "Bash(vercel:*)",
+      "Bash(PORT=3001 npm run dev)",
+      "Bash(PORT=3002 npm run dev)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "shadcn-ui",
+    "shadcn"
+  ]
 }

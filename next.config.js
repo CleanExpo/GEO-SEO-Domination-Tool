@@ -42,7 +42,7 @@ const nextConfig = {
       // Mark optional dependencies as external to avoid bundling errors
       // These will gracefully fallback if not installed
       config.externals = config.externals || [];
-      config.externals.push('pg', 'pg-native', 'ioredis');
+      config.externals.push('pg', 'pg-native', 'ioredis', 'better-sqlite3');
     }
 
     // Suppress warnings for optional dependencies

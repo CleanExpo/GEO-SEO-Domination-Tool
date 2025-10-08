@@ -14,6 +14,9 @@
     "db:test:verbose": "node scripts/test-db-connection-verbose.js",
     "db:migrate": "node scripts/migrate.js",
     "db:migrate:status": "node scripts/migrate.js status",
+    "test:saved-onboarding": "node scripts/test-saved-onboarding.js",
+    "test:onboarding-api": "node scripts/test-api-direct.js",
+    "test:onboarding-complete": "node scripts/test-onboarding-complete.js",
     "check:env": "node scripts/check-env.ts",
     "check:apis": "node scripts/check-apis.ts",
     "check:all": "npm run db:test:verbose && npm run check:env && npm run check:apis"

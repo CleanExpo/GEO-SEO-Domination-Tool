@@ -20,17 +20,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
+    await db.initialize();
 
     // Check if save already exists
-    const existing = await db.get(
+    const existing = await db.queryOne(
       `SELECT id FROM saved_onboarding WHERE business_name = ? AND email = ?`,
       [businessName, email]
     );
 
     if (existing) {
       // Update existing save
-      await db.run(
+      await db.query(
         `UPDATE saved_onboarding
          SET form_data = ?, current_step = ?, last_saved = CURRENT_TIMESTAMP
          WHERE business_name = ? AND email = ?`,
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // Insert new save
-      await db.run(
+      await db.query(
         `INSERT INTO saved_onboarding (business_name, email, form_data, current_step, last_saved)
          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [businessName, email, JSON.stringify(formData), currentStep]
@@ -75,9 +76,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
+    await db.initialize();
 
-    const saved = await db.get(
+    const saved = await db.queryOne(
       `SELECT form_data, current_step, last_saved
        FROM saved_onboarding
        WHERE business_name = ? AND email = ?`,

@@ -39,17 +39,34 @@ export class DatabaseClient {
    * Detect database configuration from environment variables
    */
   private detectDatabaseConfig(): DatabaseConfig {
-    const pgConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    // Force SQLite for local development (non-production environments)
+    // This prevents Vercel's development environment variables from being used locally
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+    const forceLocalDb = process.env.FORCE_LOCAL_DB === 'true' || process.env.USE_SQLITE === 'true';
 
+    // Use SQLite if explicitly forced OR if not in production
+    if (forceLocalDb || !isProduction) {
+      const sqlitePath = process.env.SQLITE_PATH || path.join(process.cwd(), 'data', 'geo-seo.db');
+      console.log(`🔧 Using SQLite database at: ${sqlitePath}`);
+      return {
+        type: 'sqlite',
+        sqlitePath,
+      };
+    }
+
+    // In production, use PostgreSQL if available
+    const pgConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     if (pgConnectionString) {
+      console.log('🔧 Using PostgreSQL database (production)');
       return {
         type: 'postgres',
         connectionString: pgConnectionString,
       };
     }
 
-    // Default to SQLite for local development
+    // Fallback to SQLite if no PostgreSQL connection in production
     const sqlitePath = process.env.SQLITE_PATH || path.join(process.cwd(), 'data', 'geo-seo.db');
+    console.log(`🔧 Falling back to SQLite database at: ${sqlitePath}`);
     return {
       type: 'sqlite',
       sqlitePath,
