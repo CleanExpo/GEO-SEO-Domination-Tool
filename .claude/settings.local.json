@@ -114,7 +114,10 @@
       "Bash(do echo \"Attempting to kill shell $shell_id\")",
       "Bash(cmd //c:*)",
       "Bash(gh auth:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(else echo \".next not found\")",
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(export NODE_ENV=production)"
     ],
     "deny": [],
     "ask": []
