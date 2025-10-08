@@ -1,22 +1,13 @@
-/**
- * DeepSeek V3 Backlink Analysis
- * AI-powered backlink discovery and quality scoring
- * Replaces: Ahrefs Backlink Checker, SEMrush Backlink Analytics
- */
-
-import OpenAI from 'openai';
-import { FirecrawlService } from './firecrawl';
-import type { BacklinkData } from './deepseek-seo';
-
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
-
-const deepseek = new OpenAI({
-  apiKey: DEEPSEEK_API_KEY,
-  baseURL: DEEPSEEK_BASE_URL,
-});
-
-const firecrawl = new FirecrawlService();
+// Lazy-load firecrawl to avoid build-time errors
+let _firecrawl: FirecrawlService | null = null;
+function getFirecrawl(): FirecrawlService {
+  if (!_firecrawl) {
+    _firecrawl = new FirecrawlService({
+      apiKey: process.env.FIRECRAWL_API_KEY || 'build-time-dummy-key'
+    });
+  }
+  return _firecrawl;
+}
 
 export class DeepSeekBacklinkAnalysis {
   /**
@@ -129,7 +120,7 @@ export class DeepSeekBacklinkAnalysis {
 
     try {
       // Scrape the source page
-      const scrapedData = await firecrawl.scrapeUrl(`https://${sourceDomain}`, {
+      const scrapedData = await getFirecrawl().scrapeUrl(`https://${sourceDomain}`, {
         formats: ['html', 'markdown'],
         onlyMainContent: true,
       });

@@ -1,33 +1,13 @@
-/**
- * DeepSeek V3 LOCAL/GEO SEO Intelligence
- * AI-powered local SEO analysis and optimization
- * Replaces: BrightLocal, Whitespark, Local Falcon
- *
- * Features:
- * - Google Business Profile optimization
- * - Local pack ranking tracking
- * - Citation building and monitoring
- * - Local keyword research
- * - Competitor local analysis
- * - Review management insights
- * - Geographic heat mapping
- * - Share of Local Voice (SoLV)
- */
-
-import OpenAI from 'openai';
-import { FirecrawlService } from './firecrawl';
-import { deepseekSEO } from './deepseek-seo';
-
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-
-const deepseek = new OpenAI({
-  apiKey: DEEPSEEK_API_KEY,
-  baseURL: DEEPSEEK_BASE_URL,
-});
-
-const firecrawl = new FirecrawlService();
+// Lazy-load firecrawl to avoid build-time errors
+let _firecrawl: FirecrawlService | null = null;
+function getFirecrawl(): FirecrawlService {
+  if (!_firecrawl) {
+    _firecrawl = new FirecrawlService({
+      apiKey: process.env.FIRECRAWL_API_KEY || 'build-time-dummy-key'
+    });
+  }
+  return _firecrawl;
+}
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -458,7 +438,7 @@ Return ONLY valid JSON:
       // Scrape the citation source
       const searchUrl = `https://${source}/search?q=${encodeURIComponent(businessProfile.businessName + ' ' + businessProfile.city)}`;
 
-      const scrapedData = await firecrawl.scrapeUrl(searchUrl, {
+      const scrapedData = await getFirecrawl().scrapeUrl(searchUrl, {
         formats: ['html', 'markdown'],
         onlyMainContent: true,
       });

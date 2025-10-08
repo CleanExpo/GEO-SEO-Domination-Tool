@@ -1,23 +1,13 @@
-/**
- * DeepSeek V3 Content Gap Analysis
- * AI-powered content opportunity discovery
- * Replaces: SEMrush Content Gap Tool, Ahrefs Content Gap
- */
-
-import OpenAI from 'openai';
-import { FirecrawlService } from './firecrawl';
-import { deepseekSEO } from './deepseek-seo';
-import type { ContentGap } from './deepseek-seo';
-
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
-
-const deepseek = new OpenAI({
-  apiKey: DEEPSEEK_API_KEY,
-  baseURL: DEEPSEEK_BASE_URL,
-});
-
-const firecrawl = new FirecrawlService();
+// Lazy-load firecrawl to avoid build-time errors
+let _firecrawl: FirecrawlService | null = null;
+function getFirecrawl(): FirecrawlService {
+  if (!_firecrawl) {
+    _firecrawl = new FirecrawlService({
+      apiKey: process.env.FIRECRAWL_API_KEY || 'build-time-dummy-key'
+    });
+  }
+  return _firecrawl;
+}
 
 export class DeepSeekContentGapAnalysis {
   /**
@@ -76,7 +66,7 @@ export class DeepSeekContentGapAnalysis {
   }> {
     try {
       // Scrape website
-      const scrapedData = await firecrawl.scrapeUrl(`https://${domain}`, {
+      const scrapedData = await getFirecrawl().scrapeUrl(`https://${domain}`, {
         formats: ['markdown'],
         onlyMainContent: true,
       });

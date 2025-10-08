@@ -15,7 +15,16 @@
 import { getDeepSeekClient, getDeepSeekModelName, isDeepSeekAvailable } from '@/lib/deepseek-config';
 import { FirecrawlService } from './firecrawl';
 
-const firecrawl = new FirecrawlService();
+// Lazy-load firecrawl to avoid build-time errors
+let _firecrawl: FirecrawlService | null = null;
+function getFirecrawl(): FirecrawlService {
+  if (!_firecrawl) {
+    _firecrawl = new FirecrawlService({
+      apiKey: process.env.FIRECRAWL_API_KEY || 'build-time-dummy-key'
+    });
+  }
+  return _firecrawl;
+}
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -465,7 +474,7 @@ export class DeepSeekCompetitorAnalysis {
 
     try {
       // Step 1: Scrape competitor website with Firecrawl
-      const scrapedData = await firecrawl.scrapeUrl(`https://${domain}`, {
+      const scrapedData = await getFirecrawl().scrapeUrl(`https://${domain}`, {
         formats: ['markdown', 'html'],
         onlyMainContent: true,
       });

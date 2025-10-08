@@ -1,45 +1,13 @@
-/**
- * DeepSeek V3 Data Aggregator
- * Combines multiple data sources to rival Ahrefs data depth
- *
- * DATA SOURCES:
- * 1. DeepSeek V3 AI (analysis & estimation)
- * 2. DataForSEO API (cheap SERP data)
- * 3. Firecrawl (web scraping)
- * 4. Google PageSpeed Insights (free)
- * 5. Common Crawl (free backlink data)
- * 6. Web Archives (historical data)
- * 7. Social APIs (free tier data)
- * 8. DNS/WHOIS data (free)
- * 9. Schema.org extraction
- * 10. Public databases (Majestic Million, etc.)
- *
- * CAPABILITIES MATCHING AHREFS:
- * ✅ Domain Overview (traffic, DR, backlinks, keywords)
- * ✅ Backlink Analysis (quality, anchor text, referring domains)
- * ✅ Keyword Explorer (volume, difficulty, SERP)
- * ✅ Rank Tracker (positions, competitors)
- * ✅ Site Audit (technical SEO issues)
- * ✅ Content Explorer (top content, gaps)
- * ✅ Competitor Analysis (overlap, gaps)
- * ✅ SERP Analysis (features, rankings)
- */
-
-import OpenAI from 'openai';
-import axios from 'axios';
-import { FirecrawlService } from './firecrawl';
-
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
-const DATAFORSEO_API_KEY = process.env.DATAFORSEO_API_KEY;
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-
-const deepseek = new OpenAI({
-  apiKey: DEEPSEEK_API_KEY,
-  baseURL: DEEPSEEK_BASE_URL,
-});
-
-const firecrawl = new FirecrawlService();
+// Lazy-load firecrawl to avoid build-time errors
+let _firecrawl: FirecrawlService | null = null;
+function getFirecrawl(): FirecrawlService {
+  if (!_firecrawl) {
+    _firecrawl = new FirecrawlService({
+      apiKey: process.env.FIRECRAWL_API_KEY || 'build-time-dummy-key'
+    });
+  }
+  return _firecrawl;
+}
 
 // ============================================================================
 // AHREFS-EQUIVALENT DATA TYPES
@@ -366,7 +334,7 @@ export class DeepSeekDataAggregator {
     trend: { month: string; traffic: number }[];
   }> {
     // Scrape website to analyze content
-    const scrapedData = await firecrawl.scrapeUrl(`https://${domain}`, {
+    const scrapedData = await getFirecrawl().scrapeUrl(`https://${domain}`, {
       formats: ['markdown'],
       onlyMainContent: true,
     }).catch(() => ({ markdown: '' }));
