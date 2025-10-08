@@ -112,7 +112,9 @@
       "Bash(do echo \"Killing PID: $pid\")",
       "Bash(for shell_id in 395546 573600 f11fd6 14edcd 14e170 b0f31f ee6e5a a7c8ee 10d126 c2b28b eeaca6 571fa2 f23985 6a947d)",
       "Bash(do echo \"Attempting to kill shell $shell_id\")",
-      "Bash(cmd //c:*)"
+      "Bash(cmd //c:*)",
+      "Bash(gh auth:*)",
+      "Bash(git remote set-url:*)"
     ],
     "deny": [],
     "ask": []
