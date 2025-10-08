@@ -123,3 +123,4 @@ tools/coding-agent/
 integrations/
 
 .env*.local
+.env.preview

@@ -79,7 +79,10 @@
       "Bash(taskkill:*)",
       "Bash(tree:*)",
       "Bash(node:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(tasklist)",
+      "Bash(tee:*)",
+      "Bash(start http://localhost:3000/content-opportunities)"
     ],
     "deny": [],
     "ask": []
