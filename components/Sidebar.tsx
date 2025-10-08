@@ -170,15 +170,25 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Sign Out */}
+      {/* Sign In/Out */}
       <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full"
-        >
-          <LogOut className="h-5 w-5" />
-          Sign Out
-        </button>
+        {user ? (
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full"
+          >
+            <LogOut className="h-5 w-5" />
+            Sign Out
+          </button>
+        ) : (
+          <Link
+            href="/auth/signin"
+            className="flex items-center justify-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg shadow-emerald-500/30 w-full"
+          >
+            <UserPlus className="h-5 w-5" />
+            Sign In / Sign Up
+          </Link>
+        )}
       </div>
 
       {/* User Profile */}
