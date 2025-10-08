@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db';
-import { getCl audeClient } from '@/services/api/claude';
+import Anthropic from '@anthropic-ai/sdk';
 
 export async function POST(
   request: NextRequest,
@@ -36,7 +36,9 @@ export async function POST(
     const keyBullets = JSON.parse(opportunity.key_bullets || '[]');
 
     // Generate content using Claude
-    const claude = getClaudeClient();
+    const claude = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY || ''
+    });
     const generatedContent: any = {};
 
     // 1. Article Plan
