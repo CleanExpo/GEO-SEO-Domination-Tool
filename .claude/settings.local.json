@@ -82,7 +82,8 @@
       "Bash(sqlite3:*)",
       "Bash(tasklist)",
       "Bash(tee:*)",
-      "Bash(start http://localhost:3000/content-opportunities)"
+      "Bash(start http://localhost:3000/content-opportunities)",
+      "Bash(start http://localhost:3000/task-inbox)"
     ],
     "deny": [],
     "ask": []
