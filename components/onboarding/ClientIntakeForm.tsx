@@ -12,7 +12,7 @@
  * - Service selection
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Building2,
@@ -24,7 +24,9 @@ import {
   FileText,
   Sparkles,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Save,
+  FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +77,8 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const [formData, setFormData] = useState<ClientIntakeData>({
     businessName: '',
@@ -115,6 +119,102 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
     const currentArray = formData[field] as string[];
     updateField(field, currentArray.filter(item => item !== value) as any);
   };
+
+  // Save progress function
+  const saveProgress = async () => {
+    if (!formData.businessName || !formData.email) {
+      toast({
+        title: 'Cannot Save',
+        description: 'Please enter Business Name and Email first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/onboarding/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessName: formData.businessName,
+          email: formData.email,
+          formData,
+          currentStep
+        })
+      });
+
+      if (response.ok) {
+        setLastSaved(new Date());
+        toast({
+          title: 'Progress Saved!',
+          description: 'Your onboarding progress has been saved'
+        });
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Could not save progress. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Load saved progress function
+  const loadSavedProgress = async () => {
+    const businessName = prompt('Enter your Business Name:');
+    const email = prompt('Enter your Email:');
+
+    if (!businessName || !email) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch(
+        `/api/onboarding/save?businessName=${encodeURIComponent(businessName)}&email=${encodeURIComponent(email)}`
+      );
+      const data = await response.json();
+
+      if (data.found) {
+        setFormData(data.formData);
+        setCurrentStep(data.currentStep);
+        setLastSaved(new Date(data.lastSaved));
+
+        toast({
+          title: 'Progress Loaded!',
+          description: `Resumed from step ${data.currentStep + 1} of 5`
+        });
+      } else {
+        toast({
+          title: 'No Saved Progress',
+          description: 'No saved data found for this business and email',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Load Failed',
+        description: 'Could not load progress. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Auto-save on form changes (with debounce)
+  useEffect(() => {
+    if (formData.businessName && formData.email) {
+      const timer = setTimeout(() => {
+        saveProgress();
+      }, 3000); // Auto-save 3 seconds after changes
+
+      return () => clearTimeout(timer);
+    }
+  }, [formData, currentStep]);
 
   const steps = [
     { id: 'business', title: 'Business Info', icon: Building2 },
@@ -220,10 +320,41 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
       {/* Form Content */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {steps[currentStep].title}
-            <Badge variant="outline">Step {currentStep + 1} of {steps.length}</Badge>
-          </CardTitle>
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="flex items-center gap-2">
+              {steps[currentStep].title}
+              <Badge variant="outline">Step {currentStep + 1} of {steps.length}</Badge>
+            </CardTitle>
+
+            <div className="flex items-center gap-2">
+              {lastSaved && (
+                <span className="text-xs text-muted-foreground">
+                  Saved: {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={saveProgress}
+                disabled={saving || !formData.businessName || !formData.email}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadSavedProgress}
+                disabled={saving}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Load
+              </Button>
+            </div>
+          </div>
+
           <CardDescription>
             {currentStep === 0 && 'Tell us about your business'}
             {currentStep === 1 && 'Website information and platform details'}
