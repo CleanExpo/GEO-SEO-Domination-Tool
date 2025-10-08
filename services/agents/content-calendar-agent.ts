@@ -150,16 +150,25 @@ const OPTIMAL_TIMES: Record<string, PostingWindow[]> = {
 
 export class ContentCalendarAgent {
   private dbPath: string;
+  private dbInitialized: boolean = false;
 
   constructor() {
     this.dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
-    this.ensureScheduledPostsTable();
   }
 
   /**
    * Create scheduled_posts table if it doesn't exist
    */
   private ensureScheduledPostsTable(): void {
+    // Skip during build time
+    if (typeof window !== 'undefined' || !process.env.NODE_ENV) {
+      return;
+    }
+
+    if (this.dbInitialized) {
+      return;
+    }
+
     const db = new Database(this.dbPath);
     try {
       db.exec(`
@@ -184,6 +193,7 @@ export class ContentCalendarAgent {
         CREATE INDEX IF NOT EXISTS idx_scheduled_posts_scheduled_for ON scheduled_posts(scheduled_for);
         CREATE INDEX IF NOT EXISTS idx_scheduled_posts_status ON scheduled_posts(status);
       `);
+      this.dbInitialized = true;
     } finally {
       db.close();
     }
@@ -193,6 +203,8 @@ export class ContentCalendarAgent {
    * Generate a content calendar for a date range
    */
   async generateCalendar(request: CalendarRequest): Promise<CalendarReport> {
+    this.ensureScheduledPostsTable();
+
     console.log(`[Content Calendar] Generating calendar for portfolio ${request.portfolioId}`);
     console.log(`[Content Calendar] Date range: ${request.startDate} to ${request.endDate}`);
 
@@ -371,6 +383,8 @@ export class ContentCalendarAgent {
    * Process due posts (to be called by cron job)
    */
   async processDuePosts(): Promise<void> {
+    this.ensureScheduledPostsTable();
+
     console.log('[Content Calendar] Processing due posts...');
 
     const db = new Database(this.dbPath);
