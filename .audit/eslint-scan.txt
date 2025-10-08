@@ -1,0 +1,18 @@
+
+Oops! Something went wrong! :(
+
+ESLint: 9.36.0
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'eslint-plugin-react-hooks' imported from d:\GEO_SEO_Domination-Tool\eslint.config.js
+    at packageResolve (node:internal/modules/esm/resolve:873:9)
+    at moduleResolve (node:internal/modules/esm/resolve:946:18)
+    at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:642:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:591:25)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:574:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:236:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:130:49)
+(node:68472) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///d:/GEO_SEO_Domination-Tool/eslint.config.js?mtime=1759575954145 is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to d:\GEO_SEO_Domination-Tool\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
