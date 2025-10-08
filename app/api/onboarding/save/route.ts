@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
     const db = getDatabase();
     await db.initialize();
 
+    // Detect if using PostgreSQL (JSONB) or SQLite (TEXT)
+    const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    const formDataValue = isPostgres ? formData : JSON.stringify(formData);
+
     // Check if save already exists
     const existing = await db.queryOne(
       `SELECT id FROM saved_onboarding WHERE business_name = ? AND email = ?`,
@@ -33,16 +37,16 @@ export async function POST(request: NextRequest) {
       // Update existing save
       await db.query(
         `UPDATE saved_onboarding
-         SET form_data = ?, current_step = ?, last_saved = CURRENT_TIMESTAMP
+         SET form_data = ?, current_step = ?, last_saved = ${isPostgres ? 'NOW()' : 'CURRENT_TIMESTAMP'}
          WHERE business_name = ? AND email = ?`,
-        [JSON.stringify(formData), currentStep, businessName, email]
+        [formDataValue, currentStep, businessName, email]
       );
     } else {
       // Insert new save
       await db.query(
         `INSERT INTO saved_onboarding (business_name, email, form_data, current_step, last_saved)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-        [businessName, email, JSON.stringify(formData), currentStep]
+         VALUES (?, ?, ?, ?, ${isPostgres ? 'NOW()' : 'CURRENT_TIMESTAMP'})`,
+        [businessName, email, formDataValue, currentStep]
       );
     }
 
@@ -93,9 +97,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Handle both JSONB (PostgreSQL) and TEXT (SQLite) formats
+    const formData = typeof saved.form_data === 'string'
+      ? JSON.parse(saved.form_data)
+      : saved.form_data;
+
     return NextResponse.json({
       found: true,
-      formData: JSON.parse(saved.form_data),
+      formData,
       currentStep: saved.current_step,
       lastSaved: saved.last_saved
     });
