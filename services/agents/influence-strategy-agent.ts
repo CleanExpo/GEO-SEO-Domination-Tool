@@ -140,16 +140,25 @@ export interface CampaignReport {
 
 export class InfluenceStrategyAgent {
   private dbPath: string;
+  private dbInitialized: boolean = false;
 
   constructor() {
     this.dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
-    this.ensureCampaignsTable();
   }
 
   /**
    * Create influence_campaigns table
    */
   private ensureCampaignsTable(): void {
+    // Skip during build time
+    if (typeof window !== 'undefined' || !process.env.NODE_ENV) {
+      return;
+    }
+
+    if (this.dbInitialized) {
+      return;
+    }
+
     const db = new Database(this.dbPath);
     try {
       db.exec(`
@@ -177,6 +186,7 @@ export class InfluenceStrategyAgent {
         CREATE INDEX IF NOT EXISTS idx_campaigns_trend ON influence_campaigns(trend_id);
         CREATE INDEX IF NOT EXISTS idx_campaigns_status ON influence_campaigns(status);
       `);
+      this.dbInitialized = true;
     } finally {
       db.close();
     }
@@ -186,6 +196,8 @@ export class InfluenceStrategyAgent {
    * Create influence campaign from a trend
    */
   async createCampaign(request: InfluenceCampaignRequest): Promise<CampaignReport> {
+    this.ensureCampaignsTable();
+
     console.log(`[Influence Strategy] Creating campaign for trend ${request.trendId}`);
 
     const db = new Database(this.dbPath);
@@ -507,6 +519,8 @@ Return as JSON:
    * Execute campaign (auto-generate and schedule content)
    */
   async executeCampaign(campaignId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    this.ensureCampaignsTable();
+
     console.log(`[Influence Strategy] Executing campaign ${campaignId}`);
 
     const db = new Database(this.dbPath);
