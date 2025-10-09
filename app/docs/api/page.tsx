@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * API Documentation Page
  * Comprehensive REST API documentation with examples
