@@ -1,4 +1,5 @@
 import { ClaudeService } from './claude'
+import * as Sentry from '@sentry/nextjs'
 
 export interface AISearchStrategy {
   id?: number
@@ -63,7 +64,10 @@ export class AISearchService {
           full_response: response,
         })
       } catch (error) {
-        console.error(`Error checking visibility for query: ${query}`, error)
+        Sentry.captureException(error, {
+          tags: { service: 'ai-search', operation: 'checkAIVisibility' },
+          contexts: { aiSearch: { query, brandName, industry } }
+        })
       }
     }
 
