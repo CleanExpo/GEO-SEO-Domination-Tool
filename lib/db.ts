@@ -116,7 +116,13 @@ export class DatabaseClient {
       await this.initialize();
     }
 
+    // Debug: Log database type detection
+    console.log('[DEBUG] Database config type:', this.config.type);
+    console.log('[DEBUG] DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('[DEBUG] POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
+
     if (this.config.type === 'postgres') {
+      console.log('[DEBUG] ✅ PostgreSQL branch selected');
       // Convert ? placeholders to $1, $2, $3 for PostgreSQL
       let paramIndex = 1;
       const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
@@ -132,6 +138,7 @@ export class DatabaseClient {
         rowCount: result.rowCount || 0,
       };
     } else {
+      console.log('[DEBUG] ❌ SQLite branch selected (ERROR if production!)');
       // SQLite
       try {
         if (sql.trim().toUpperCase().startsWith('SELECT') || sql.trim().toUpperCase().startsWith('PRAGMA')) {
