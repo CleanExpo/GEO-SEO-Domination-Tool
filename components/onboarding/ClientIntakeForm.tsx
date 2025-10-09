@@ -23,7 +23,9 @@ import {
   ArrowRight,
   ChevronRight,
   Save,
-  FolderOpen
+  FolderOpen,
+  Search,
+  Sparkle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +77,7 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
 
   const [formData, setFormData] = useState<ClientIntakeData>({
     businessName: '',
@@ -224,6 +227,70 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
     } finally {
       setSaving(false);
       console.log('[Load] Finished');
+    }
+  };
+
+  // Business lookup function - auto-populate from Google Business Profile
+  const lookupBusiness = async () => {
+    const query = prompt('Enter business name and location (e.g., "Joe\'s Pizza Brisbane")');
+
+    if (!query || query.trim().length < 3) {
+      console.log('[Lookup] Cancelled or invalid query');
+      return;
+    }
+
+    console.log('[Lookup] Searching for:', query);
+    setLookingUp(true);
+
+    try {
+      const response = await fetch('/api/onboarding/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await response.json();
+      console.log('[Lookup] Response:', data);
+
+      if (data.found) {
+        // Auto-populate form fields
+        setFormData(prev => ({
+          ...prev,
+          businessName: data.businessName || prev.businessName,
+          phone: data.phone || prev.phone,
+          address: data.address || prev.address,
+          industry: data.industry || prev.industry,
+          website: data.website || prev.website,
+          websitePlatform: data.websitePlatform || prev.websitePlatform,
+          competitors: data.competitors?.map((c: any) => c.name || c.website).filter(Boolean) || prev.competitors,
+          targetKeywords: data.keywords || prev.targetKeywords,
+          targetLocations: data.location?.formatted ? [data.location.formatted.split(',')[1]?.trim() || ''] : prev.targetLocations
+        }));
+
+        toast({
+          title: 'Business Found!',
+          description: `Auto-populated ${data.businessName} details from Google Business Profile`,
+          duration: 5000
+        });
+
+        console.log('[Lookup] Form auto-populated successfully');
+      } else {
+        toast({
+          title: 'Business Not Found',
+          description: 'Could not find business in Google. Please enter details manually.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      console.error('[Lookup] Error:', error);
+      toast({
+        title: 'Lookup Failed',
+        description: error.message || 'Failed to lookup business',
+        variant: 'destructive'
+      });
+    } finally {
+      setLookingUp(false);
+      console.log('[Lookup] Finished');
     }
   };
 
@@ -378,6 +445,17 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Load
+              </Button>
+
+              <Button
+                variant="default"
+                size="sm"
+                onClick={lookupBusiness}
+                disabled={lookingUp}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                <Sparkle className="h-4 w-4 mr-2" />
+                {lookingUp ? 'Looking up...' : 'Auto-Fill from Google'}
               </Button>
             </div>
           </div>
