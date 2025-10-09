@@ -57,10 +57,33 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Failed to save onboarding progress:', error);
+
+    // Check if error is due to missing table
+    const isMissingTable = error.message?.includes('does not exist') ||
+                          error.message?.includes('relation') ||
+                          error.code === '42P01'; // PostgreSQL error code for undefined table
+
+    if (isMissingTable) {
+      console.error('❌ CRITICAL: saved_onboarding table does not exist in database!');
+      console.error('Run database/supabase-saved-onboarding.sql in Supabase SQL Editor');
+      console.error('See SUPABASE_SAVED_ONBOARDING_SETUP.md for instructions');
+
+      return NextResponse.json(
+        {
+          error: 'Database table not initialized',
+          details: 'The saved_onboarding table does not exist. Please contact support.',
+          code: 'TABLE_MISSING',
+          instructions: 'See SUPABASE_SAVED_ONBOARDING_SETUP.md'
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to save progress',
-        details: error.message
+        details: error.message,
+        code: error.code
       },
       { status: 500 }
     );
@@ -111,10 +134,31 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Failed to load onboarding progress:', error);
+
+    // Check if error is due to missing table
+    const isMissingTable = error.message?.includes('does not exist') ||
+                          error.message?.includes('relation') ||
+                          error.code === '42P01';
+
+    if (isMissingTable) {
+      console.error('❌ CRITICAL: saved_onboarding table does not exist in database!');
+      console.error('Run database/supabase-saved-onboarding.sql in Supabase SQL Editor');
+
+      return NextResponse.json(
+        {
+          error: 'Database table not initialized',
+          details: 'The saved_onboarding table does not exist. Please contact support.',
+          code: 'TABLE_MISSING'
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to load progress',
-        details: error.message
+        details: error.message,
+        code: error.code
       },
       { status: 500 }
     );
