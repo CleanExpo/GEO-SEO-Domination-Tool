@@ -147,14 +147,21 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
           description: 'Your onboarding progress has been saved'
         });
       } else {
-        throw new Error('Failed to save');
+        // Get actual error details from response
+        const errorData = await response.json();
+        throw new Error(
+          `Save failed (${response.status}): ${errorData.error || errorData.details || 'Unknown error'}\n${JSON.stringify(errorData, null, 2)}`
+        );
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Show the actual error, not a generic message
       toast({
         title: 'Save Failed',
-        description: 'Could not save progress. Please try again.',
+        description: error.message || String(error),
         variant: 'destructive'
       });
+      // Also log to console for debugging
+      console.error('Save error:', error);
     } finally {
       setSaving(false);
     }
@@ -190,12 +197,14 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
           variant: 'destructive'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Show actual error details
       toast({
         title: 'Load Failed',
-        description: 'Could not load progress. Please try again.',
+        description: error.message || String(error),
         variant: 'destructive'
       });
+      console.error('Load error:', error);
     } finally {
       setSaving(false);
     }
@@ -244,14 +253,19 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
           router.push(`/onboarding/${data.onboardingId}`);
         }
       } else {
-        throw new Error(data.error || 'Failed to start onboarding');
+        // Show full error details including status and response
+        throw new Error(
+          `Onboarding failed (${response.status}): ${data.error || 'Unknown error'}\nDetails: ${JSON.stringify(data, null, 2)}`
+        );
       }
     } catch (error: any) {
+      // Show full error message
       toast({
         title: 'Error',
-        description: error.message,
+        description: error.message || String(error),
         variant: 'destructive'
       });
+      console.error('Onboarding error:', error);
     } finally {
       setLoading(false);
     }
