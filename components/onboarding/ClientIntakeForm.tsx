@@ -172,25 +172,40 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
     const businessName = prompt('Enter your Business Name:');
     const email = prompt('Enter your Email:');
 
-    if (!businessName || !email) return;
+    if (!businessName || !email) {
+      console.log('[Load] Cancelled - no business name or email provided');
+      return;
+    }
 
+    console.log('[Load] Attempting to load:', { businessName, email });
     setSaving(true);
+
     try {
-      const response = await fetch(
-        `/api/onboarding/save?businessName=${encodeURIComponent(businessName)}&email=${encodeURIComponent(email)}`
-      );
+      const url = `/api/onboarding/save?businessName=${encodeURIComponent(businessName)}&email=${encodeURIComponent(email)}`;
+      console.log('[Load] Fetching:', url);
+
+      const response = await fetch(url);
       const data = await response.json();
 
+      console.log('[Load] Response status:', response.status);
+      console.log('[Load] Response data:', data);
+
       if (data.found) {
+        console.log('[Load] Data found! Setting form data:', data.formData);
+        console.log('[Load] Current step:', data.currentStep);
+
         setFormData(data.formData);
         setCurrentStep(data.currentStep);
         setLastSaved(new Date(data.lastSaved));
 
+        console.log('[Load] State updated successfully');
+
         toast({
           title: 'Progress Loaded!',
-          description: `Resumed from step ${data.currentStep + 1} of 5`
+          description: `Resumed from step ${data.currentStep + 1} of 5. Business: ${data.formData.businessName}`
         });
       } else {
+        console.log('[Load] No saved data found');
         toast({
           title: 'No Saved Progress',
           description: 'No saved data found for this business and email',
@@ -198,15 +213,17 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
         });
       }
     } catch (error: any) {
+      console.error('[Load] Error:', error);
+
       // Show actual error details
       toast({
         title: 'Load Failed',
         description: error.message || String(error),
         variant: 'destructive'
       });
-      console.error('Load error:', error);
     } finally {
       setSaving(false);
+      console.log('[Load] Finished');
     }
   };
 

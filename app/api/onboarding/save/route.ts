@@ -113,19 +113,40 @@ export async function GET(request: NextRequest) {
     const db = getDatabase();
     await db.initialize();
 
+    // Use case-insensitive search with TRIM to handle whitespace
+    // PostgreSQL: Use LOWER() and TRIM() for flexible matching
+    // SQLite: Use LOWER() and TRIM() for flexible matching
+    const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
     const saved = await db.queryOne(
-      `SELECT form_data, current_step, last_saved
+      `SELECT form_data, current_step, last_saved, business_name, email
        FROM saved_onboarding
-       WHERE business_name = ? AND email = ?`,
+       WHERE LOWER(TRIM(business_name)) = LOWER(TRIM(?))
+       AND LOWER(TRIM(email)) = LOWER(TRIM(?))`,
       [businessName, email]
     );
 
     if (!saved) {
+      // For debugging: show what we searched for
+      console.log('[Load] No saved data found for:', {
+        businessName: businessName.trim(),
+        email: email.trim()
+      });
+
       return NextResponse.json({
         found: false,
-        message: 'No saved progress found'
+        message: 'No saved progress found',
+        searchedFor: {
+          businessName: businessName.trim(),
+          email: email.trim()
+        }
       });
     }
+
+    console.log('[Load] Found saved data for:', {
+      businessName: saved.business_name,
+      email: saved.email
+    });
 
     // Handle both JSONB (PostgreSQL) and TEXT (SQLite) formats
     const formData = typeof saved.form_data === 'string'
