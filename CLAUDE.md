@@ -313,6 +313,35 @@ The repository includes extensive documentation:
 
 **Before making significant changes**: Review `DEPLOYMENT_CHECKPOINT.md` for known issues and fixes.
 
+## 🚨 CRITICAL: Before Debugging ANY Issue
+
+**ALWAYS run the pre-debug check script first:**
+
+```bash
+node scripts/pre-debug-check.js [issue-type]
+```
+
+**Issue types:**
+- `save` - Test save/onboarding endpoints (most common)
+- `database` - Test database connections
+- `api` - Test all API endpoints
+- `frontend` - Frontend debugging guidance
+
+**See [TROUBLESHOOTING_CHECKLIST.md](TROUBLESHOOTING_CHECKLIST.md) for full debugging workflow.**
+
+### Key Principle: Test Before Debugging
+
+> **DON'T:**
+> - Assume error messages are accurate
+> - Start debugging without confirming the issue exists
+> - Make multiple deployment attempts guessing at fixes
+>
+> **DO:**
+> - Run test scripts to verify the actual problem
+> - Test endpoints directly before debugging backend
+> - Check browser console before debugging frontend
+> - Read TROUBLESHOOTING_CHECKLIST.md when stuck
+
 ## Common Development Workflows
 
 ### Adding a New Feature
