@@ -37,51 +37,66 @@ export async function POST(request: NextRequest) {
     // Start traditional onboarding
     const onboardingId = await onboardingOrchestrator.startOnboarding(body);
 
-    // Create comprehensive Bytebot research task
-    const bytebot = getBytebotClient();
-    const bytebotTask = await bytebot.createTask(
-      buildOnboardingResearchPrompt(body),
-      {
-        priority: 'HIGH',
-        metadata: {
-          onboardingId,
-          businessName: body.businessName,
-          website: body.website,
-          taskType: 'onboarding_research'
+    // Try to create Bytebot research task (optional - graceful fallback if Bytebot unavailable)
+    let bytebotTaskId: string | null = null;
+    let bytebotMessage = '';
+
+    try {
+      const bytebot = getBytebotClient();
+      const bytebotTask = await bytebot.createTask(
+        buildOnboardingResearchPrompt(body),
+        {
+          priority: 'HIGH',
+          metadata: {
+            onboardingId,
+            businessName: body.businessName,
+            website: body.website,
+            taskType: 'onboarding_research'
+          }
         }
-      }
-    );
+      );
 
-    // Store Bytebot task reference in database
-    const db = getDatabase();
-    await db.initialize();
+      bytebotTaskId = bytebotTask.id;
 
-    await db.query(
-      `INSERT INTO bytebot_tasks (
-        bytebot_task_id, description, task_type, priority,
-        onboarding_id, metadata, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        bytebotTask.id,
-        'Comprehensive onboarding research',
-        'onboarding',
-        'HIGH',
-        onboardingId,
-        JSON.stringify({
-          businessName: body.businessName,
-          website: body.website,
-          competitors: body.competitors,
-          keywords: body.targetKeywords
-        }),
-        'RUNNING'
-      ]
-    );
+      // Store Bytebot task reference in database
+      const db = getDatabase();
+      await db.initialize();
+
+      await db.query(
+        `INSERT INTO bytebot_tasks (
+          bytebot_task_id, description, task_type, priority,
+          onboarding_id, metadata, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          bytebotTask.id,
+          'Comprehensive onboarding research',
+          'onboarding',
+          'HIGH',
+          onboardingId,
+          JSON.stringify({
+            businessName: body.businessName,
+            website: body.website,
+            competitors: body.competitors,
+            keywords: body.targetKeywords
+          }),
+          'RUNNING'
+        ]
+      );
+
+      bytebotMessage = ' Bytebot is conducting comprehensive research.';
+      console.log(`[Onboarding] Bytebot task created: ${bytebotTask.id}`);
+
+    } catch (bytebotError: any) {
+      // Bytebot unavailable - continue without it
+      console.warn('[Onboarding] Bytebot unavailable, continuing without automated research:', bytebotError.message);
+      bytebotMessage = ' Manual research required.';
+    }
 
     return Response.json({
       success: true,
       onboardingId,
-      bytebotTaskId: bytebotTask.id,
-      message: 'Onboarding started successfully. Bytebot is conducting comprehensive research.'
+      bytebotTaskId,
+      message: `Onboarding started successfully.${bytebotMessage}`
     }, { status: 201 });
   } catch (error: any) {
     console.error('Error starting onboarding:', error);
