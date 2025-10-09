@@ -4,6 +4,7 @@
  */
 
 import { chromium, Browser, Page, BrowserContext } from 'playwright';
+import * as Sentry from '@sentry/nextjs';
 
 export interface BrowserAction {
   type: 'navigate' | 'click' | 'fill' | 'scroll' | 'screenshot' | 'extract' | 'execute';
@@ -63,7 +64,12 @@ class BrowserAutomationService {
       startTime: Date.now()
     });
 
-    console.log(`[BrowserAutomation] Created session: ${sessionId}`);
+    Sentry.addBreadcrumb({
+      category: 'browser-automation',
+      message: 'Created browser session',
+      data: { sessionId, headless: options.headless },
+      level: 'info'
+    });
     return sessionId;
   }
 
@@ -144,7 +150,12 @@ class BrowserAutomationService {
           throw new Error(`Unknown action type: ${(action as any).type}`);
       }
 
-      console.log(`[BrowserAutomation] Executed ${action.type} in session ${sessionId}`);
+      Sentry.addBreadcrumb({
+        category: 'browser-automation',
+        message: `Executed ${action.type}`,
+        data: { sessionId, actionType: action.type },
+        level: 'info'
+      });
 
       return {
         success: true,
@@ -153,7 +164,10 @@ class BrowserAutomationService {
         timestamp: Date.now()
       };
     } catch (error: any) {
-      console.error(`[BrowserAutomation] Error in session ${sessionId}:`, error.message);
+      Sentry.captureException(error, {
+        tags: { service: 'browser-automation', sessionId },
+        contexts: { browserAction: { type: action.type, selector: action.selector } }
+      });
       return {
         success: false,
         error: error.message,
@@ -215,13 +229,23 @@ class BrowserAutomationService {
   async closeSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
     if (!session) {
-      console.warn(`[BrowserAutomation] Session ${sessionId} not found`);
+      Sentry.addBreadcrumb({
+        category: 'browser-automation',
+        message: 'Session not found during close',
+        data: { sessionId },
+        level: 'warning'
+      });
       return;
     }
 
     await session.browser.close();
     this.sessions.delete(sessionId);
-    console.log(`[BrowserAutomation] Closed session: ${sessionId}`);
+    Sentry.addBreadcrumb({
+      category: 'browser-automation',
+      message: 'Closed browser session',
+      data: { sessionId, duration: Date.now() - session.startTime },
+      level: 'info'
+    });
   }
 
   /**
@@ -237,7 +261,12 @@ class BrowserAutomationService {
   async closeAllSessions(): Promise<void> {
     const sessionIds = this.getActiveSessions();
     await Promise.all(sessionIds.map((id) => this.closeSession(id)));
-    console.log(`[BrowserAutomation] Closed all ${sessionIds.length} sessions`);
+    Sentry.addBreadcrumb({
+      category: 'browser-automation',
+      message: 'Closed all sessions',
+      data: { count: sessionIds.length },
+      level: 'info'
+    });
   }
 }
 
