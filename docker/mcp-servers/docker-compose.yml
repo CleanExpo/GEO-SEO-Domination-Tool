@@ -1,0 +1,77 @@
+# Docker Compose for MCP Servers
+# Runs browser automation MCP servers in isolated containers
+
+version: '3.8'
+
+services:
+  # Puppeteer MCP Server
+  puppeteer-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.puppeteer
+    container_name: geo-seo-puppeteer-mcp
+    restart: unless-stopped
+    environment:
+      - MCP_SERVER_TYPE=puppeteer
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+      - DISPLAY=:99
+    volumes:
+      - ./mcp-wrapper.js:/app/mcp-wrapper.js:ro
+      - puppeteer-screenshots:/app/screenshots
+    ports:
+      - "3100:3100"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    shm_size: '2gb'  # Required for Chromium
+    security_opt:
+      - seccomp:unconfined  # Required for sandboxing
+    labels:
+      - "com.geo-seo.service=mcp-server"
+      - "com.geo-seo.type=puppeteer"
+
+  # Playwright MCP Server
+  playwright-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    container_name: geo-seo-playwright-mcp
+    restart: unless-stopped
+    environment:
+      - MCP_SERVER_TYPE=playwright
+      - DISPLAY=:99
+    volumes:
+      - ./mcp-wrapper.js:/app/mcp-wrapper.js:ro
+      - playwright-screenshots:/app/screenshots
+    ports:
+      - "3101:3101"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "npx", "playwright", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    shm_size: '2gb'  # Required for browsers
+    security_opt:
+      - seccomp:unconfined
+    labels:
+      - "com.geo-seo.service=mcp-server"
+      - "com.geo-seo.type=playwright"
+
+networks:
+  mcp-network:
+    driver: bridge
+    name: geo-seo-mcp-network
+
+volumes:
+  puppeteer-screenshots:
+    name: geo-seo-puppeteer-screenshots
+  playwright-screenshots:
+    name: geo-seo-playwright-screenshots

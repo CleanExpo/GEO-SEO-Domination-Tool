@@ -1,0 +1,32 @@
+# Dockerfile for Playwright MCP Server
+# Provides cross-browser automation (Chromium, Firefox, WebKit)
+
+FROM mcr.microsoft.com/playwright:v1.47.0-jammy
+
+# Set working directory
+WORKDIR /app
+
+# Install Node.js and npm (if not already in base image)
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright MCP package
+RUN npm install -g @playwright/mcp
+
+# Install browsers
+RUN npx playwright install chromium firefox webkit
+
+# Create startup script that keeps container alive
+RUN echo '#!/bin/bash\n\
+echo "Playwright MCP Server ready - waiting for commands via docker exec"\n\
+echo "Browsers: Chromium, Firefox, WebKit"\n\
+tail -f /dev/null' > /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD npx playwright --version || exit 1
+
+# Keep container running
+CMD ["/app/start.sh"]

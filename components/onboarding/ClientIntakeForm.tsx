@@ -18,9 +18,6 @@ import {
   Building2,
   Globe,
   Target,
-  TrendingUp,
-  Calendar,
-  Users,
   FileText,
   Sparkles,
   ArrowRight,
@@ -33,7 +30,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
@@ -207,14 +203,14 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
 
   // Auto-save on form changes (with debounce)
   useEffect(() => {
-    if (formData.businessName && formData.email) {
+    if (formData.businessName && formData.email && !saving) {
       const timer = setTimeout(() => {
         saveProgress();
       }, 3000); // Auto-save 3 seconds after changes
 
       return () => clearTimeout(timer);
     }
-  }, [formData, currentStep]);
+  }, [formData, currentStep]); // saveProgress excluded intentionally to prevent loop
 
   const steps = [
     { id: 'business', title: 'Business Info', icon: Building2 },

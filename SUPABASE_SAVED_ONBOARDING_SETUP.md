@@ -36,7 +36,7 @@ SELECT 'saved_onboarding table created successfully' AS status;
 
 -- Check table structure
 \d saved_onboarding
-```
+
 
 ## Verification
 

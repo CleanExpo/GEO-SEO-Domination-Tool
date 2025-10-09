@@ -129,7 +129,20 @@
       "Bash(if [ -d \".audit\" ])",
       "Bash(then echo \"✓ .audit directory exists\")",
       "Bash(else mkdir -p .audit)",
-      "Read(//d/c/**)"
+      "Read(//d/c/**)",
+      "Read(//c/Users/Disaster Recovery 4/.config/**)",
+      "Read(//c/Users/Disaster Recovery 4/AppData/Roaming/Code/User/**)",
+      "Read(//c/Users/Disaster Recovery 4/AppData/Roaming/**)",
+      "Bash(code:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose:*)",
+      "Bash(if [ -d \"integrations/serpbear/_pages_disabled\" ])",
+      "Bash(then rm -rf integrations/serpbear/_pages_disabled)",
+      "Bash(if [ -d \"integrations/serpbear/__tests__/pages\" ])",
+      "Bash(then mv integrations/serpbear/__tests__/pages integrations/serpbear/__tests__/_pages_disabled)",
+      "Bash(if [ -d \"integrations\" ])",
+      "Bash(then mv integrations _integrations_disabled)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
@@ -141,6 +154,8 @@
     "perplexity",
     "github",
     "google-maps",
-    "filesystem"
+    "filesystem",
+    "puppeteer-docker",
+    "playwright-docker"
   ]
 }

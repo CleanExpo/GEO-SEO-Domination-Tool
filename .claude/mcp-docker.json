@@ -1,0 +1,66 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server",
+        "--project-url",
+        "https://qwoggbbavikzhypzodcr.supabase.co",
+        "--api-key",
+        "${SUPABASE_ANON_KEY}"
+      ]
+    },
+    "perplexity": {
+      "command": "npx",
+      "args": ["-y", "@perplexity/mcp-server"],
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "google-maps": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-maps"],
+      "env": {
+        "GOOGLE_API_KEY": "${GOOGLE_API_KEY}"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\GEO_SEO_Domination-Tool"
+      ]
+    },
+    "puppeteer-docker": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "geo-seo-puppeteer-mcp",
+        "node",
+        "/app/mcp-wrapper.js"
+      ],
+      "description": "Puppeteer MCP Server (Docker)"
+    },
+    "playwright-docker": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "geo-seo-playwright-mcp",
+        "node",
+        "/app/mcp-wrapper.js"
+      ],
+      "description": "Playwright MCP Server (Docker)"
+    }
+  }
+}

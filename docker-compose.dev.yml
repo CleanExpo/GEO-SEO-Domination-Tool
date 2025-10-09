@@ -60,6 +60,9 @@ services:
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Bytebot integration
+      - BYTEBOT_AGENT_URL=http://bytebot-agent:9991
+      - BYTEBOT_DESKTOP_URL=http://bytebot-desktop:9990
     ports:
       - "3000:3000"
     volumes:
@@ -74,7 +77,66 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      bytebot-agent:
+        condition: service_started
     command: npm run dev
+
+  # Bytebot Desktop - Virtual Ubuntu Desktop
+  bytebot-desktop:
+    image: bytebotai/bytebot-desktop:latest
+    container_name: geo-seo-bytebot-desktop
+    restart: unless-stopped
+    environment:
+      - RESOLUTION=1920x1080
+      - VNC_PASSWORD=bytebot_vnc_dev
+    ports:
+      - "9990:9990"  # Desktop control API
+      - "5900:5900"  # VNC (optional - for manual access)
+    volumes:
+      - bytebot_desktop_data:/home/bytebot
+    networks:
+      - geo-seo-network
+    shm_size: '2gb'  # Required for browser rendering
+
+  # Bytebot Agent - AI Orchestration Service
+  bytebot-agent:
+    image: bytebotai/bytebot-agent:latest
+    container_name: geo-seo-bytebot-agent
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - DESKTOP_URL=http://bytebot-desktop:9990
+      - DATABASE_URL=postgresql://geoseo:dev_password_change_me@postgres:5432/geo_seo_db
+      - REDIS_URL=redis://:dev_redis_password@redis:6379
+    ports:
+      - "9991:9991"  # Task management API
+    networks:
+      - geo-seo-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      bytebot-desktop:
+        condition: service_started
+
+  # Bytebot UI - Task Management Interface
+  bytebot-ui:
+    image: bytebotai/bytebot-ui:latest
+    container_name: geo-seo-bytebot-ui
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_AGENT_URL=http://bytebot-agent:9991
+      - NEXT_PUBLIC_DESKTOP_URL=http://bytebot-desktop:9990
+    ports:
+      - "9992:3000"  # Bytebot UI
+    networks:
+      - geo-seo-network
+    depends_on:
+      - bytebot-agent
 
   # PgAdmin (Optional - Database Management UI)
   pgadmin:
@@ -104,4 +166,6 @@ volumes:
   redis_data:
     driver: local
   pgadmin_data:
+    driver: local
+  bytebot_desktop_data:
     driver: local

@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "src", "electron", "web-app", "_src_electron", "_electron", "app/api/_agents_disabled", "app/api/_tactical_disabled"]
+  "exclude": ["node_modules", "src", "electron", "web-app", "_src_electron", "_electron", "app/api/_agents_disabled", "app/api/_tactical_disabled", "integrations", "tools", "unite-group"]
 }

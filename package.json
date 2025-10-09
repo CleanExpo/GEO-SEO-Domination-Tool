@@ -25,7 +25,16 @@
     "gemini:competitor": "npx tsx scripts/examples/gemini-seo-competitor-analysis.ts",
     "gemini:local-pack": "npx tsx scripts/examples/gemini-local-pack-tracking.ts",
     "gemini:ai-search": "npx tsx scripts/examples/gemini-ai-search-visibility.ts",
-    "gemini:custom": "npx tsx scripts/my-seo-automation.ts"
+    "gemini:custom": "npx tsx scripts/my-seo-automation.ts",
+    "vercel:monitor": "node scripts/vercel/monitor-deployments.js",
+    "vercel:monitor:watch": "node scripts/vercel/monitor-deployments.js --watch",
+    "vercel:errors": "node scripts/vercel/capture-errors.js --latest",
+    "vercel:status": "node scripts/vercel/deployment-status.js",
+    "vercel:status:compare": "node scripts/vercel/deployment-status.js --compare",
+    "vercel:deploy": "node scripts/vercel/deploy-manager.js --deploy",
+    "vercel:deploy:prod": "node scripts/vercel/deploy-manager.js --deploy --prod",
+    "vercel:rollback": "node scripts/vercel/deploy-manager.js --rollback",
+    "vercel:auto-report": "node scripts/vercel/auto-report.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.23",
