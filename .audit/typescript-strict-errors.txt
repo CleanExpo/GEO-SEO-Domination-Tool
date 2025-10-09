@@ -1,0 +1,100 @@
+.next/types/validator.ts(639,31): error TS2344: Type 'typeof import("d:/GEO_SEO_Domination-Tool/app/api/clients/[id]/autopilot/[action]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/clients/[id]/autopilot/[action]">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; action: string; }; }) => Promise<NextResponse<{ success: boolean; message: string; action: string; subscriptionId: any; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; action: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; action: string; }>; }' is not assignable to type '{ params: { id: string; action: string; }; }'.
+          Types of property 'params' are incompatible.
+            Type 'Promise<{ id: string; action: string; }>' is missing the following properties from type '{ id: string; action: string; }': id, action
+.next/types/validator.ts(648,31): error TS2344: Type 'typeof import("d:/GEO_SEO_Domination-Tool/app/api/clients/[id]/subscription/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/clients/[id]/subscription">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ success: boolean; subscription: { id: any; companyId: any; companyName: any; tierName: any; monthlySpend: number; ... 6 more ...; timestamps: { ...; }; }; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(657,31): error TS2344: Type 'typeof import("d:/GEO_SEO_Domination-Tool/app/api/clients/[id]/tasks/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/clients/[id]/tasks">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ success: boolean; tasks: any; stats: { total: any; scheduled: any; executing: any; completed: any; failed: any; }; subscriptionId: any; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(711,31): error TS2344: Type 'typeof import("d:/GEO_SEO_Domination-Tool/app/api/content-opportunities/[id]/generate/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/content-opportunities/[id]/generate">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ success: boolean; contentPlanId: any; content: any; slug: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+app/api/ai-strategy/campaigns/route.ts(36,32): error TS2339: Property 'all' does not exist on type 'DatabaseClient'.
+app/api/ai-strategy/campaigns/route.ts(129,29): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/ai-visibility/route.ts(36,30): error TS2339: Property 'all' does not exist on type 'DatabaseClient'.
+app/api/ai-visibility/route.ts(112,29): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/backlinks/route.ts(36,32): error TS2339: Property 'all' does not exist on type 'DatabaseClient'.
+app/api/backlinks/route.ts(84,29): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/blog/publish/route.ts(11,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/clients/[id]/autopilot/[action]/route.ts(27,13): error TS2339: Property 'db' does not exist on type 'typeof import("d:/GEO_SEO_Domination-Tool/database/init")'.
+app/api/clients/[id]/subscription/route.ts(5,10): error TS2305: Module '"@/database/init"' has no exported member 'db'.
+app/api/clients/[id]/tasks/route.ts(5,10): error TS2305: Module '"@/database/init"' has no exported member 'db'.
+app/api/clients/[id]/tasks/route.ts(61,38): error TS7006: Parameter 'task' implicitly has an 'any' type.
+app/api/clients/[id]/tasks/route.ts(79,40): error TS7006: Parameter 't' implicitly has an 'any' type.
+app/api/clients/[id]/tasks/route.ts(80,40): error TS7006: Parameter 't' implicitly has an 'any' type.
+app/api/clients/[id]/tasks/route.ts(81,40): error TS7006: Parameter 't' implicitly has an 'any' type.
+app/api/clients/[id]/tasks/route.ts(82,37): error TS7006: Parameter 't' implicitly has an 'any' type.
+app/api/clients/subscribe/route.ts(6,10): error TS2305: Module '"@/database/init"' has no exported member 'db'.
+app/api/clients/subscribe/route.ts(126,38): error TS7006: Parameter 'tier' implicitly has an 'any' type.
+app/api/content-gaps/route.ts(42,27): error TS2339: Property 'all' does not exist on type 'DatabaseClient'.
+app/api/content-gaps/route.ts(97,29): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/[id]/generate/route.ts(22,34): error TS2339: Property 'get' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/[id]/generate/route.ts(199,29): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/[id]/generate/route.ts(217,14): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/discover/route.ts(34,35): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/discover/route.ts(48,18): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/discover/route.ts(78,33): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/discover/route.ts(116,16): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/discover/route.ts(147,16): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/route.ts(55,36): error TS2339: Property 'all' does not exist on type 'DatabaseClient'.
+app/api/content-opportunities/route.ts(86,34): error TS2339: Property 'get' does not exist on type 'DatabaseClient'.
+app/api/crm/audit/full/route.ts(45,14): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/crm/audit/full/route.ts(152,14): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/crm/audit/full/route.ts(179,14): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/crm/audit/full/route.ts(261,14): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/crm/calendar/route.ts(13,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/crm/content/generate/route.ts(12,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/crm/deploy/route.ts(10,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/crm/influence/route.ts(11,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/crm/trends/route.ts(10,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/deepseek/competitors/analyze/route.ts(29,7): error TS2554: Expected 1 arguments, but got 3.
+app/api/feature-flags/route.ts(55,34): error TS2339: Property 'feature_flag_id' does not exist on type 'never'.
+app/api/feature-flags/route.ts(55,53): error TS2339: Property 'enabled' does not exist on type 'never'.
+app/api/feature-flags/route.ts(60,11): error TS2698: Spread types may only be created from object types.
+app/api/feature-flags/route.ts(61,54): error TS2339: Property 'id' does not exist on type 'never'.
+app/api/feature-flags/route.ts(91,8): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, "feature_flags", never, "POST">', gave the following error.
+    Argument of type '{ key: any; name: any; description: any; enabled: any; rollout_percentage: any; variants: any; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: string; }, never, never, null, "feature_flags", never, "POST">', gave the following error.
+    Object literal may only specify known properties, but 'key' does not exist in type 'never[]'. Did you mean to write 'keys'?
+app/api/feature-flags/route.ts(128,15): error TS2345: Argument of type '{ name: any; description: any; enabled: any; rollout_percentage: any; variants: any; }' is not assignable to parameter of type 'never'.
+app/api/mcp/route.ts(300,10): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(name: string, uri: string, metadata: ResourceMetadata, readCallback: ReadResourceCallback): RegisteredResource', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type 'ResourceMetadata'.
+  Overload 2 of 4, '(name: string, template: ResourceTemplate, metadata: ResourceMetadata, readCallback: ReadResourceTemplateCallback): RegisteredResourceTemplate', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type 'ResourceTemplate'.
+app/api/onboarding/credentials/route.ts(18,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/onboarding/route.ts(19,22): error TS7016: Could not find a declaration file for module 'better-sqlite3'. 'd:/GEO_SEO_Domination-Tool/node_modules/better-sqlite3/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/better-sqlite3` if it exists or add a new declaration (.d.ts) file containing `declare module 'better-sqlite3';`
+app/api/sandbox/chat/route.ts(35,7): error TS2353: Object literal may only specify known properties, and 'maxTokens' does not exist in type 'CallSettings & (Prompt & { model: LanguageModel; tools?: ToolSet | undefined; toolChoice?: ToolChoice<ToolSet> | undefined; ... 17 more ...; _internal?: { ...; } | undefined; })'.
+app/api/sandbox/chat/route.ts(39,19): error TS2551: Property 'toDataStreamResponse' does not exist on type 'StreamTextResult<ToolSet, never>'. Did you mean 'toTextStreamResponse'?
+app/api/support/contact/route.ts(97,18): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/tasks/create/route.ts(31,29): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/tasks/create/route.ts(49,27): error TS2339: Property 'get' does not exist on type 'DatabaseClient'.
+app/api/tasks/execute/route.ts(26,27): error TS2339: Property 'get' does not exist on type 'DatabaseClient'.
+app/api/tasks/execute/route.ts(39,14): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.
+app/api/tasks/execute/route.ts(68,18): error TS2339: Property 'run' does not exist on type 'DatabaseClient'.

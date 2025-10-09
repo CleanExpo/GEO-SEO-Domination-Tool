@@ -1,27 +1,80 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { auth } from '@/auth'
+
+// Define protected routes that require authentication
+const protectedRoutes = [
+  '/dashboard',
+  '/companies',
+  '/audits',
+  '/keywords',
+  '/rankings',
+  '/reports',
+  '/crm',
+  '/projects',
+  '/resources',
+  '/settings',
+  '/onboarding',
+]
+
+// Define public routes that don't require authentication
+const publicRoutes = [
+  '/',
+  '/auth/signin',
+  '/auth/error',
+  '/api/auth',
+  '/terms',
+  '/privacy',
+]
 
 export async function middleware(request: NextRequest) {
-  // Supabase SSR package uses Node.js APIs not available in Edge Runtime
-  // Removing Supabase client initialization from middleware
-  // Auth will be handled on page level using client-side Supabase
+  const { pathname } = request.nextUrl
+
+  // Allow public routes
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
+    const response = NextResponse.next({
+      request,
+    })
+    return addSecurityHeaders(response)
+  }
+
+  // Check if route is protected
+  const isProtectedRoute = protectedRoutes.some(route =>
+    pathname.startsWith(route)
+  )
+
+  if (isProtectedRoute) {
+    const session = await auth()
+
+    if (!session) {
+      const signInUrl = new URL('/auth/signin', request.url)
+      signInUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(signInUrl)
+    }
+  }
 
   const response = NextResponse.next({
     request,
   })
+
+  return addSecurityHeaders(response)
+}
+
+function addSecurityHeaders(response: NextResponse) {
 
   // Content Security Policy
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com",
-      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://accounts.google.com https://accounts.google.com/gsi/",
+      "style-src 'self' 'unsafe-inline' https://accounts.google.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.semrush.com https://api.screaming-frog.co.uk",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.semrush.com https://api.screaming-frog.co.uk https://accounts.google.com https://*.googleapis.com https://oauth2.googleapis.com",
       "frame-ancestors 'none'",
+      "frame-src 'self' https://accounts.google.com",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://accounts.google.com",
     ].join('; ')
   )
 
@@ -50,19 +103,6 @@ export async function middleware(request: NextRequest) {
       'max-age=31536000; includeSubDomains; preload'
     )
   }
-
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
 
   return response
 }

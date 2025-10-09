@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEO SEO AI Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+        <h1>AI Assistant</h1>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Ready</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="quick-btn" id="analyzePageBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        Analyze This Page
+      </button>
+      <button class="quick-btn" id="extractDataBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Extract Data
+      </button>
+    </div>
+
+    <!-- Task Input -->
+    <div class="task-section">
+      <label for="taskInput">What would you like me to do?</label>
+      <textarea 
+        id="taskInput" 
+        placeholder="E.g., Analyze this page's SEO and give me 5 improvement suggestions..."
+        rows="4"
+      ></textarea>
+      <button id="submitBtn" class="submit-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        <span>Execute Task</span>
+      </button>
+    </div>
+
+    <!-- Current Task -->
+    <div class="current-task" id="currentTask" style="display: none;">
+      <div class="task-header">
+        <div class="task-status">
+          <div class="spinner"></div>
+          <span>Running...</span>
+        </div>
+        <button class="cancel-btn" id="cancelBtn">Cancel</button>
+      </div>
+      <div class="task-progress" id="taskProgress">
+        Initializing task...
+      </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="recent-tasks">
+      <h3>Recent Tasks</h3>
+      <div id="taskHistory" class="task-list">
+        <!-- Tasks will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="tips">
+      <details>
+        <summary>💡 Quick Tips</summary>
+        <ul>
+          <li>Right-click any page for quick analysis</li>
+          <li>Use natural language - be specific!</li>
+          <li>Tasks run in the background</li>
+          <li>Get notifications when complete</li>
+        </ul>
+      </details>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings">
+      <button id="settingsBtn" class="settings-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 6v6m-5.2-9.8 4.2 4.2m4.2 4.2 4.2-4.2M1 12h6m6 0h6m-9.8 5.2 4.2-4.2m4.2-4.2 4.2 4.2"/>
+        </svg>
+        Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="closeSettings" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label for="apiUrl">Backend URL</label>
+          <input 
+            type="text" 
+            id="apiUrl" 
+            placeholder="http://localhost:3000"
+            value="http://localhost:3000"
+          >
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="notificationsEnabled" checked>
+            Enable notifications
+          </label>
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="autoAnalyze">
+            Auto-analyze pages on load
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="saveSettings" class="submit-btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

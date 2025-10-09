@@ -3,6 +3,8 @@
  * Provides keyword research data with search volume, difficulty, and SERP features
  */
 
+import * as Sentry from '@sentry/nextjs'
+
 export interface KeywordData {
   keyword: string;
   search_volume: number;
@@ -25,7 +27,12 @@ export async function getKeywordIdeas(
   const apiKey = process.env.DATAFORSEO_API_KEY;
 
   if (!apiKey) {
-    console.warn('DataForSEO API key not configured, returning mock data');
+    Sentry.addBreadcrumb({
+      category: 'dataforseo',
+      message: 'API key not configured, using mock data',
+      level: 'warning',
+      data: { seedKeyword, database }
+    });
     return generateMockKeywordData(seedKeyword);
   }
 
@@ -58,7 +65,12 @@ export async function getKeywordIdeas(
     const data = await response.json();
 
     if (!data.tasks || !data.tasks[0] || !data.tasks[0].result) {
-      console.warn('No results from DataForSEO, using mock data');
+      Sentry.addBreadcrumb({
+        category: 'dataforseo',
+        message: 'No results from API, using mock data',
+        level: 'warning',
+        data: { seedKeyword, database }
+      });
       return generateMockKeywordData(seedKeyword);
     }
 
@@ -75,8 +87,19 @@ export async function getKeywordIdeas(
     }));
 
   } catch (error: any) {
-    console.error('DataForSEO API error:', error.message);
-    console.warn('Falling back to mock data');
+    Sentry.captureException(error, {
+      tags: {
+        service: 'dataforseo',
+        operation: 'getKeywordIdeas',
+        fallback: 'mock_data'
+      },
+      contexts: {
+        dataforseo: {
+          seedKeyword,
+          database
+        }
+      }
+    });
     return generateMockKeywordData(seedKeyword);
   }
 }

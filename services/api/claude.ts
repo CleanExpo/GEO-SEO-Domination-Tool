@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import * as Sentry from '@sentry/nextjs'
 
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514'
 
@@ -31,7 +32,19 @@ export class ClaudeService {
       }
       throw new Error('Unexpected response format')
     } catch (error) {
-      console.error('Claude API error:', error)
+      Sentry.captureException(error, {
+        tags: {
+          service: 'claude',
+          model: CLAUDE_MODEL,
+          operation: 'query'
+        },
+        contexts: {
+          claude: {
+            hasSystemPrompt: !!systemPrompt,
+            promptLength: prompt.length
+          }
+        }
+      })
       throw error
     }
   }

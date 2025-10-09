@@ -119,7 +119,17 @@
       "Bash(NODE_ENV=production npm run build)",
       "Bash(export NODE_ENV=production)",
       "Bash(git grep:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(openssl rand:*)",
+      "Bash(start http://localhost:3000/auth/signin)",
+      "Bash(else echo \"✗ .next folder not found\")",
+      "Bash(if [ ! -d \".github/workflows\" ])",
+      "Bash(then mkdir -p .github/workflows)",
+      "Bash(else echo \"✓ .github/workflows exists\")",
+      "Bash(if [ -d \".audit\" ])",
+      "Bash(then echo \"✓ .audit directory exists\")",
+      "Bash(else mkdir -p .audit)",
+      "Read(//d/c/**)"
     ],
     "deny": [],
     "ask": []

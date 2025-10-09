@@ -1,5 +1,5 @@
-// Import Sentry webpack plugin (disabled for now)
-// const { withSentryConfig } = require('@sentry/nextjs');
+// Import Sentry webpack plugin
+const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -111,10 +111,5 @@ const sentryWebpackPluginOptions = {
   disableLogger: true,
 }
 
-// Export the configuration wrapped with Sentry (disabled for now)
-// module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
-
-// Export regular Next.js config for now
-module.exports = nextConfig;
-
-module.exports = nextConfig
+// Export the configuration wrapped with Sentry
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
