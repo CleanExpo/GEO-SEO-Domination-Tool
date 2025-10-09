@@ -121,6 +121,11 @@ export class DatabaseClient {
       let paramIndex = 1;
       const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
 
+      // Debug logging for troubleshooting
+      console.log('[DEBUG] Original SQL:', sql);
+      console.log('[DEBUG] Converted SQL:', pgSql);
+      console.log('[DEBUG] Parameters:', params);
+
       const result = await this.pgPool!.query(pgSql, params);
       return {
         rows: result.rows,
