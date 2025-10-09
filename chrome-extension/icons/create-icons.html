@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Extension Icons</title>
+</head>
+<body>
+    <h1>Icon Generator for Extension</h1>
+    <p>Open this file in a browser and it will generate the icon files automatically.</p>
+    <canvas id="canvas16" width="16" height="16" style="display:none;"></canvas>
+    <canvas id="canvas32" width="32" height="32" style="display:none;"></canvas>
+    <canvas id="canvas48" width="48" height="48" style="display:none;"></canvas>
+    <canvas id="canvas128" width="128" height="128" style="display:none;"></canvas>
+    
+    <div id="output"></div>
+    <div id="downloads"></div>
+
+    <script>
+        function createIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add "AI" text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('AI', size / 2, size / 2);
+            
+            return canvas;
+        }
+
+        function downloadIcon(canvas, filename) {
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.textContent = `Download ${filename}`;
+                a.style.display = 'block';
+                a.style.margin = '10px';
+                document.getElementById('downloads').appendChild(a);
+                
+                // Auto-click to download
+                a.click();
+            });
+        }
+
+        // Generate all icons
+        ['16', '32', '48', '128'].forEach(size => {
+            const canvas = document.getElementById(`canvas${size}`);
+            createIcon(canvas);
+            downloadIcon(canvas, `icon${size}.png`);
+        });
+        
+        document.getElementById('output').innerHTML = '<h2>Icons generated! Check your downloads folder.</h2><p>Move all 4 icon files to the chrome-extension/icons/ folder.</p>';
+    </script>
+</body>
+</html>
