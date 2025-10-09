@@ -109,7 +109,18 @@ const sentryWebpackPluginOptions = {
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
+  
+  // Disable auto-instrumentation to prevent Html import issues in App Router
+  autoInstrumentServerFunctions: false,
+  
+  // Disable automatic middleware instrumentation (we use instrumentation.ts instead)
+  autoInstrumentMiddleware: false,
 }
 
 // Export the configuration wrapped with Sentry
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+// Only wrap with Sentry if DSN is configured to avoid build issues
+if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+} else {
+  module.exports = nextConfig;
+}
