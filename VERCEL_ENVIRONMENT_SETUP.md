@@ -119,11 +119,11 @@ vercel env add DATABASE_URL production
 
 **Variable:** `GOOGLE_OAUTH_CLIENT_ID`
 **Status:** ✅ Currently configured
-**Value:** `810093513411-o6b1eqol277rvgeh3n4ihnrv6vh8qbcj.apps.googleusercontent.com`
+**Value:** `[REDACTED - Set in Vercel environment]`
 
 **Variable:** `GOOGLE_OAUTH_CLIENT_SECRET`
 **Status:** ✅ Currently configured
-**Value:** `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`
+**Value:** `[REDACTED - Set in Vercel environment]`
 
 **Authorized Redirect URIs (Google Console):**
 - ✅ `http://localhost:3000/api/auth/callback/google` (development)
