@@ -12,6 +12,20 @@ export async function GET() {
     const db = getDatabase();
     await db.initialize();
 
+    // Test a simple query with ? placeholder to verify conversion
+    let testQueryResult = null;
+    let testQueryError = null;
+
+    try {
+      const testQuery = 'SELECT 1 as test WHERE 1 = ?';
+      testQueryResult = await db.query(testQuery, [1]);
+    } catch (error: any) {
+      testQueryError = {
+        message: error.message,
+        code: error.code
+      };
+    }
+
     return NextResponse.json({
       success: true,
       config: {
@@ -21,9 +35,13 @@ export async function GET() {
         nodeEnv: process.env.NODE_ENV,
         databaseUrlSet: process.env.DATABASE_URL ? 'YES' : 'NO',
         postgresUrlSet: process.env.POSTGRES_URL ? 'YES' : 'NO',
-        // Don't expose actual values, just show if they exist
         databaseUrlLength: process.env.DATABASE_URL?.length || 0,
         postgresUrlLength: process.env.POSTGRES_URL?.length || 0,
+      },
+      testQuery: {
+        success: testQueryResult !== null,
+        result: testQueryResult,
+        error: testQueryError
       },
       message: `Database type detected: ${db.getType()}`
     });

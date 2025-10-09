@@ -79,11 +79,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Add debug info to error response (temporary for debugging)
     return NextResponse.json(
       {
         error: 'Failed to save progress',
         details: error.message,
-        code: error.code
+        code: error.code,
+        debug: {
+          dbType: db.getType(),
+          hasDatabaseUrl: !!process.env.DATABASE_URL,
+          errorName: error.name,
+          errorStack: error.stack?.split('\n').slice(0, 3).join('\n')
+        }
       },
       { status: 500 }
     );
