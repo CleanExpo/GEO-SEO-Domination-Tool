@@ -82,13 +82,20 @@ export class DatabaseClient {
       this.pgPool = new Pool({
         connectionString: this.config.connectionString,
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+        // Connection pool limits for Vercel serverless
+        max: 20, // Maximum pool size (Supabase free tier allows 60 connections)
+        min: 2, // Minimum pool size
+        idleTimeoutMillis: 30000, // Close idle connections after 30s
+        connectionTimeoutMillis: 10000, // Timeout for acquiring connection
+        maxUses: 7500, // Recycle connections after 7500 uses
+        allowExitOnIdle: true, // Allow process to exit when idle
       });
 
       // Test connection
       try {
         const client = await this.pgPool.connect();
         client.release();
-        console.log('✓ Connected to PostgreSQL database');
+        console.log('✓ Connected to PostgreSQL database (pool: max 20, min 2)');
       } catch (error) {
         console.error('✗ Failed to connect to PostgreSQL:', error);
         throw error;
@@ -294,15 +301,26 @@ export class DatabaseClient {
   }
 }
 
-// Singleton instance
+// Singleton instance - persists across serverless function invocations
 let dbInstance: DatabaseClient | null = null;
+
+// Check if we're in a serverless environment
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 /**
  * Get or create database client singleton
+ * In serverless environments, this connection pool persists across invocations
  */
 export function getDatabase(config?: DatabaseConfig): DatabaseClient {
   if (!dbInstance) {
+    if (isServerless) {
+      console.log('🚀 Creating database connection pool (serverless - will persist)');
+    }
     dbInstance = new DatabaseClient(config);
+  } else {
+    if (isServerless) {
+      console.log('♻️  Reusing existing database connection pool (serverless optimization)');
+    }
   }
   return dbInstance;
 }
