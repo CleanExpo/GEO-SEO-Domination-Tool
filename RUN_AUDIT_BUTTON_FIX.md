@@ -40,36 +40,41 @@ User clicks "Run Audit"
 Run this SQL in Supabase SQL Editor:
 👉 **https://supabase.com/dashboard/project/qwoggbbavikzhypzodcr/sql/new**
 
-**IMPORTANT**: Use the v2 script that handles existing NULL values:
+**IMPORTANT**: Use the v3 script that drops the foreign key constraint:
 
 ```sql
--- Step 1: Handle existing NULL values
-DO $$
-DECLARE
-  system_user_id UUID := '00000000-0000-0000-0000-000000000000';
-BEGIN
-  UPDATE seo_audits
-  SET user_id = system_user_id
-  WHERE user_id IS NULL;
-END $$;
+-- Step 1: Drop the foreign key constraint
+ALTER TABLE seo_audits DROP CONSTRAINT IF EXISTS seo_audits_user_id_fkey;
 
--- Step 2: Make column nullable
+-- Step 2: Make user_id nullable
 ALTER TABLE seo_audits ALTER COLUMN user_id DROP NOT NULL;
 
--- Step 3: Verify
+-- Step 3: Add UUID format validation (optional but recommended)
+ALTER TABLE seo_audits
+ADD CONSTRAINT seo_audits_user_id_check
+CHECK (user_id IS NULL OR user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+
+-- Step 4: Verify
 SELECT column_name, is_nullable, data_type
 FROM information_schema.columns
 WHERE table_name = 'seo_audits' AND column_name = 'user_id';
 ```
 
 **What this does**:
-1. Assigns existing NULL values to a system user ID (`00000000-0000-0000-0000-000000000000`)
-2. Makes the `user_id` column nullable for future audits
-3. Verifies the change was successful
+1. **Drops the foreign key constraint** - Allows NULL values without requiring a user in auth.users
+2. **Makes user_id nullable** - Permits server-side audits without user sessions
+3. **Adds format validation** - Ensures user_id is valid UUID format when provided
+4. **Verifies the change** - Confirms nullable status
 
 Expected result: `is_nullable = 'YES'`
 
-**Alternative**: Copy/paste from `URGENT_FIX_seo_audits_v2.sql` for the complete version with verification steps.
+**Why drop the foreign key?**
+- Server-side audits don't have a user session
+- Foreign key requires user_id to exist in auth.users table
+- We want to allow NULL for automated/system audits
+- Format validation ensures data quality without FK
+
+**Alternative**: Copy/paste from `URGENT_FIX_seo_audits_v3.sql` for the complete version with verification steps.
 
 ### Step 2: Verify Environment Variables (Already Done)
 
