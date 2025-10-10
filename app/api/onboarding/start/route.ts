@@ -68,20 +68,26 @@ export async function POST(request: NextRequest) {
 
     console.log('[Start Onboarding] Session saved to database');
 
-    // Trigger background processing (fire and forget)
+    // Trigger background processing asynchronously
+    // Use the full URL to call ourselves
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : request.headers.get('origin') || 'http://localhost:3000';
+      : (request.headers.get('host') ? `https://${request.headers.get('host')}` : 'http://localhost:3000');
 
+    console.log('[Start Onboarding] Triggering background worker at:', `${baseUrl}/api/onboarding/process`);
+
+    // Initiate the request but don't wait for completion
     fetch(`${baseUrl}/api/onboarding/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ onboardingId })
+    }).then(res => {
+      console.log('[Start Onboarding] Background worker response:', res.status);
     }).catch(err => {
-      console.error('[Start Onboarding] Failed to trigger background processing:', err);
+      console.error('[Start Onboarding] Failed to trigger background processing:', err.message);
     });
 
-    console.log('[Start Onboarding] Background processing triggered');
+    console.log('[Start Onboarding] Background processing request sent');
 
     return NextResponse.json({
       success: true,
