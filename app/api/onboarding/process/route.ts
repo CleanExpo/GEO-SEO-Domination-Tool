@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     // Update status to in_progress
     await db.query(
       `UPDATE onboarding_sessions
-       SET status = ?, current_step = ?, steps_data = ?, updated_at = ?
+       SET status = ?, current_step = ?, steps_data = ?, started_at = ?
        WHERE id = ?`,
       ['in_progress', 'Create Company Record', JSON.stringify(steps), new Date().toISOString(), onboardingId]
     );
@@ -164,14 +164,13 @@ export async function POST(request: NextRequest) {
       await db.query(
         `UPDATE onboarding_sessions
          SET status = ?, current_step = ?, steps_data = ?,
-             company_id = ?, completed_at = ?, updated_at = ?
+             company_id = ?, completed_at = ?
          WHERE id = ?`,
         [
           'completed',
           'Completed',
           JSON.stringify(steps),
           companyId,
-          new Date().toISOString(),
           new Date().toISOString(),
           onboardingId
         ]
@@ -196,13 +195,12 @@ export async function POST(request: NextRequest) {
 
       await db.query(
         `UPDATE onboarding_sessions
-         SET status = ?, steps_data = ?, error = ?, updated_at = ?
+         SET status = ?, steps_data = ?, error = ?
          WHERE id = ?`,
         [
           'failed',
           JSON.stringify(steps),
           stepError.message,
-          new Date().toISOString(),
           onboardingId
         ]
       );
@@ -232,22 +230,19 @@ async function updateProgress(
   steps: OnboardingStep[],
   companyId?: string
 ) {
-  const updateFields = [status, currentStep, JSON.stringify(steps), new Date().toISOString()];
-  const updateParams = [onboardingId];
-
   if (companyId) {
     await db.query(
       `UPDATE onboarding_sessions
-       SET status = ?, current_step = ?, steps_data = ?, company_id = ?, updated_at = ?
+       SET status = ?, current_step = ?, steps_data = ?, company_id = ?
        WHERE id = ?`,
-      [...updateFields, companyId, onboardingId]
+      [status, currentStep, JSON.stringify(steps), companyId, onboardingId]
     );
   } else {
     await db.query(
       `UPDATE onboarding_sessions
-       SET status = ?, current_step = ?, steps_data = ?, updated_at = ?
+       SET status = ?, current_step = ?, steps_data = ?
        WHERE id = ?`,
-      [...updateFields, onboardingId]
+      [status, currentStep, JSON.stringify(steps), onboardingId]
     );
   }
 }
