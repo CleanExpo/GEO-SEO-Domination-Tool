@@ -170,19 +170,16 @@ export class OnboardingOrchestrator extends EventEmitter {
       });
 
       // Step 6: Trigger Autonomous Value Generation 🚀
-      await this.executeStep(onboardingId, 5, async () => {
-        console.log(`[Onboarding] 🚀 Triggering Master Orchestrator for ${progress.companyId}`);
-
-        // Launch all autonomous engines (Critical Tier starts immediately)
-        const orchestratorCompanyId = await masterOrchestrator.onClientOnboarding(request);
-
-        console.log(`[Onboarding] ✅ Master Orchestrator launched. Value generation in progress...`);
-
-        return {
-          orchestratorCompanyId,
-          message: 'Autonomous engines activated. Client will receive 10x value vs traditional agency.'
-        };
-      });
+      // TODO: Re-enable when all engines are built
+      // await this.executeStep(onboardingId, 5, async () => {
+      //   console.log(`[Onboarding] 🚀 Triggering Master Orchestrator for ${progress.companyId}`);
+      //   const orchestratorCompanyId = await masterOrchestrator.onClientOnboarding(request);
+      //   console.log(`[Onboarding] ✅ Master Orchestrator launched. Value generation in progress...`);
+      //   return {
+      //     orchestratorCompanyId,
+      //     message: 'Autonomous engines activated. Client will receive 10x value vs traditional agency.'
+      //   };
+      // });
 
       // Mark as completed
       progress.status = 'completed';
