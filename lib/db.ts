@@ -82,13 +82,13 @@ export class DatabaseClient {
       this.pgPool = new Pool({
         connectionString: this.config.connectionString,
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
-        // Connection pool limits for Vercel serverless
-        max: 20, // Maximum pool size (Supabase free tier allows 60 connections)
-        min: 2, // Minimum pool size
-        idleTimeoutMillis: 30000, // Close idle connections after 30s
-        connectionTimeoutMillis: 10000, // Timeout for acquiring connection
-        maxUses: 7500, // Recycle connections after 7500 uses
-        allowExitOnIdle: true, // Allow process to exit when idle
+        // Aggressive connection pool limits for Vercel serverless
+        max: 10, // Conservative max (Supabase free tier: 60 total, but multiple instances)
+        min: 0, // No minimum - connections created on demand
+        idleTimeoutMillis: 10000, // Close idle after 10s (aggressive cleanup)
+        connectionTimeoutMillis: 5000, // Fail fast if pool exhausted
+        maxUses: 1000, // Recycle connections frequently
+        allowExitOnIdle: true, // Allow graceful shutdown
       });
 
       // Test connection
@@ -134,16 +134,22 @@ export class DatabaseClient {
       let paramIndex = 1;
       const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
 
-      // Debug logging for troubleshooting
-      console.log('[DEBUG] Original SQL:', sql);
-      console.log('[DEBUG] Converted SQL:', pgSql);
-      console.log('[DEBUG] Parameters:', params);
+      // Debug logging for troubleshooting (reduce verbosity)
+      console.log('[DEBUG] SQL:', pgSql.substring(0, 100));
 
-      const result = await this.pgPool!.query(pgSql, params);
-      return {
-        rows: result.rows,
-        rowCount: result.rowCount || 0,
-      };
+      // Use pool.query() which automatically acquires and releases connections
+      // This is the recommended approach for single queries
+      try {
+        const result = await this.pgPool!.query(pgSql, params);
+        console.log('[DEBUG] Query completed, rows:', result.rowCount);
+        return {
+          rows: result.rows,
+          rowCount: result.rowCount || 0,
+        };
+      } catch (error) {
+        console.error('[DEBUG] PostgreSQL query failed:', error);
+        throw error;
+      }
     } else {
       console.log('[DEBUG] ❌ SQLite branch selected (ERROR if production!)');
       // SQLite
