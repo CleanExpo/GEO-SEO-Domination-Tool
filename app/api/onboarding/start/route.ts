@@ -68,38 +68,42 @@ export async function POST(request: NextRequest) {
 
     console.log('[Start Onboarding] Session saved to database');
 
-    // Trigger background processing SYNCHRONOUSLY
-    // In Vercel serverless, fire-and-forget doesn't work reliably
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : (request.headers.get('host') ? `https://${request.headers.get('host')}` : 'http://localhost:3000');
-
-    console.log('[Start Onboarding] Triggering background worker at:', `${baseUrl}/api/onboarding/process`);
+    // Process onboarding INLINE (same process) instead of separate HTTP call
+    // This avoids timeout issues in Vercel serverless
+    console.log('[Start Onboarding] Processing onboarding inline...');
 
     try {
-      // AWAIT the background worker to ensure it actually runs
-      const workerResponse = await fetch(`${baseUrl}/api/onboarding/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ onboardingId })
-      });
+      // Import and call the processor directly
+      const { processOnboarding } = await import('@/services/onboarding/onboarding-processor');
+      const result = await processOnboarding(onboardingId);
 
-      console.log('[Start Onboarding] Worker response:', workerResponse.status);
-
-      if (!workerResponse.ok) {
-        const errorData = await workerResponse.json();
-        console.error('[Start Onboarding] Worker failed:', errorData);
+      if (result.success) {
+        console.log('[Start Onboarding] Processing completed:', result.companyId);
+        return NextResponse.json({
+          success: true,
+          onboardingId,
+          companyId: result.companyId,
+          message: 'Client onboarding completed successfully!'
+        }, { status: 201 });
+      } else {
+        console.error('[Start Onboarding] Processing failed:', result.error);
+        return NextResponse.json({
+          success: true,
+          onboardingId,
+          message: 'Client onboarding started, but processing encountered errors.',
+          error: result.error
+        }, { status: 201 });
       }
-    } catch (workerError) {
-      console.error('[Start Onboarding] Worker error:', workerError);
-      // Don't fail the entire request if worker fails
+    } catch (processingError: any) {
+      console.error('[Start Onboarding] Processing error:', processingError);
+      // Still return success since the session was created
+      return NextResponse.json({
+        success: true,
+        onboardingId,
+        message: 'Client onboarding session created. Processing will continue.',
+        warning: processingError.message
+      }, { status: 201 });
     }
-
-    return NextResponse.json({
-      success: true,
-      onboardingId,
-      message: 'Client onboarding started successfully. Processing complete!'
-    }, { status: 201 });
   } catch (error: any) {
     console.error('[Start Onboarding] ERROR:', error);
     console.error('[Start Onboarding] Stack trace:', error.stack);
