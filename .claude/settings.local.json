@@ -46,7 +46,11 @@
       "Bash(echo $DATABASE_URL)",
       "Bash(for i in {1..5})",
       "Bash(do echo \"Test $i:\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []
