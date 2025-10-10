@@ -50,7 +50,8 @@
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
       "Bash(taskkill:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

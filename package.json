@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "tom": "node scripts/tom.mjs",
+    "tom:genie": "node scripts/tom-genie.mjs",
     "db:init": "node scripts/init-db-ordered.js",
     "db:init:old": "node scripts/init-database.js",
     "db:init:verify": "node scripts/db-init-verify.js",
