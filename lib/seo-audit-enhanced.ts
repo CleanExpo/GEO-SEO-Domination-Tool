@@ -16,15 +16,17 @@ export class EnhancedSEOAuditor {
 
   constructor() {
     // Initialize services if API keys are available
-    // Try multiple env var names for Google API key
-    const googleApiKey = process.env.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY;
+    // Priority: GOOGLE_SPEED_KEY (Vercel) > GOOGLE_PAGESPEED_API_KEY > GOOGLE_API_KEY
+    const googleApiKey = process.env.GOOGLE_SPEED_KEY ||
+                         process.env.GOOGLE_PAGESPEED_API_KEY ||
+                         process.env.GOOGLE_API_KEY;
     const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
 
     if (googleApiKey) {
       this.lighthouseService = new LighthouseService(googleApiKey);
-      console.log('[EnhancedSEOAuditor] Lighthouse service initialized successfully');
+      console.log('[EnhancedSEOAuditor] Lighthouse service initialized with API key');
     } else {
-      console.warn('[EnhancedSEOAuditor] GOOGLE_PAGESPEED_API_KEY or GOOGLE_API_KEY not configured - Lighthouse audits will be skipped');
+      console.warn('[EnhancedSEOAuditor] GOOGLE_SPEED_KEY not configured - Lighthouse audits will be skipped');
     }
 
     if (firecrawlApiKey) {
@@ -284,8 +286,8 @@ export class EnhancedSEOAuditor {
       // Check for rate limiting
       if (error.response?.status === 429) {
         console.error('[EnhancedSEOAuditor] Lighthouse API rate limit exceeded - falling back to basic audit');
-      } else if (error.response?.status === 403) {
-        console.error('[EnhancedSEOAuditor] Lighthouse API authentication failed - check GOOGLE_PAGESPEED_API_KEY');
+      } else if (error.response?.status === 403 || error.response?.status === 400) {
+        console.error('[EnhancedSEOAuditor] Lighthouse API authentication failed - check GOOGLE_SPEED_KEY in Vercel');
       } else {
         console.error('[EnhancedSEOAuditor] Lighthouse audit failed:', error.message || error);
       }

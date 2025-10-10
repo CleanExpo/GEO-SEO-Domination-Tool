@@ -78,12 +78,19 @@ export async function POST(request: NextRequest) {
 
     console.log(`[SEO Audits API] Starting audit for ${url}`);
 
-    // Check API key availability
-    const hasLighthouse = !!(process.env.GOOGLE_PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY);
+    // Check API key availability (GOOGLE_SPEED_KEY is the primary Vercel key)
+    const hasLighthouse = !!(process.env.GOOGLE_SPEED_KEY ||
+                             process.env.GOOGLE_PAGESPEED_API_KEY ||
+                             process.env.GOOGLE_API_KEY);
     const hasFirecrawl = !!process.env.FIRECRAWL_API_KEY;
 
     if (!hasLighthouse && !hasFirecrawl) {
       console.warn('[SEO Audits API] No API keys configured - using basic audit only');
+    } else {
+      console.log('[SEO Audits API] API keys available:', {
+        lighthouse: hasLighthouse,
+        firecrawl: hasFirecrawl
+      });
     }
 
     // Run the enhanced SEO audit with Lighthouse and Firecrawl
