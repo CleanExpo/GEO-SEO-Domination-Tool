@@ -68,8 +68,20 @@ export async function POST(request: NextRequest) {
 
     console.log('[Start Onboarding] Session saved to database');
 
-    // TODO: Trigger background processing
-    // For now, just return success
+    // Trigger background processing (fire and forget)
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : request.headers.get('origin') || 'http://localhost:3000';
+
+    fetch(`${baseUrl}/api/onboarding/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onboardingId })
+    }).catch(err => {
+      console.error('[Start Onboarding] Failed to trigger background processing:', err);
+    });
+
+    console.log('[Start Onboarding] Background processing triggered');
 
     return NextResponse.json({
       success: true,
