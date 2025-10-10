@@ -110,7 +110,10 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   const addToArray = (field: keyof ClientIntakeData, value: string) => {
     const currentArray = formData[field] as string[];
     if (value && !currentArray.includes(value)) {
+      console.log(`[Step${currentStep}] addToArray(${field}):`, value);
+      console.log(`[Step${currentStep}] Before:`, currentArray);
       updateField(field, [...currentArray, value] as any);
+      console.log(`[Step${currentStep}] After:`, [...currentArray, value]);
     }
   };
 
@@ -356,20 +359,32 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   };
 
   const isStepValid = (step: number): boolean => {
+    let isValid = false;
     switch (step) {
       case 0: // Business Info
-        return !!(formData.businessName && formData.email && formData.contactName);
+        isValid = !!(formData.businessName && formData.email && formData.contactName);
+        break;
       case 1: // Website
-        return formData.hasExistingWebsite ? !!formData.website : true;
+        isValid = formData.hasExistingWebsite ? !!formData.website : true;
+        break;
       case 2: // Goals - Allow proceeding if at least ONE goal OR keyword is set
-        return formData.primaryGoals.length > 0 || formData.targetKeywords.length > 0;
+        isValid = formData.primaryGoals.length > 0 || formData.targetKeywords.length > 0;
+        console.log('[Validation Step 2]', {
+          goals: formData.primaryGoals,
+          keywords: formData.targetKeywords,
+          isValid
+        });
+        break;
       case 3: // Content
-        return formData.contentTypes.length > 0;
+        isValid = formData.contentTypes.length > 0;
+        break;
       case 4: // Services
-        return formData.selectedServices.length > 0;
+        isValid = formData.selectedServices.length > 0;
+        break;
       default:
-        return true;
+        isValid = true;
     }
+    return isValid;
   };
 
   return (
