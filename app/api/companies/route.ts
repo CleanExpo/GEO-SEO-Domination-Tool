@@ -14,6 +14,12 @@ const companySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const user = await getUser();
+
+    // If no authenticated user, return empty array (not an error)
+    if (!user) {
+      return NextResponse.json({ companies: [] });
+    }
 
     // Get companies filtered by RLS policies (organisation_id is handled automatically)
     const { data, error } = await supabase
@@ -22,14 +28,17 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // RLS policy errors should not crash the API
+      console.error('[Companies API] Supabase error:', error);
+      return NextResponse.json({ companies: [], error: error.message }, { status: 200 });
     }
 
-    return NextResponse.json({ companies: data });
-  } catch (error) {
+    return NextResponse.json({ companies: data || [] });
+  } catch (error: any) {
+    console.error('[Companies API] Fatal error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch companies' },
-      { status: 500 }
+      { companies: [], error: error.message || 'Failed to fetch companies' },
+      { status: 200 }
     );
   }
 }

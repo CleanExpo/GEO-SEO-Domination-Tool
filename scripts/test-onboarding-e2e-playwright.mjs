@@ -120,6 +120,7 @@ async function runE2ETest() {
     for (const goal of testData.primaryGoals) {
       try {
         await page.click(`label:has-text("${goal}")`);
+        await page.waitForTimeout(300); // Wait for React state update
         console.log(`   ✓ Checked: ${goal}`);
       } catch (e) {
         console.warn(`   ⚠️  Could not find checkbox for: ${goal}`);
@@ -132,17 +133,22 @@ async function runE2ETest() {
       try {
         await page.fill(`[placeholder*="${keywordPlaceholder}"]`, keyword);
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(200); // Wait for state update
+        await page.waitForTimeout(300); // Wait for state update
         console.log(`   ✓ Added keyword: ${keyword}`);
       } catch (e) {
         console.warn(`   ⚠️  Could not add keyword: ${keyword}`);
       }
     }
 
+    // Wait for validation to complete after all inputs
+    await page.waitForTimeout(500);
+
     await page.screenshot({ path: 'onboarding-step-3.png' });
     screenshots.push('onboarding-step-3.png');
     console.log('✅ SEO goals filled');
 
+    // Wait for Next button to be enabled before clicking
+    await page.waitForSelector('button:has-text("Next"):not([disabled])', { timeout: 5000 });
     await page.click('button:has-text("Next")');
     await page.waitForTimeout(1000);
     console.log('✅ Moved to Step 4\n');

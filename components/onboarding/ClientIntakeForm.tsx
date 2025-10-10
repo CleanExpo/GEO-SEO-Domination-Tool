@@ -233,23 +233,27 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
     }
   };
 
-  // Business lookup function - auto-populate from Google Business Profile
+  // Business lookup function - auto-populate from Website URL via Google Business Profile
   const lookupBusiness = async () => {
-    const query = prompt('Enter business name and location (e.g., "Joe\'s Pizza Brisbane")');
+    const websiteUrl = formData.website?.trim();
 
-    if (!query || query.trim().length < 3) {
-      console.log('[Lookup] Cancelled or invalid query');
+    if (!websiteUrl || websiteUrl.length < 10) {
+      toast({
+        title: 'Website URL Required',
+        description: 'Please enter a website URL first to enable auto-fill',
+        variant: 'destructive'
+      });
       return;
     }
 
-    console.log('[Lookup] Searching for:', query);
-    setLookingUp(true);
+    console.log('[Lookup] Searching for website:', websiteUrl);
+    setSaving(true);
 
     try {
       const response = await fetch('/api/onboarding/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query: websiteUrl, searchBy: 'url' })
       });
 
       const data = await response.json();
@@ -488,6 +492,32 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
           {/* Step 0: Business Information */}
           {currentStep === 0 && (
             <div className="space-y-4">
+              {/* Website URL First - Enables Auto-Fill */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="website">Website URL *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={lookupBusiness}
+                    disabled={!formData.website || saving}
+                  >
+                    {saving ? 'Loading...' : '🔍 Auto-Fill from Website'}
+                  </Button>
+                </div>
+                <Input
+                  id="website"
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => updateField('website', e.target.value)}
+                  placeholder="https://www.example.com"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter your website URL and click Auto-Fill to pull business details from Google
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name *</Label>

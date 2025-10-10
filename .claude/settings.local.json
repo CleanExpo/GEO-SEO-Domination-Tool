@@ -15,7 +15,12 @@
       "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/check-company-portfolios-table.mjs)",
       "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/migrate-portfolios-add-columns.mjs)",
       "Bash(git remote add:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(if [ -d \".next\" ])",
+      "Bash(else echo \"✗ .next folder not found\")",
+      "Bash(echo $NODE_ENV)",
+      "Bash(unset NODE_ENV)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

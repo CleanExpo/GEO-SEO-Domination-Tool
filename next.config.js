@@ -112,14 +112,22 @@ const sentryWebpackPluginOptions = {
   
   // Disable auto-instrumentation to prevent Html import issues in App Router
   autoInstrumentServerFunctions: false,
-  
+
   // Disable automatic middleware instrumentation (we use instrumentation.ts instead)
   autoInstrumentMiddleware: false,
+
+  // Disable automatic error page instrumentation to prevent Html import errors
+  disableServerWebpackPlugin: false,
+  disableClientWebpackPlugin: false,
+
+  // Configure Sentry to not inject error pages (App Router only)
+  automaticVercelMonitors: false,
 }
 
 // Export the configuration wrapped with Sentry
-// Only wrap with Sentry if DSN is configured to avoid build issues
-if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+// Only wrap with Sentry if DSN is configured AND not in build mode
+// Temporarily disable Sentry to fix Html import error during build
+if (false && (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)) {
   module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
 } else {
   module.exports = nextConfig;

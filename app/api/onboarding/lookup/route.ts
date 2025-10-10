@@ -55,7 +55,7 @@ interface BusinessLookupResult {
 
 export async function POST(request: NextRequest) {
   try {
-    const { query } = await request.json();
+    const { query, searchBy } = await request.json();
 
     if (!query || query.trim().length < 3) {
       return NextResponse.json(
@@ -64,14 +64,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Business Lookup] Searching for: "${query}"`);
+    const isUrlSearch = searchBy === 'url' || query.startsWith('http');
+    console.log(`[Business Lookup] ${isUrlSearch ? 'URL-based' : 'Name-based'} search for: "${query}"`);
 
     const result: BusinessLookupResult = {
       found: false
     };
 
     // Step 1: Search Google Places for the business
-    const placeData = await searchGooglePlaces(query);
+    // If URL provided, extract domain and search for it
+    const searchQuery = isUrlSearch ? extractDomain(query) : query;
+    const placeData = await searchGooglePlaces(searchQuery);
 
     if (placeData) {
       result.found = true;
@@ -346,6 +349,18 @@ function extractKeywordsFromGBP(placeData: any): string[] {
   }
 
   return [...new Set(keywords)].slice(0, 10); // Remove duplicates, limit to 10
+}
+
+/**
+ * Extract domain from URL
+ */
+function extractDomain(url: string): string {
+  try {
+    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+    return urlObj.hostname.replace('www.', '');
+  } catch {
+    return url;
+  }
 }
 
 /**
