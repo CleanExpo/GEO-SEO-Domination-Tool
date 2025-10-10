@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Database from 'better-sqlite3';
 import path from 'path';
+import { randomUUID } from 'crypto';
 import { encrypt, decrypt, maskCredential, sanitizeCredential, validateCredentialFormat, hash } from '@/lib/encryption';
 
 const dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
@@ -300,5 +301,6 @@ function generateClientId(): string {
 }
 
 function generatePortfolioId(): string {
-  return `portfolio-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  // Generate UUID for PostgreSQL compatibility
+  return randomUUID();
 }
