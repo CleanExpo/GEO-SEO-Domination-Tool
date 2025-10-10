@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { EnhancedSEOAuditor } from '@/lib/seo-audit-enhanced';
 
 // GET /api/seo-audits - List all SEO audits
@@ -53,7 +54,8 @@ export async function GET(request: NextRequest) {
 // POST /api/seo-audits - Create a new SEO audit
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // Use admin client to bypass RLS for server-side audit operations
+    const supabase = createAdminClient();
     const body = await request.json();
     const { company_id, url } = body;
 
