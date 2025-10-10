@@ -24,7 +24,8 @@
       "Bash(for pid in 214879 9de3b0 d63f15 86c76e 853fbf cb0e24)",
       "Bash(do echo \"Attempting shell $pid\")",
       "Bash(then grep -E \"(GOOGLE_API_KEY|GOOGLE_PAGESPEED)\" .env.local)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git clone:*)"
     ],
     "deny": [],
     "ask": []

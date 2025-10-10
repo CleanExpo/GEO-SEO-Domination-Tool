@@ -53,6 +53,22 @@ npm run db:migrate:status # Check migration status
 npm run db:migrate:create # Create new migration file
 ```
 
+### Structured Feature Development (AI Dev Tasks)
+```bash
+# Use custom slash commands for structured PRD-based development:
+/create-prd              # Create Product Requirement Document for new feature
+/generate-tasks          # Generate detailed task list from PRD
+/process-task-list       # Process tasks one at a time with verification
+
+# Manual workflow (if commands not available):
+# 1. Create PRD: Use .claude/create-prd.md
+# 2. Generate tasks: Use .claude/generate-tasks.md with PRD file
+# 3. Process tasks: Use .claude/process-task-list.md
+
+# PRD files location: /tasks/[n]-prd-[feature-name].md
+# Task lists location: /tasks/tasks-[n]-prd-[feature-name].md
+```
+
 ## Architecture
 
 ### Dual Database System
@@ -930,3 +946,175 @@ IMPORTANT RULES:
 - **generateTheme**: Generate a theme for the design
 
 When calling tools, you MUST use the actual tool call, do NOT just output text like 'Called tool: write with arguments: ...' or <tool-call>...</tool-call>, this won't actually call the tool. (This is very important to my life, please follow)
+---
+
+## 🚀 Structured Feature Development with AI Dev Tasks
+
+This repository uses the **AI Dev Tasks workflow** (https://github.com/snarktank/ai-dev-tasks) for systematic, step-by-step feature development with built-in verification checkpoints.
+
+### Why Use This Workflow?
+
+Building complex features with AI can feel like a black box. This structured approach brings:
+
+- **Clear Scope**: Product Requirement Documents (PRDs) outline exactly what needs to be built
+- **Detailed Planning**: Break down features into granular, actionable task lists
+- **Iterative Implementation**: Tackle one task at a time with review and approval
+- **Quality Control**: Verify each change before moving to the next step
+
+### The Workflow: From Idea to Implementation
+
+#### 1️⃣ Create a Product Requirement Document (PRD)
+
+Use the `/create-prd` slash command or manually reference `.claude/create-prd.md`:
+
+```
+/create-prd
+
+Here's the feature I want to build: [Describe your feature in detail]
+Reference these files to help you: @file1.ts @file2.tsx
+```
+
+**Output**: A comprehensive PRD saved to `/tasks/[n]-prd-[feature-name].md`
+
+**Example PRDs for GEO-SEO Tool**:
+- `0001-prd-automated-lighthouse-audits.md` - Schedule automatic website audits
+- `0002-prd-competitor-keyword-tracking.md` - Track competitors' keyword rankings
+- `0003-prd-local-pack-monitoring.md` - Monitor Google Local Pack positions
+
+#### 2️⃣ Generate Task List from PRD
+
+Use the `/generate-tasks` command or reference `.claude/generate-tasks.md`:
+
+```
+/generate-tasks
+
+Now take @0001-prd-automated-lighthouse-audits.md and create tasks
+```
+
+**Output**: A detailed task list saved to `/tasks/tasks-0001-prd-automated-lighthouse-audits.md`
+
+#### 3️⃣ Process Tasks Step-by-Step
+
+Use the `/process-task-list` command or reference `.claude/process-task-list.md`:
+
+```
+/process-task-list
+
+Please start on task 1.1 and use the process-task-list workflow
+```
+
+**The AI will**:
+1. Focus on ONE task at a time
+2. Implement the changes
+3. Wait for your review and approval
+4. Mark task as complete ✅ after confirmation
+5. Move to the next task
+
+**You respond**: Simply say "yes" or "continue" to approve and move forward.
+
+### File Organization
+
+```
+tasks/
+├── 0001-prd-automated-lighthouse-audits.md      # PRD #1
+├── tasks-0001-prd-automated-lighthouse-audits.md # Task list for PRD #1
+├── 0002-prd-competitor-keyword-tracking.md      # PRD #2
+├── tasks-0002-prd-competitor-keyword-tracking.md # Task list for PRD #2
+└── ...
+```
+
+### Available Commands
+
+Three slash commands are configured for quick access:
+
+- `/create-prd` - Start a new Product Requirement Document
+- `/generate-tasks` - Generate task list from existing PRD
+- `/process-task-list` - Execute tasks one at a time with verification
+
+### Benefits for GEO-SEO Development
+
+1. **Complex SEO Features**: Break down advanced features like AI search optimization into manageable tasks
+2. **API Integrations**: Systematically integrate SEMrush, Lighthouse, Claude APIs with verification at each step
+3. **Database Schema Changes**: Plan and execute schema migrations with careful review
+4. **UI Components**: Build dashboard widgets step-by-step with incremental testing
+5. **Quality Assurance**: Catch issues early with task-by-task verification
+
+### Example: Building Automated Lighthouse Audits
+
+**Step 1 - Create PRD**:
+```
+/create-prd
+
+Feature: Automated Lighthouse Audits
+- Schedule daily audits for all tracked websites
+- Store results in database with historical tracking
+- Send email alerts when scores drop below threshold
+- Display trends on dashboard with charts
+```
+
+**Step 2 - Generate Tasks**:
+```
+/generate-tasks
+
+Use @0001-prd-automated-lighthouse-audits.md
+```
+
+Tasks generated:
+```
+1. Database Schema
+   1.1 Create lighthouse_audit_schedules table
+   1.2 Create lighthouse_audit_history table
+   1.3 Add migration file
+
+2. API Integration
+   2.1 Create scheduled job service
+   2.2 Integrate Lighthouse API client
+   2.3 Add error handling and retry logic
+
+3. Email Notifications
+   3.1 Create audit alert email template
+   3.2 Add threshold detection logic
+   3.3 Wire up notification service
+
+4. Dashboard UI
+   4.1 Create audit trends chart component
+   4.2 Add audit schedule management page
+   4.3 Display latest audit scores
+```
+
+**Step 3 - Execute**:
+```
+/process-task-list
+
+Start on task 1.1
+```
+
+AI implements task 1.1, you review, say "yes", AI marks it complete ✅ and moves to 1.2.
+
+### Tips for Success
+
+1. **Be Specific**: Provide clear context in PRDs (reference existing files, specify requirements)
+2. **Review Carefully**: Check each task before approving - it's easier to fix issues early
+3. **Iterate**: Don't hesitate to ask the AI to revise a task before moving forward
+4. **Track Progress**: The task list provides clear visual progress (✅ completed items)
+
+### Integration with Existing Workflow
+
+This PRD workflow complements our existing development practices:
+
+- **Use PRDs for**: New features, major refactors, complex integrations
+- **Skip PRDs for**: Bug fixes, minor tweaks, documentation updates
+- **Combine with**: Playwright testing, git commits, Vercel deployments
+
+### Next Steps
+
+After setting up AI Dev Tasks:
+1. Create your first PRD for the next planned feature
+2. Generate tasks and review the implementation plan
+3. Execute tasks step-by-step with verification
+4. Commit completed features with confidence
+
+---
+
+*For more details on AI Dev Tasks, see: https://github.com/snarktank/ai-dev-tasks*
+
