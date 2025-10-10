@@ -12,6 +12,7 @@
 
 import { EventEmitter } from 'events';
 import { getDatabase } from '@/lib/db';
+import { randomUUID } from 'crypto';
 import type { OnboardingRequest } from '../onboarding/onboarding-orchestrator';
 
 const db = getDatabase();
@@ -276,7 +277,8 @@ export class MasterOrchestrator extends EventEmitter {
    * Create company record from onboarding data
    */
   private async createCompanyRecord(data: OnboardingRequest): Promise<string> {
-    const companyId = `company_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate UUID for PostgreSQL compatibility
+    const companyId = randomUUID();
     const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 
     await db.query(`
