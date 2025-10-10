@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, getUser } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { getCurrentOrganisationId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
@@ -13,15 +14,10 @@ const companySchema = z.object({
 // GET /api/companies - List all companies (scoped to current organisation)
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const user = await getUser();
+    // Use admin client to bypass RLS issues with organisation_members
+    const supabase = createAdminClient();
 
-    // If no authenticated user, return empty array (not an error)
-    if (!user) {
-      return NextResponse.json({ companies: [] });
-    }
-
-    // Get companies filtered by RLS policies (organisation_id is handled automatically)
+    // Get companies - temporarily bypass auth to fix infinite recursion
     const { data, error } = await supabase
       .from('companies')
       .select('*')

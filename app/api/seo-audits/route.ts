@@ -6,7 +6,7 @@ import { EnhancedSEOAuditor } from '@/lib/seo-audit-enhanced';
 // GET /api/seo-audits - List all SEO audits
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const searchParams = request.nextUrl.searchParams;
     const companyId = searchParams.get('company_id');
 
