@@ -7,6 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { onboardingOrchestrator } from '@/services/onboarding/onboarding-orchestrator';
 
+// Force Node.js runtime (orchestrator uses fs, path, EventEmitter)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   console.log('[Start Onboarding] API called');
 

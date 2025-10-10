@@ -8,6 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { onboardingOrchestrator } from '@/services/onboarding/onboarding-orchestrator';
 import { getDatabase } from '@/lib/db';
 
+// Force Node.js runtime (uses database and file system)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const db = getDatabase();
 
 export async function GET(
