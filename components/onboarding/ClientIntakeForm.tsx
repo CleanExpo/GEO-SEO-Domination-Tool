@@ -390,34 +390,10 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
     }
   };
 
-  const isStepValid = (step: number): boolean => {
-    let isValid = false;
-    switch (step) {
-      case 0: // Business Info
-        isValid = !!(formData.businessName && formData.email && formData.contactName);
-        break;
-      case 1: // Website
-        isValid = formData.hasExistingWebsite ? !!formData.website : true;
-        break;
-      case 2: // Goals - Allow proceeding if at least ONE goal OR keyword is set
-        isValid = formData.primaryGoals.length > 0 || formData.targetKeywords.length > 0;
-        console.log('[Validation Step 2]', {
-          goals: formData.primaryGoals,
-          keywords: formData.targetKeywords,
-          isValid
-        });
-        break;
-      case 3: // Content
-        isValid = formData.contentTypes.length > 0;
-        break;
-      case 4: // Services
-        isValid = formData.selectedServices.length > 0;
-        break;
-      default:
-        isValid = true;
-    }
-    return isValid;
-  };
+  // REMOVED: isStepValid() function (Task 1.4)
+  // Replaced by validateStep() from Zod schemas in useEffect hook (Task 1.3)
+  // Old implementation used manual validation logic with race condition bug
+  // New implementation uses Zod schemas with reactive validation
 
   return (
     <div className="max-w-4xl mx-auto p-6">
