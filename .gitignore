@@ -126,3 +126,8 @@ integrations/
 .env.preview
 .claude/mcp.json
 .mcp.json
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+*.png
