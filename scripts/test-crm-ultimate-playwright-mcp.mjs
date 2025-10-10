@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
 import { writeFileSync } from 'fs';
 
 // Configuration
-const BASE_URL = 'https://geo-seo-domination-tool.vercel.app';
+const BASE_URL = 'https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app';
 const API_BASE = BASE_URL + '/api';
 const TIMEOUT = 30000;
 const SCREENSHOT_DIR = './test-screenshots';

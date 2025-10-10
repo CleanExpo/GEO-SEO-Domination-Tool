@@ -1,0 +1,340 @@
+{
+  "timestamp": "2025-10-10T03:25:03.873Z",
+  "summary": {
+    "totalTests": 25,
+    "passed": 14,
+    "failed": 11,
+    "skipped": 0,
+    "duration": 48578
+  },
+  "categories": {
+    "navigation": {
+      "tests": [
+        {
+          "name": "Load Main Dashboard",
+          "status": "FAIL",
+          "details": {
+            "error": "Expected content not found",
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/dashboard"
+          },
+          "timestamp": "2025-10-10T03:25:07.795Z"
+        },
+        {
+          "name": "Load Companies List",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/companies",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:10.762Z"
+        },
+        {
+          "name": "Load CRM Calendar",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/crm/calendar",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:13.827Z"
+        },
+        {
+          "name": "Load CRM Influence",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/crm/influence",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:16.575Z"
+        },
+        {
+          "name": "Load New Client Onboarding",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/onboarding/new",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:19.442Z"
+        },
+        {
+          "name": "Load Clients Page",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/clients",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:22.245Z"
+        },
+        {
+          "name": "Load Projects",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/projects",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:24.946Z"
+        },
+        {
+          "name": "Load Tactical Coding",
+          "status": "PASS",
+          "details": {
+            "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/tactical",
+            "loadTime": "< 2s"
+          },
+          "timestamp": "2025-10-10T03:25:27.892Z"
+        }
+      ],
+      "passed": 7,
+      "failed": 1
+    },
+    "apiEndpoints": {
+      "tests": [
+        {
+          "name": "Get CRM Portfolios",
+          "status": "FAIL",
+          "details": {
+            "error": "HTTP 404: ",
+            "status": 404
+          },
+          "timestamp": "2025-10-10T03:25:28.181Z"
+        },
+        {
+          "name": "Get Rankings Data",
+          "status": "FAIL",
+          "details": {
+            "error": "HTTP 404: ",
+            "status": 404
+          },
+          "timestamp": "2025-10-10T03:25:28.465Z"
+        },
+        {
+          "name": "Get Keywords Data",
+          "status": "FAIL",
+          "details": {
+            "error": "HTTP 404: ",
+            "status": 404
+          },
+          "timestamp": "2025-10-10T03:25:28.756Z"
+        },
+        {
+          "name": "Get SEO Audits",
+          "status": "FAIL",
+          "details": {
+            "error": "HTTP 404: ",
+            "status": 404
+          },
+          "timestamp": "2025-10-10T03:25:29.034Z"
+        },
+        {
+          "name": "Save Onboarding Data",
+          "status": "FAIL",
+          "details": {
+            "error": "HTTP 404: ",
+            "status": 404
+          },
+          "timestamp": "2025-10-10T03:25:29.329Z"
+        }
+      ],
+      "passed": 0,
+      "failed": 5
+    },
+    "dataOperations": {
+      "tests": [
+        {
+          "name": "Create Company - Form Input",
+          "status": "PASS",
+          "details": {
+            "companyName": "Test Company 1760066731662"
+          },
+          "timestamp": "2025-10-10T03:25:31.711Z"
+        },
+        {
+          "name": "Read Companies List",
+          "status": "PASS",
+          "details": {
+            "note": "Companies page rendered successfully"
+          },
+          "timestamp": "2025-10-10T03:25:35.045Z"
+        },
+        {
+          "name": "Update - Save Progress",
+          "status": "FAIL",
+          "details": {
+            "note": "No save confirmation"
+          },
+          "timestamp": "2025-10-10T03:25:39.682Z"
+        }
+      ],
+      "passed": 2,
+      "failed": 1
+    },
+    "integrations": {
+      "tests": [
+        {
+          "name": "Google OAuth Button Present",
+          "status": "FAIL",
+          "details": {
+            "error": "locator.count: Unexpected token \"=\" while parsing css selector \"button:has-text(\"Google\"), text=Sign in with Google\". Did you mean to CSS.escape it?"
+          },
+          "timestamp": "2025-10-10T03:25:42.227Z"
+        },
+        {
+          "name": "Calendar Component Renders",
+          "status": "PASS",
+          "details": {},
+          "timestamp": "2025-10-10T03:25:45.540Z"
+        },
+        {
+          "name": "API Keys Configuration Check",
+          "status": "FAIL",
+          "details": {
+            "error": "page.evaluate: ReferenceError: process is not defined\n    at eval (eval at evaluate (:290:30), <anonymous>:3:30)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+          },
+          "timestamp": "2025-10-10T03:25:45.543Z"
+        }
+      ],
+      "passed": 1,
+      "failed": 2
+    },
+    "userFlow": {
+      "tests": [
+        {
+          "name": "Multi-Step Onboarding Navigation",
+          "status": "PASS",
+          "details": {
+            "stepsCompleted": 3,
+            "totalSteps": 3
+          },
+          "timestamp": "2025-10-10T03:25:48.143Z"
+        },
+        {
+          "name": "Dashboard → Companies Navigation",
+          "status": "FAIL",
+          "details": {
+            "error": "locator.isVisible: Unexpected token \"=\" while parsing css selector \"a[href=\"/companies\"], text=Companies\". Did you mean to CSS.escape it?\nCall log:\n\u001b[2m    - checking visibility of a[href=\"/companies\"], text=Companies >> nth=0\u001b[22m\n"
+          },
+          "timestamp": "2025-10-10T03:25:50.602Z"
+        }
+      ],
+      "passed": 1,
+      "failed": 1
+    },
+    "performance": {
+      "tests": [
+        {
+          "name": "/dashboard Load Time",
+          "status": "PASS",
+          "details": {
+            "loadTime": "306ms",
+            "threshold": "3000ms",
+            "status": "Under threshold"
+          },
+          "timestamp": "2025-10-10T03:25:50.909Z"
+        },
+        {
+          "name": "/companies Load Time",
+          "status": "PASS",
+          "details": {
+            "loadTime": "294ms",
+            "threshold": "3000ms",
+            "status": "Under threshold"
+          },
+          "timestamp": "2025-10-10T03:25:51.203Z"
+        },
+        {
+          "name": "/onboarding/new Load Time",
+          "status": "PASS",
+          "details": {
+            "loadTime": "511ms",
+            "threshold": "3000ms",
+            "status": "Under threshold"
+          },
+          "timestamp": "2025-10-10T03:25:51.714Z"
+        },
+        {
+          "name": "No Critical Console Errors",
+          "status": "FAIL",
+          "details": {
+            "criticalErrors": 8,
+            "examples": [
+              "Failed to fetch dashboard data: TypeError: Failed to fetch\n    at i (https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/_next/static/chunks/app/dashboard/page-d901dc82e5ac2abd.js?dpl=dpl_A57uHLZPSfsWUvy23Z2U3yqBC7At:1:1269)",
+              "Error loading portfolios: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+              "Error loading portfolios: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+            ]
+          },
+          "timestamp": "2025-10-10T03:25:51.714Z"
+        }
+      ],
+      "passed": 3,
+      "failed": 1
+    }
+  },
+  "errors": [
+    {
+      "category": "navigation",
+      "name": "Load Main Dashboard",
+      "error": "Expected content not found",
+      "url": "https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/dashboard"
+    },
+    {
+      "category": "apiEndpoints",
+      "name": "Get CRM Portfolios",
+      "error": "HTTP 404: ",
+      "status": 404
+    },
+    {
+      "category": "apiEndpoints",
+      "name": "Get Rankings Data",
+      "error": "HTTP 404: ",
+      "status": 404
+    },
+    {
+      "category": "apiEndpoints",
+      "name": "Get Keywords Data",
+      "error": "HTTP 404: ",
+      "status": 404
+    },
+    {
+      "category": "apiEndpoints",
+      "name": "Get SEO Audits",
+      "error": "HTTP 404: ",
+      "status": 404
+    },
+    {
+      "category": "apiEndpoints",
+      "name": "Save Onboarding Data",
+      "error": "HTTP 404: ",
+      "status": 404
+    },
+    {
+      "category": "dataOperations",
+      "name": "Update - Save Progress",
+      "note": "No save confirmation"
+    },
+    {
+      "category": "integrations",
+      "name": "Google OAuth Button Present",
+      "error": "locator.count: Unexpected token \"=\" while parsing css selector \"button:has-text(\"Google\"), text=Sign in with Google\". Did you mean to CSS.escape it?"
+    },
+    {
+      "category": "integrations",
+      "name": "API Keys Configuration Check",
+      "error": "page.evaluate: ReferenceError: process is not defined\n    at eval (eval at evaluate (:290:30), <anonymous>:3:30)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "category": "userFlow",
+      "name": "Dashboard → Companies Navigation",
+      "error": "locator.isVisible: Unexpected token \"=\" while parsing css selector \"a[href=\"/companies\"], text=Companies\". Did you mean to CSS.escape it?\nCall log:\n\u001b[2m    - checking visibility of a[href=\"/companies\"], text=Companies >> nth=0\u001b[22m\n"
+    },
+    {
+      "category": "performance",
+      "name": "No Critical Console Errors",
+      "criticalErrors": 8,
+      "examples": [
+        "Failed to fetch dashboard data: TypeError: Failed to fetch\n    at i (https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app/_next/static/chunks/app/dashboard/page-d901dc82e5ac2abd.js?dpl=dpl_A57uHLZPSfsWUvy23Z2U3yqBC7At:1:1269)",
+        "Error loading portfolios: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+        "Error loading portfolios: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+      ]
+    }
+  ],
+  "warnings": []
+}

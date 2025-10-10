@@ -1,0 +1,100 @@
+
+======================================================================
+🚀 ULTIMATE CRM SYSTEM TEST - Playwright MCP
+======================================================================
+Base URL: https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app
+Started: 10/10/2025, 1:25:03 pm
+
+
+📍 CATEGORY 1: Navigation & Page Loading
+----------------------------------------------------------------------
+    ❌ Load Main Dashboard
+       Error: Expected content not found
+    ✅ Load Companies List
+    ✅ Load CRM Calendar
+    ✅ Load CRM Influence
+    ✅ Load New Client Onboarding
+    ✅ Load Clients Page
+    ✅ Load Projects
+    ✅ Load Tactical Coding
+
+📡 CATEGORY 2: API Endpoint Testing
+----------------------------------------------------------------------
+    ❌ Get CRM Portfolios
+       Error: HTTP 404: 
+    ❌ Get Rankings Data
+       Error: HTTP 404: 
+    ❌ Get Keywords Data
+       Error: HTTP 404: 
+    ❌ Get SEO Audits
+       Error: HTTP 404: 
+    ❌ Save Onboarding Data
+       Error: HTTP 404: 
+
+💾 CATEGORY 3: Data Operations (CRUD)
+----------------------------------------------------------------------
+    ✅ Create Company - Form Input
+    ✅ Read Companies List
+    ❌ Update - Save Progress
+
+🔗 CATEGORY 4: Integration Testing
+----------------------------------------------------------------------
+    ❌ Google OAuth Button Present
+       Error: locator.count: Unexpected token "=" while parsing css selector "button:has-text("Google"), text=Sign in with Google". Did you mean to CSS.escape it?
+    ✅ Calendar Component Renders
+    ❌ API Keys Configuration Check
+       Error: page.evaluate: ReferenceError: process is not defined
+    at eval (eval at evaluate (:290:30), <anonymous>:3:30)
+    at UtilityScript.evaluate (<anonymous>:292:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+
+👤 CATEGORY 5: User Flow Testing
+----------------------------------------------------------------------
+    ✅ Multi-Step Onboarding Navigation
+    ❌ Dashboard → Companies Navigation
+       Error: locator.isVisible: Unexpected token "=" while parsing css selector "a[href="/companies"], text=Companies". Did you mean to CSS.escape it?
+Call log:
+[2m    - checking visibility of a[href="/companies"], text=Companies >> nth=0[22m
+
+
+⚡ CATEGORY 6: Performance Testing
+----------------------------------------------------------------------
+    ✅ /dashboard Load Time
+    ✅ /companies Load Time
+    ✅ /onboarding/new Load Time
+    ❌ No Critical Console Errors
+
+
+======================================================================
+📊 ULTIMATE CRM TEST REPORT
+======================================================================
+
+⏱️  Duration: 48.58s
+📝 Total Tests: 25
+✅ Passed: 14 (56.0%)
+❌ Failed: 11 (44.0%)
+⏭️  Skipped: 0
+
+📋 Category Breakdown:
+  navigation: 7/8 (87.5%)
+  apiEndpoints: 0/5 (0.0%)
+  dataOperations: 2/3 (66.7%)
+  integrations: 1/3 (33.3%)
+  userFlow: 1/2 (50.0%)
+  performance: 3/4 (75.0%)
+
+❌ Top Errors:
+  1. [navigation] Load Main Dashboard
+     Expected content not found
+  2. [apiEndpoints] Get CRM Portfolios
+     HTTP 404: 
+  3. [apiEndpoints] Get Rankings Data
+     HTTP 404: 
+  4. [apiEndpoints] Get Keywords Data
+     HTTP 404: 
+  5. [apiEndpoints] Get SEO Audits
+     HTTP 404: 
+
+💾 Detailed report saved: ./test-reports/crm-ultimate-test-1760066752453.json
+
+======================================================================

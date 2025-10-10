@@ -11,7 +11,7 @@ import fetch from 'node-fetch';
 // Test both local and production
 const BASE_URLS = {
   local: 'http://localhost:3000',
-  production: 'https://geo-seo-domination-tool-d5iivltdz-unite-group.vercel.app'
+  production: 'https://geo-seo-domination-tool-azlxx5slm-unite-group.vercel.app'
 };
 
 // API routes to test (grouped by category)
