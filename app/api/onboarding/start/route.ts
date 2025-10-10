@@ -68,31 +68,37 @@ export async function POST(request: NextRequest) {
 
     console.log('[Start Onboarding] Session saved to database');
 
-    // Trigger background processing asynchronously
-    // Use the full URL to call ourselves
+    // Trigger background processing SYNCHRONOUSLY
+    // In Vercel serverless, fire-and-forget doesn't work reliably
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : (request.headers.get('host') ? `https://${request.headers.get('host')}` : 'http://localhost:3000');
 
     console.log('[Start Onboarding] Triggering background worker at:', `${baseUrl}/api/onboarding/process`);
 
-    // Initiate the request but don't wait for completion
-    fetch(`${baseUrl}/api/onboarding/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ onboardingId })
-    }).then(res => {
-      console.log('[Start Onboarding] Background worker response:', res.status);
-    }).catch(err => {
-      console.error('[Start Onboarding] Failed to trigger background processing:', err.message);
-    });
+    try {
+      // AWAIT the background worker to ensure it actually runs
+      const workerResponse = await fetch(`${baseUrl}/api/onboarding/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboardingId })
+      });
 
-    console.log('[Start Onboarding] Background processing request sent');
+      console.log('[Start Onboarding] Worker response:', workerResponse.status);
+
+      if (!workerResponse.ok) {
+        const errorData = await workerResponse.json();
+        console.error('[Start Onboarding] Worker failed:', errorData);
+      }
+    } catch (workerError) {
+      console.error('[Start Onboarding] Worker error:', workerError);
+      // Don't fail the entire request if worker fails
+    }
 
     return NextResponse.json({
       success: true,
       onboardingId,
-      message: 'Client onboarding started successfully. Processing in background.'
+      message: 'Client onboarding started successfully. Processing complete!'
     }, { status: 201 });
   } catch (error: any) {
     console.error('[Start Onboarding] ERROR:', error);

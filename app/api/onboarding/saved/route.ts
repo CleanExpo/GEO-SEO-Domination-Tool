@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
   try {
     console.log('[Saved Onboarding] Fetching saved sessions');
 
-    // Fetch all completed or pending onboarding sessions
-    // Order alphabetically by business_name
+    // Fetch only the MOST RECENT onboarding session per business name
+    // This prevents showing duplicate test attempts
     const result = await db.query(
       `SELECT
         id,
@@ -30,12 +30,23 @@ export async function GET(request: NextRequest) {
         completed_at,
         request_data
       FROM onboarding_sessions
-      ORDER BY business_name ASC`
+      ORDER BY business_name ASC, created_at DESC`
     );
 
-    const sessions = result.rows || [];
+    const allSessions = result.rows || [];
+    console.log('[Saved Onboarding] Found', allSessions.length, 'total sessions');
 
-    console.log('[Saved Onboarding] Found', sessions.length, 'sessions');
+    // Keep only the most recent session per business name
+    const uniqueSessions = new Map();
+    for (const session of allSessions) {
+      const key = session.business_name.toLowerCase().trim();
+      if (!uniqueSessions.has(key)) {
+        uniqueSessions.set(key, session);
+      }
+    }
+
+    const sessions = Array.from(uniqueSessions.values());
+    console.log('[Saved Onboarding] Filtered to', sessions.length, 'unique clients');
 
     // Format response with client details
     const savedClients = sessions.map(session => {
@@ -60,6 +71,9 @@ export async function GET(request: NextRequest) {
         formData: requestData
       };
     });
+
+    // Sort alphabetically by business name
+    savedClients.sort((a, b) => a.businessName.localeCompare(b.businessName));
 
     return NextResponse.json({
       success: true,
