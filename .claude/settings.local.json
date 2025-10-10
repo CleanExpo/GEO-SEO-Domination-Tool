@@ -38,7 +38,15 @@
       "Bash(fi)",
       "Bash(if [ -f \".env.local\" ])",
       "Bash(npx playwright test:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(env)",
+      "Bash(npx @playwright/mcp@latest:*)",
+      "Bash(npx vercel:*)",
+      "Bash(tee:*)",
+      "Bash(echo $DATABASE_URL)",
+      "Bash(for i in {1..5})",
+      "Bash(do echo \"Test $i:\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

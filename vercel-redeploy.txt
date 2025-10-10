@@ -1,0 +1,17 @@
+Vercel CLI 48.2.9
+Retrieving project…
+Deploying unite-group/geo-seo-domination-tool
+Uploading [--------------------] (0.0B/12.8KB)
+Uploading [=======-------------] (4.7KB/12.8KB)
+Uploading [============--------] (8.1KB/12.8KB)
+Uploading [===============-----] (9.8KB/12.8KB)
+Uploading [====================] (12.8KB/12.8KB)
+Inspect: https://vercel.com/unite-group/geo-seo-domination-tool/E6763Qx8pHtYuJrCQta4ADZEmizM [5s]
+Production: https://geo-seo-domination-tool-lz2g095rm-unite-group.vercel.app [5s]
+https://geo-seo-domination-tool-lz2g095rm-unite-group.vercel.appQueued
+Building
+Completing
+
+Common next commands:
+- `vercel inspect geo-seo-domination-tool-lz2g095rm-unite-group.vercel.app --logs`
+- `vercel redeploy geo-seo-domination-tool-lz2g095rm-unite-group.vercel.app`
