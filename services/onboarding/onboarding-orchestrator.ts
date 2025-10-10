@@ -76,7 +76,15 @@ export interface OnboardingStep {
 
 export class OnboardingOrchestrator extends EventEmitter {
   private activeOnboardings: Map<string, OnboardingProgress> = new Map();
-  private readonly baseWorkspacePath = 'D:/GEO_SEO_Domination-Tool/workspaces';
+  private readonly baseWorkspacePath = path.join(process.cwd(), 'data', 'workspaces');
+
+  constructor() {
+    super();
+    // Ensure base workspaces directory exists
+    if (!fs.existsSync(this.baseWorkspacePath)) {
+      fs.mkdirSync(this.baseWorkspacePath, { recursive: true });
+    }
+  }
 
   /**
    * Start onboarding process for a new client
@@ -408,7 +416,7 @@ Created: ${new Date().toLocaleDateString()}
     };
 
     // Save audit to database (using portfolio_audits table)
-    const auditId = `audit_${Date.now()}`;
+    const auditId = randomUUID(); // Use UUID for PostgreSQL compatibility
     await db.query(`
       INSERT INTO portfolio_audits (
         id, portfolio_id, audit_type, website_url,
