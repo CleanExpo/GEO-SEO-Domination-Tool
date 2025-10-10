@@ -50,7 +50,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const requestData = JSON.parse(session.request_data);
+    // Parse request_data (might already be an object in PostgreSQL)
+    const requestData = typeof session.request_data === 'string'
+      ? JSON.parse(session.request_data)
+      : session.request_data;
 
     // Initialize steps
     const steps: OnboardingStep[] = [
