@@ -27,7 +27,9 @@
       "Bash(find:*)",
       "Bash(git clone:*)",
       "Bash(echo $?)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
