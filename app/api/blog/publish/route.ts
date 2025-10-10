@@ -81,8 +81,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`\n📝 Publishing blog post: "${title}"`);
-
     // Create slug from title
     const slug = title
       .toLowerCase()
@@ -137,7 +135,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       // If table doesn't exist, create it
       if (error.message.includes('no such table')) {
-        console.log('  Creating blog_posts table...');
 
         db.exec(`
           CREATE TABLE IF NOT EXISTS blog_posts (
@@ -192,8 +189,6 @@ export async function POST(request: NextRequest) {
 
     const postId = result.lastInsertRowid.toString();
     const postUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/blog/${slug}`;
-
-    console.log(`  ✅ Published: ${postUrl}`);
 
     return NextResponse.json({
       success: true,

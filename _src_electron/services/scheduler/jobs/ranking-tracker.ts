@@ -40,7 +40,7 @@ export class RankingTracker {
 
   public async execute(): Promise<void> {
     if (this.isRunning) {
-      console.log('[RankingTracker] Job already running, skipping this execution');
+
       return;
     }
 
@@ -51,7 +51,7 @@ export class RankingTracker {
     try {
       await this.trackRankings(false);
       const endTime = new Date();
-      console.log(`[RankingTracker] Completed daily ranking check`);
+
     } catch (error) {
       console.error('[RankingTracker] Job execution failed:', error);
       throw error;
@@ -62,9 +62,7 @@ export class RankingTracker {
 
   public async executeHighPriority(): Promise<void> {
     if (this.isPriorityRunning) {
-      console.log(
-        '[RankingTracker] High-priority job already running, skipping this execution'
-      );
+
       return;
     }
 
@@ -77,7 +75,7 @@ export class RankingTracker {
     try {
       await this.trackRankings(true);
       const endTime = new Date();
-      console.log(`[RankingTracker] Completed high-priority ranking check`);
+
     } catch (error) {
       console.error('[RankingTracker] High-priority job execution failed:', error);
       throw error;
@@ -93,10 +91,9 @@ export class RankingTracker {
       // Get keywords to track
       const keywords = await this.getKeywordsForTracking(priorityOnly);
       const mode = priorityOnly ? 'high-priority' : 'all';
-      console.log(`[RankingTracker] Found ${keywords.length} ${mode} keywords to track`);
 
       if (keywords.length === 0) {
-        console.log('[RankingTracker] No keywords to track');
+
         return;
       }
 
@@ -105,9 +102,7 @@ export class RankingTracker {
       // Process each keyword
       for (const keyword of keywords) {
         try {
-          console.log(
-            `[RankingTracker] Checking ranking for "${keyword.keyword}" in ${keyword.location}`
-          );
+
           const result = await this.checkRanking(keyword);
           results.push(result);
 
@@ -147,9 +142,7 @@ export class RankingTracker {
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
 
-      console.log(`[RankingTracker] Completed ranking check in ${duration}ms`);
-      console.log(`[RankingTracker] Results: ${successful} successful, ${failed} failed`);
-      console.log(`[RankingTracker] Changes: ${improved} improved, ${declined} declined`);
+
 
       // Log to job execution table
       await this.logJobExecution(
@@ -262,7 +255,7 @@ export class RankingTracker {
           location: result.location,
         }),
       ]);
-      console.log(`[RankingTracker] Saved ranking for keyword ID ${result.keywordId}`);
+
     } catch (error) {
       console.error(
         `[RankingTracker] Error saving ranking for keyword ID ${result.keywordId}:`,
@@ -294,9 +287,6 @@ export class RankingTracker {
     );
 
     if (significantChanges.length > 0) {
-      console.log(
-        `[RankingTracker] Found ${significantChanges.length} significant ranking changes`
-      );
 
       for (const change of significantChanges) {
         const direction = change.rankChange < 0 ? 'improved' : 'declined';
@@ -318,9 +308,6 @@ export class RankingTracker {
     direction: string
   ): Promise<void> {
     // This would create an alert/notification for significant ranking changes
-    console.log(
-      `[RankingTracker] Creating alert for significant ${direction} in ranking for "${change.keyword}"`
-    );
 
     // Could insert into alerts table, send email, Slack notification, etc.
   }

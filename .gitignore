@@ -6,6 +6,7 @@
 .env.production
 .env*.local
 .env.docker
+.env.vercel
 
 # Docker
 docker-compose.override.yml

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 
 // GET /api/rankings/[id] - Get a single ranking
 export async function GET(
@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
     const { data, error } = await supabase
       .from('rankings')
@@ -34,7 +34,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
     const { error } = await supabase
       .from('rankings')

@@ -200,7 +200,7 @@ export async function sendSystemNotification(
 export async function processNotificationQueue(db: any) {
   const emailService = createEmailService(db);
   await emailService.processQueue();
-  console.log('Notification queue processed');
+
 }
 
 /**
@@ -354,7 +354,6 @@ export async function onRankingChange(
  * Run this every Monday at 9am
  */
 export async function sendScheduledWeeklyReports(db: any) {
-  console.log('Starting scheduled weekly reports...');
 
   const companies = await db.all(
     `SELECT DISTINCT c.*
@@ -364,14 +363,10 @@ export async function sendScheduledWeeklyReports(db: any) {
      AND np.types LIKE '%"weekly_report":true%'`
   );
 
-  console.log(`Sending reports to ${companies.length} companies`);
-
   const results = await sendBatchNotifications(db);
 
   const successCount = results.filter(r => r.success).length;
   const failureCount = results.length - successCount;
-
-  console.log(`Completed: ${successCount} sent, ${failureCount} failed`);
 
   // Send summary to admin
   await sendSystemNotification(

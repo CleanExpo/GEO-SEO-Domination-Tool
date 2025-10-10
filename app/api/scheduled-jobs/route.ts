@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { z } from 'zod';
 
 // Validation schema
@@ -21,7 +21,7 @@ const ScheduledJobSchema = z.object({
 // GET /api/scheduled-jobs - List all scheduled jobs
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const searchParams = request.nextUrl.searchParams;
     const companyId = searchParams.get('company_id');
     const jobType = searchParams.get('job_type');
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 // POST /api/scheduled-jobs - Create a new scheduled job
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const body = await request.json();
 
     // Validate input
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 // PATCH /api/scheduled-jobs - Bulk update (enable/disable jobs)
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const body = await request.json();
     const { job_ids, is_active } = body;
 

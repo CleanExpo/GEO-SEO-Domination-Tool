@@ -46,7 +46,7 @@ export class ReportGenerator {
 
   public async execute(): Promise<void> {
     if (this.isRunning) {
-      console.log('[ReportGenerator] Job already running, skipping this execution');
+
       return;
     }
 
@@ -63,10 +63,9 @@ export class ReportGenerator {
 
       // Get companies to generate reports for
       const companies = await this.getCompaniesForReports();
-      console.log(`[ReportGenerator] Found ${companies.length} companies for reports`);
 
       if (companies.length === 0) {
-        console.log('[ReportGenerator] No companies to generate reports for');
+
         return;
       }
 
@@ -75,7 +74,7 @@ export class ReportGenerator {
       // Generate report for each company
       for (const company of companies) {
         try {
-          console.log(`[ReportGenerator] Generating report for ${company.name}`);
+
           const report = await this.generateReport(company, weekStart, weekEnd);
           reports.push(report);
 
@@ -94,8 +93,7 @@ export class ReportGenerator {
       // Log summary
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
-      console.log(`[ReportGenerator] Completed report generation in ${duration}ms`);
-      console.log(`[ReportGenerator] Generated ${reports.length} reports`);
+
 
       // Log to job execution table
       await this.logJobExecution('report-generator', startTime, endTime, 'success', {
@@ -339,7 +337,7 @@ export class ReportGenerator {
           rankingsSummary: report.rankingsSummary,
         }),
       ]);
-      console.log(`[ReportGenerator] Saved report for ${report.companyName}`);
+
     } catch (error) {
       console.error(`[ReportGenerator] Error saving report for ${report.companyName}:`, error);
       throw error;
@@ -348,15 +346,14 @@ export class ReportGenerator {
 
   private async sendEmailReport(company: Company, report: ReportData): Promise<void> {
     // This would integrate with an email service (SendGrid, AWS SES, etc.)
-    console.log(`[ReportGenerator] Sending email report to ${company.email}`);
 
     // Simulate email sending
     const emailContent = this.formatEmailReport(report);
 
     // In production, this would call an email service
-    console.log(`[ReportGenerator] Email report prepared for ${company.name}`);
+
     console.log(`Subject: Weekly SEO Report - ${report.weekStart.toLocaleDateString()}`);
-    console.log(`To: ${company.email}`);
+
   }
 
   private formatEmailReport(report: ReportData): string {

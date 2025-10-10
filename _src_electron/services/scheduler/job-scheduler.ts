@@ -68,7 +68,6 @@ export class JobScheduler {
       enabled: false, // Disabled by default
     });
 
-    console.log('Job scheduler initialized with', this.jobs.size, 'jobs');
   }
 
   private registerJob(config: {
@@ -100,7 +99,7 @@ export class JobScheduler {
 
     if (enabled) {
       task.start();
-      console.log(`Job '${name}' scheduled with cron pattern: ${schedule}`);
+
     }
   }
 
@@ -185,7 +184,7 @@ export class JobScheduler {
     if (!job.enabled) {
       job.task.start();
       job.enabled = true;
-      console.log(`Job '${jobName}' enabled`);
+
     }
   }
 
@@ -198,7 +197,7 @@ export class JobScheduler {
     if (job.enabled) {
       job.task.stop();
       job.enabled = false;
-      console.log(`Job '${jobName}' disabled`);
+
     }
   }
 
@@ -235,7 +234,6 @@ export class JobScheduler {
       newTask.start();
     }
 
-    console.log(`Job '${jobName}' schedule updated to: ${newSchedule}`);
   }
 
   public getJobStatus(jobName?: string): any {
@@ -303,14 +301,14 @@ export class JobScheduler {
         job.task.start();
       }
     });
-    console.log('All enabled jobs started');
+
   }
 
   public stopAll(): void {
     this.jobs.forEach((job) => {
       job.task.stop();
     });
-    console.log('All jobs stopped');
+
   }
 
   public getAvailableJobs(): string[] {

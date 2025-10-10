@@ -16,7 +16,7 @@ export default function CompanyProfile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Saving company profile:', formData)
+
     // TODO: Save to database via API
   }
 

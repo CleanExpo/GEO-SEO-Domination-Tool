@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { GoogleSearchClient } from '@/lib/api-clients';
 import { z } from 'zod';
 
@@ -14,7 +14,7 @@ const rankingSchema = z.object({
 // GET /api/rankings - List all rankings
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const searchParams = request.nextUrl.searchParams;
     const companyId = searchParams.get('company_id');
     const keywordId = searchParams.get('keyword_id');
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 // POST /api/rankings - Check ranking for a keyword
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const body = await request.json();
     const validatedData = rankingSchema.parse(body);
 

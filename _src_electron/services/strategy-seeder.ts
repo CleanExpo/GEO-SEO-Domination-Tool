@@ -170,5 +170,4 @@ export function seedAISearchStrategies(db: Database.Database) {
     )
   }
 
-  console.log(`Seeded ${strategies.length} AI Search SEO strategies with case studies`)
 }

@@ -35,7 +35,7 @@ export class AuditRunner {
 
   public async execute(): Promise<void> {
     if (this.isRunning) {
-      console.log('[AuditRunner] Job already running, skipping this execution');
+
       return;
     }
 
@@ -46,10 +46,9 @@ export class AuditRunner {
     try {
       // Get companies with scheduled audits enabled
       const companies = await this.getCompaniesForAudit();
-      console.log(`[AuditRunner] Found ${companies.length} companies to audit`);
 
       if (companies.length === 0) {
-        console.log('[AuditRunner] No companies scheduled for audits');
+
         return;
       }
 
@@ -87,8 +86,6 @@ export class AuditRunner {
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
 
-      console.log(`[AuditRunner] Completed audit run in ${duration}ms`);
-      console.log(`[AuditRunner] Results: ${successful} successful, ${failed} failed`);
 
       // Log to job execution table
       await this.logJobExecution('audit-runner', startTime, endTime, 'success', {
@@ -161,7 +158,6 @@ export class AuditRunner {
   private async runLighthouseAudit(website: string): Promise<any> {
     // This would call the actual Lighthouse API
     // For now, return mock data
-    console.log(`[AuditRunner] Running Lighthouse audit for ${website}`);
 
     // Simulate API call delay
     await this.sleep(1000);
@@ -177,7 +173,6 @@ export class AuditRunner {
 
   private async analyzeEEAT(company: Company): Promise<any> {
     // This would analyze E-E-A-T signals
-    console.log(`[AuditRunner] Analyzing E-E-A-T for ${company.name}`);
 
     await this.sleep(500);
 
@@ -245,7 +240,7 @@ export class AuditRunner {
         JSON.stringify(result.recommendations),
         priorityLevel,
       ]);
-      console.log(`[AuditRunner] Saved audit results for ${result.companyName}`);
+
     } catch (error) {
       console.error(
         `[AuditRunner] Error saving audit results for ${result.companyName}:`,
