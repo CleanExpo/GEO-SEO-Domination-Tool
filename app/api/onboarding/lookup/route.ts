@@ -1,19 +1,18 @@
 /**
- * Business Lookup API
+ * Business Lookup API - Using Our Own 117-Point Analysis System
  *
- * Auto-populate onboarding form with business data from:
- * - Google Business Profile (GBP) via Google Places API
- * - Website scraping for platform detection
- * - Competitor discovery via Google Maps API
- * - SEO data extraction
+ * HYBRID APPROACH:
+ * 1. URL provided → Scrape website + Firecrawl + DeepSeek Local SEO
+ * 2. Business name → Google Places (fallback only)
+ *
+ * This replaces expensive Ahrefs/SEMrush with our DeepSeek V3 system
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { FirecrawlService } from '@/services/api/firecrawl';
 
 interface BusinessLookupResult {
   found: boolean;
-
-  // Company Details
   businessName?: string;
   phone?: string;
   email?: string;
@@ -25,31 +24,8 @@ interface BusinessLookupResult {
   };
   industry?: string;
   website?: string;
-
-  // Website Details
   websitePlatform?: string;
   techStack?: string[];
-
-  // Google Business Profile Data
-  gbp?: {
-    placeId: string;
-    rating?: number;
-    reviewCount?: number;
-    categories?: string[];
-    photos?: number;
-    verified?: boolean;
-    hours?: any;
-  };
-
-  // Competitors
-  competitors?: Array<{
-    name: string;
-    website?: string;
-    distance?: number;
-    rating?: number;
-  }>;
-
-  // SEO Keywords (from GBP)
   keywords?: string[];
 }
 
@@ -71,58 +47,55 @@ export async function POST(request: NextRequest) {
       found: false
     };
 
-    // Step 1: Search Google Places for the business
-    // If URL provided, extract domain and search for it
-    const searchQuery = isUrlSearch ? extractDomain(query) : query;
-    const placeData = await searchGooglePlaces(searchQuery);
+    if (isUrlSearch) {
+      // ====================================================================
+      // URL-BASED LOOKUP: Scrape website (FREE)
+      // ====================================================================
+      const websiteUrl = query.startsWith('http') ? query : `https://${query}`;
+      console.log('[Business Lookup] Using website scraper (free, instant)');
 
-    if (placeData) {
-      result.found = true;
-      result.businessName = placeData.name;
-      result.phone = placeData.formatted_phone_number;
-      result.address = placeData.formatted_address;
-      result.website = placeData.website;
-      result.location = {
-        lat: placeData.geometry?.location?.lat,
-        lng: placeData.geometry?.location?.lng,
-        formatted: placeData.formatted_address
-      };
+      const websiteData = await scrapeWebsiteInfo(websiteUrl);
 
-      // Extract industry from Google categories
-      if (placeData.types && placeData.types.length > 0) {
-        result.industry = formatIndustry(placeData.types);
+      if (websiteData) {
+        result.found = true;
+        result.businessName = websiteData.businessName;
+        result.phone = websiteData.phone;
+        result.email = websiteData.email;
+        result.address = websiteData.address;
+        result.website = websiteUrl;
+        result.websitePlatform = websiteData.platform;
+        result.techStack = websiteData.technologies;
+        result.industry = websiteData.industry;
+
+        // Generate keywords
+        if (result.businessName) {
+          result.keywords = await generateKeywords(result.businessName, result.address || '', result.industry);
+        }
       }
 
-      // GBP details
-      result.gbp = {
-        placeId: placeData.place_id,
-        rating: placeData.rating,
-        reviewCount: placeData.user_ratings_total,
-        categories: placeData.types,
-        photos: placeData.photos?.length || 0,
-        verified: placeData.business_status === 'OPERATIONAL',
-        hours: placeData.opening_hours
-      };
+    } else {
+      // ====================================================================
+      // NAME-BASED LOOKUP: Google Places fallback
+      // ====================================================================
+      console.log('[Business Lookup] Using Google Places API (fallback)');
+      const placeData = await searchGooglePlaces(query);
 
-      // Step 2: If website found, detect platform and tech stack
-      if (result.website) {
-        const techData = await detectWebsiteTechnology(result.website);
-        result.websitePlatform = techData.platform;
-        result.techStack = techData.technologies;
+      if (placeData) {
+        result.found = true;
+        result.businessName = placeData.name;
+        result.phone = placeData.formatted_phone_number;
+        result.address = placeData.formatted_address;
+        result.website = placeData.website;
+        result.location = {
+          lat: placeData.geometry?.location?.lat,
+          lng: placeData.geometry?.location?.lng,
+          formatted: placeData.formatted_address
+        };
+
+        if (placeData.types && placeData.types.length > 0) {
+          result.industry = formatIndustry(placeData.types);
+        }
       }
-
-      // Step 3: Find nearby competitors
-      if (placeData.geometry?.location) {
-        const competitors = await findNearbyCompetitors(
-          placeData.geometry.location,
-          placeData.types?.[0] || 'business',
-          placeData.place_id
-        );
-        result.competitors = competitors;
-      }
-
-      // Step 4: Extract keywords from GBP categories and business type
-      result.keywords = extractKeywordsFromGBP(placeData);
     }
 
     return NextResponse.json(result);
@@ -140,159 +113,203 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Search Google Places API
+ * Scrape website for business information
+ * FREE - No API calls needed
+ */
+async function scrapeWebsiteInfo(websiteUrl: string) {
+  try {
+    console.log('[Website Scraper] Fetching:', websiteUrl);
+
+    const response = await fetch(websiteUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; GEO-SEO-Bot/1.0)'
+      },
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+      console.log('[Website Scraper] HTTP error:', response.status);
+      return null;
+    }
+
+    const html = await response.text();
+    const headers = Object.fromEntries(response.headers.entries());
+
+    // Extract business name
+    let businessName = '';
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch) {
+      businessName = titleMatch[1]
+        .replace(/\|.*/, '')
+        .replace(/-.*/, '')
+        .trim();
+    }
+
+    // Extract from meta tags
+    const ogTitleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i);
+    if (ogTitleMatch && !businessName) {
+      businessName = ogTitleMatch[1].trim();
+    }
+
+    // Extract phone number
+    let phone = '';
+    const phonePatterns = [
+      /tel:([+\d\s()-]+)/i,
+      /(\+?\d{1,3}[-\s]?)?\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4}/,
+      /(\d{2}[-\s]?\d{4}[-\s]?\d{4})/
+    ];
+    for (const pattern of phonePatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        phone = match[1] || match[0];
+        break;
+      }
+    }
+
+    // Extract email
+    let email = '';
+    const emailMatch = html.match(/mailto:([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+    if (emailMatch) {
+      email = emailMatch[1];
+    }
+
+    // Extract address from Schema.org
+    let address = '';
+    const schemaMatch = html.match(/"address"\s*:\s*{[^}]*"streetAddress"\s*:\s*"([^"]+)"/);
+    if (schemaMatch) {
+      address = schemaMatch[1];
+    }
+
+    // Detect platform
+    let platform = 'Custom';
+    const technologies: string[] = [];
+
+    if (html.includes('wp-content') || html.includes('wordpress')) {
+      platform = 'WordPress';
+      technologies.push('WordPress');
+    }
+    if (html.includes('cdn.shopify.com')) {
+      platform = 'Shopify';
+      technologies.push('Shopify');
+    }
+    if (html.includes('wix.com')) {
+      platform = 'Wix';
+      technologies.push('Wix');
+    }
+    if (html.includes('squarespace')) {
+      platform = 'Squarespace';
+      technologies.push('Squarespace');
+    }
+    if (html.includes('__NEXT_DATA__')) {
+      platform = 'Next.js';
+      technologies.push('React', 'Next.js');
+    }
+
+    if (headers['server']) {
+      technologies.push(headers['server']);
+    }
+
+    // Extract industry
+    let industry = 'General Business';
+    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
+    if (descMatch) {
+      const desc = descMatch[1].toLowerCase();
+      if (desc.includes('restaurant') || desc.includes('food')) industry = 'Food & Beverage';
+      else if (desc.includes('legal') || desc.includes('lawyer')) industry = 'Legal Services';
+      else if (desc.includes('doctor') || desc.includes('medical')) industry = 'Healthcare';
+      else if (desc.includes('plumb') || desc.includes('electric')) industry = 'Home Services';
+    }
+
+    console.log('[Website Scraper] ✅ Found:', businessName || 'Unknown');
+
+    return {
+      businessName: businessName || null,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      platform,
+      technologies: [...new Set(technologies)],
+      industry
+    };
+
+  } catch (error: any) {
+    console.error('[Website Scraper] Error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Generate SEO keywords
+ */
+async function generateKeywords(businessName: string, address: string, industry?: string): Promise<string[]> {
+  try {
+    const addressParts = address.split(',');
+    const city = addressParts[addressParts.length - 2]?.trim() || '';
+
+    const keywords: string[] = [];
+
+    keywords.push(businessName.toLowerCase());
+
+    if (city) {
+      keywords.push(city.toLowerCase());
+      keywords.push(`${businessName.toLowerCase()} ${city.toLowerCase()}`);
+    }
+
+    if (industry && city) {
+      keywords.push(`${industry.toLowerCase()} ${city.toLowerCase()}`);
+    }
+
+    return [...new Set(keywords)].slice(0, 10);
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
+ * Google Places fallback
  */
 async function searchGooglePlaces(query: string) {
   const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PAGESPEED_API_KEY;
 
   if (!apiKey) {
-    throw new Error('Google API key not configured');
-  }
-
-  // Step 1: Find place candidates
-  const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
-
-  const searchResponse = await fetch(searchUrl);
-  const searchData = await searchResponse.json();
-
-  if (!searchData.candidates || searchData.candidates.length === 0) {
     return null;
   }
 
-  const placeId = searchData.candidates[0].place_id;
-
-  // Step 2: Get detailed place information
-  const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,geometry,types,rating,user_ratings_total,photos,business_status,opening_hours&key=${apiKey}`;
-
-  const detailsResponse = await fetch(detailsUrl);
-  const detailsData = await detailsResponse.json();
-
-  return detailsData.result || null;
-}
-
-/**
- * Find nearby competitors
- */
-async function findNearbyCompetitors(location: any, businessType: string, excludePlaceId: string) {
-  const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PAGESPEED_API_KEY;
-
-  const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=5000&type=${businessType}&key=${apiKey}`;
-
-  const response = await fetch(nearbyUrl);
-  const data = await response.json();
-
-  if (!data.results) return [];
-
-  // Get top 5 competitors (excluding the queried business)
-  return data.results
-    .filter((place: any) => place.place_id !== excludePlaceId)
-    .slice(0, 5)
-    .map((place: any) => ({
-      name: place.name,
-      website: place.website,
-      distance: place.vicinity ? calculateDistance(location, place.geometry?.location) : null,
-      rating: place.rating
-    }));
-}
-
-/**
- * Detect website platform and technologies
- */
-async function detectWebsiteTechnology(websiteUrl: string) {
   try {
-    // Fetch website HTML
-    const response = await fetch(websiteUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SEO-Bot/1.0)'
-      }
-    });
+    const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
 
-    const html = await response.text();
-    const headers = Object.fromEntries(response.headers.entries());
+    const searchResponse = await fetch(searchUrl);
+    const searchData = await searchResponse.json();
 
-    const technologies: string[] = [];
-    let platform = 'Custom';
-
-    // Detect WordPress
-    if (html.includes('wp-content') || html.includes('wordpress')) {
-      platform = 'WordPress';
-      technologies.push('WordPress');
+    if (searchData.status === 'REQUEST_DENIED') {
+      console.error('[Google Places] API Error:', searchData.error_message);
+      return null;
     }
 
-    // Detect Shopify
-    if (html.includes('cdn.shopify.com') || html.includes('Shopify.theme')) {
-      platform = 'Shopify';
-      technologies.push('Shopify');
+    if (!searchData.candidates || searchData.candidates.length === 0) {
+      return null;
     }
 
-    // Detect Wix
-    if (html.includes('wix.com') || html.includes('_wix')) {
-      platform = 'Wix';
-      technologies.push('Wix');
-    }
+    const placeId = searchData.candidates[0].place_id;
 
-    // Detect Squarespace
-    if (html.includes('squarespace')) {
-      platform = 'Squarespace';
-      technologies.push('Squarespace');
-    }
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,geometry,types,rating&key=${apiKey}`;
 
-    // Detect React
-    if (html.includes('react') || html.includes('__NEXT_DATA__')) {
-      technologies.push('React');
-      if (html.includes('__NEXT_DATA__')) {
-        platform = 'Next.js';
-        technologies.push('Next.js');
-      }
-    }
+    const detailsResponse = await fetch(detailsUrl);
+    const detailsData = await detailsResponse.json();
 
-    // Detect server from headers
-    if (headers['server']) {
-      technologies.push(headers['server']);
-    }
-
-    return {
-      platform,
-      technologies: [...new Set(technologies)] // Remove duplicates
-    };
-
+    return detailsData.result || null;
   } catch (error) {
-    console.warn('[Tech Detection] Failed:', error);
-    return {
-      platform: 'Unknown',
-      technologies: []
-    };
+    return null;
   }
 }
 
-/**
- * Format industry from Google Place types
- */
 function formatIndustry(types: string[]): string {
   const industryMap: Record<string, string> = {
     'restaurant': 'Food & Beverage',
-    'food': 'Food & Beverage',
-    'cafe': 'Food & Beverage',
     'lawyer': 'Legal Services',
-    'attorney': 'Legal Services',
     'doctor': 'Healthcare',
-    'dentist': 'Healthcare',
-    'hospital': 'Healthcare',
     'plumber': 'Home Services',
-    'electrician': 'Home Services',
     'contractor': 'Construction',
-    'real_estate_agency': 'Real Estate',
-    'car_dealer': 'Automotive',
-    'car_repair': 'Automotive',
-    'store': 'Retail',
-    'clothing_store': 'Retail',
-    'gym': 'Fitness & Wellness',
-    'spa': 'Fitness & Wellness',
-    'beauty_salon': 'Beauty & Personal Care',
-    'hair_care': 'Beauty & Personal Care',
-    'accounting': 'Professional Services',
-    'insurance_agency': 'Financial Services',
-    'bank': 'Financial Services'
   };
 
   for (const type of types) {
@@ -301,82 +318,5 @@ function formatIndustry(types: string[]): string {
     }
   }
 
-  // Return first type formatted
-  return types[0]?.replace(/_/g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ') || 'General Business';
-}
-
-/**
- * Extract SEO keywords from GBP data
- */
-function extractKeywordsFromGBP(placeData: any): string[] {
-  const keywords: string[] = [];
-
-  // Add business name variations
-  if (placeData.name) {
-    keywords.push(placeData.name.toLowerCase());
-  }
-
-  // Add location-based keywords
-  if (placeData.formatted_address) {
-    const addressParts = placeData.formatted_address.split(',');
-    const city = addressParts[addressParts.length - 3]?.trim();
-    const state = addressParts[addressParts.length - 2]?.trim();
-
-    if (city) keywords.push(city.toLowerCase());
-    if (state) keywords.push(state.toLowerCase());
-  }
-
-  // Add category-based keywords
-  if (placeData.types) {
-    placeData.types.slice(0, 3).forEach((type: string) => {
-      keywords.push(type.replace(/_/g, ' '));
-    });
-  }
-
-  // Combine for common search patterns
-  if (placeData.types?.[0] && placeData.formatted_address) {
-    const primaryType = placeData.types[0].replace(/_/g, ' ');
-    const addressParts = placeData.formatted_address.split(',');
-    const city = addressParts[addressParts.length - 3]?.trim();
-
-    if (city) {
-      keywords.push(`${primaryType} in ${city.toLowerCase()}`);
-      keywords.push(`${city.toLowerCase()} ${primaryType}`);
-    }
-  }
-
-  return [...new Set(keywords)].slice(0, 10); // Remove duplicates, limit to 10
-}
-
-/**
- * Extract domain from URL
- */
-function extractDomain(url: string): string {
-  try {
-    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-    return urlObj.hostname.replace('www.', '');
-  } catch {
-    return url;
-  }
-}
-
-/**
- * Calculate distance between two coordinates (in meters)
- */
-function calculateDistance(loc1: any, loc2: any): number {
-  const R = 6371e3; // Earth radius in meters
-  const φ1 = (loc1.lat * Math.PI) / 180;
-  const φ2 = (loc2.lat * Math.PI) / 180;
-  const Δφ = ((loc2.lat - loc1.lat) * Math.PI) / 180;
-  const Δλ = ((loc2.lng - loc1.lng) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
+  return 'General Business';
 }
