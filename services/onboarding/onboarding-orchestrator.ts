@@ -16,6 +16,7 @@ import { EventEmitter } from 'events';
 import { getDatabase } from '@/lib/db';
 import fs from 'fs';
 import path from 'path';
+import { masterOrchestrator } from '../engines/master-orchestrator';
 
 const db = getDatabase();
 
@@ -166,6 +167,21 @@ export class OnboardingOrchestrator extends EventEmitter {
       await this.executeStep(onboardingId, 4, async () => {
         await this.sendWelcomeEmail(progress.companyId, request);
         return { emailSent: true };
+      });
+
+      // Step 6: Trigger Autonomous Value Generation 🚀
+      await this.executeStep(onboardingId, 5, async () => {
+        console.log(`[Onboarding] 🚀 Triggering Master Orchestrator for ${progress.companyId}`);
+
+        // Launch all autonomous engines (Critical Tier starts immediately)
+        const orchestratorCompanyId = await masterOrchestrator.onClientOnboarding(request);
+
+        console.log(`[Onboarding] ✅ Master Orchestrator launched. Value generation in progress...`);
+
+        return {
+          orchestratorCompanyId,
+          message: 'Autonomous engines activated. Client will receive 10x value vs traditional agency.'
+        };
       });
 
       // Mark as completed

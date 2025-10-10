@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(then grep -E \"(DATABASE_URL|POSTGRES_URL)\" .env)",
+      "Bash(else echo \".env file does not exist\")",
+      "Bash(then grep -E \"(DATABASE_URL|POSTGRES_URL)\" .env.local)",
+      "Bash(else echo \".env.local not found\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/create-onboarding-sessions.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/check-companies-table.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/create-onboarding-sessions-fixed.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/verify-onboarding-table.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/check-saved-onboarding-table.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/test-case-insensitive-load.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/check-company-portfolios-table.mjs)",
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/migrate-portfolios-add-columns.mjs)"
     ],
     "deny": [],
     "ask": []
