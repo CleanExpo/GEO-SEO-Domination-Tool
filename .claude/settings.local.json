@@ -25,7 +25,9 @@
       "Bash(do echo \"Attempting shell $pid\")",
       "Bash(then grep -E \"(GOOGLE_API_KEY|GOOGLE_PAGESPEED)\" .env.local)",
       "Bash(find:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(echo $?)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
