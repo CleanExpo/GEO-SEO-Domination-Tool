@@ -13,7 +13,9 @@
       "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/check-saved-onboarding-table.mjs)",
       "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/test-case-insensitive-load.mjs)",
       "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/check-company-portfolios-table.mjs)",
-      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/migrate-portfolios-add-columns.mjs)"
+      "Bash(DATABASE_URL=\"postgresql://postgres.qwoggbbavikzhypzodcr:NwtXEg6aVNs7ZstH@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres\" node scripts/migrate-portfolios-add-columns.mjs)",
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

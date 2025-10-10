@@ -16,6 +16,7 @@
 
 import { getDatabase } from '@/lib/db';
 import { DeepResearchAgent } from '../agents/deep-research-agent';
+import { parallelR1Enhanced } from '../ai/parallel-r1-integration';
 
 const db = getDatabase();
 
@@ -310,9 +311,28 @@ Provide strategic analysis in 3-5 bullet points.
 
   /**
    * Generate counter-strategy to beat competitor
+   * Enhanced with Parallel-R1 for multi-path exploration
    */
   private async generateCounterStrategy(strategyAnalysis: string): Promise<string> {
-    const counterPrompt = `
+    try {
+      // Use Parallel-R1 to explore 16 different counter-strategies in parallel
+      console.log('[CompetitiveIntelligence] 🧠 Applying Parallel-R1 reinforcement learning...');
+
+      const parallelResult = await parallelR1Enhanced.enhanceCompetitiveIntel(
+        strategyAnalysis.split('\n')[0] || 'competitor',
+        strategyAnalysis
+      );
+
+      console.log('[CompetitiveIntelligence] ✅ Parallel-R1 found optimal strategy');
+
+      // Fallback to single-path if Parallel-R1 fails
+      return parallelResult;
+
+    } catch (parallelError: any) {
+      console.warn('[CompetitiveIntelligence] Parallel-R1 failed, using fallback:', parallelError);
+
+      // Fallback to original single-path strategy
+      const counterPrompt = `
 Based on this competitor analysis:
 ${strategyAnalysis}
 
@@ -324,18 +344,19 @@ Generate a 3-step counter-strategy to outrank them:
 Be specific and actionable.
 `;
 
-    try {
-      const counterStrategy = await this.researchAgent.analyze({
-        query: counterPrompt,
-        depth: 'strategic',
-        sources: ['analysis']
-      });
+      try {
+        const counterStrategy = await this.researchAgent.analyze({
+          query: counterPrompt,
+          depth: 'strategic',
+          sources: ['analysis']
+        });
 
-      return counterStrategy.summary || 'Counter-strategy: Focus on content gaps and technical SEO improvements.';
+        return counterStrategy.summary || 'Counter-strategy: Focus on content gaps and technical SEO improvements.';
 
-    } catch (error: any) {
-      console.error('[CompetitiveIntelligence] Counter-strategy generation failed:', error);
-      return 'Counter-strategy: Improve content quality and increase backlink acquisition.';
+      } catch (error: any) {
+        console.error('[CompetitiveIntelligence] Counter-strategy generation failed:', error);
+        return 'Counter-strategy: Improve content quality and increase backlink acquisition.';
+      }
     }
   }
 
