@@ -36,7 +36,9 @@
       "Bash(findstr:*)",
       "Bash(if [ -f \".env\" ])",
       "Bash(fi)",
-      "Bash(if [ -f \".env.local\" ])"
+      "Bash(if [ -f \".env.local\" ])",
+      "Bash(npx playwright test:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
