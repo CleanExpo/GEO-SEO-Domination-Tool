@@ -36,6 +36,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { validateStep } from '@/lib/validation/onboarding-schemas';
 
 interface ClientIntakeData {
   // Business Information
@@ -78,6 +79,10 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
+
+  // TASK 1.3: Reactive validation state to fix race condition bug
+  const [isCurrentStepValid, setIsCurrentStepValid] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState<ClientIntakeData>({
     businessName: '',
@@ -300,6 +305,29 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
       console.log('[Lookup] Finished');
     }
   };
+
+  // TASK 1.3: Real-time validation (fixes race condition bug)
+  // Re-validates whenever formData or currentStep changes
+  // This is THE FIX for the "Next button stays disabled" bug
+  useEffect(() => {
+    const { success, errors } = validateStep(currentStep, formData);
+    setIsCurrentStepValid(success);
+    setValidationErrors(errors);
+
+    console.log(`[Task 1.3] Validation for Step ${currentStep}:`, {
+      success,
+      errors,
+      formDataSnapshot: {
+        businessName: formData.businessName,
+        email: formData.email,
+        contactName: formData.contactName,
+        primaryGoals: formData.primaryGoals,
+        targetKeywords: formData.targetKeywords,
+        contentTypes: formData.contentTypes,
+        selectedServices: formData.selectedServices
+      }
+    });
+  }, [formData, currentStep]); // ✅ CRITICAL: React re-runs this when formData changes
 
   // Auto-save on form changes (with debounce)
   useEffect(() => {
@@ -914,14 +942,14 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
             {currentStep < steps.length - 1 ? (
               <Button
                 onClick={() => setCurrentStep(prev => prev + 1)}
-                disabled={!isStepValid(currentStep)}
+                disabled={!isCurrentStepValid}
               >
                 Next <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={!isStepValid(currentStep) || loading}
+                disabled={!isCurrentStepValid || loading}
               >
                 {loading ? 'Starting Onboarding...' : 'Start Onboarding'}
                 <ArrowRight className="h-4 w-4 ml-2" />
