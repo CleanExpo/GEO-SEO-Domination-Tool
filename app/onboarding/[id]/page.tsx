@@ -72,6 +72,13 @@ export default function OnboardingStatusPage() {
   const loadProgress = async () => {
     try {
       const response = await fetch(`/api/onboarding/${onboardingId}`);
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`API returned HTML instead of JSON. This usually means the route is not found. Status: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -87,7 +94,8 @@ export default function OnboardingStatusPage() {
         setError(data.error || 'Failed to load progress');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('[Onboarding Page] Error loading progress:', err);
+      setError(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
