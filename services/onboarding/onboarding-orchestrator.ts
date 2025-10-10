@@ -240,12 +240,15 @@ export class OnboardingOrchestrator extends EventEmitter {
     const companyId = `portfolio_${Date.now()}`;
 
     // Use company_portfolios table (new schema)
+    // Note: target_keywords is ARRAY type, target_locations and content_preferences are JSONB
+    const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
     await db.query(`
       INSERT INTO company_portfolios (
         id, company_name, industry, website_url, email, phone,
         target_keywords, target_locations, content_preferences,
         autopilot_enabled, automation_level, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${isPostgres ? 'NOW()' : 'datetime(\'now\')'}, ${isPostgres ? 'NOW()' : 'datetime(\'now\')'})
     `, [
       companyId,
       request.businessName,
@@ -253,18 +256,21 @@ export class OnboardingOrchestrator extends EventEmitter {
       request.website || null,
       request.email,
       request.phone || null,
-      JSON.stringify(request.targetKeywords),
-      JSON.stringify(request.targetLocations),
-      JSON.stringify({
+      isPostgres ? request.targetKeywords : JSON.stringify(request.targetKeywords), // ARRAY for PG, JSON string for SQLite
+      isPostgres ? request.targetLocations : JSON.stringify(request.targetLocations), // JSONB for PG, JSON string for SQLite
+      isPostgres ? {
         contentTypes: request.contentTypes,
         contentFrequency: request.contentFrequency,
         brandVoice: request.brandVoice,
         primaryGoals: request.primaryGoals
-      }),
+      } : JSON.stringify({
+        contentTypes: request.contentTypes,
+        contentFrequency: request.contentFrequency,
+        brandVoice: request.brandVoice,
+        primaryGoals: request.primaryGoals
+      }), // JSONB for PG, JSON string for SQLite
       true, // autopilot enabled by default
-      'empire', // highest automation level
-      new Date().toISOString(),
-      new Date().toISOString()
+      'empire' // highest automation level
     ]);
 
     return companyId;
