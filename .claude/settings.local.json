@@ -29,7 +29,14 @@
       "Bash(echo $?)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(if [ -f \".env\" ])",
+      "Bash(fi)",
+      "Bash(if [ -f \".env.local\" ])"
     ],
     "deny": [],
     "ask": []
