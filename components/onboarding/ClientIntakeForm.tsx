@@ -25,7 +25,8 @@ import {
   Save,
   FolderOpen,
   Search,
-  Sparkle
+  Sparkle,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { validateStep } from '@/lib/validation/onboarding-schemas';
 
@@ -407,8 +409,18 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Progress Steps */}
-      <div className="mb-8">
+      {/* Progress Steps - Enhanced with Progress Bar */}
+      <div className="mb-8 space-y-4">
+        {/* Progress Bar with Percentage */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span className="font-medium">Step {currentStep + 1} of {steps.length}</span>
+            <span className="font-medium">{Math.round(((currentStep + 1) / steps.length) * 100)}% Complete</span>
+          </div>
+          <Progress value={((currentStep + 1) / steps.length) * 100} className="h-2" />
+        </div>
+
+        {/* Step Indicators */}
         <div className="flex items-center justify-between">
           {steps.map((step, index) => {
             const Icon = step.icon;
@@ -419,21 +431,29 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
               <div key={step.id} className="flex items-center flex-1">
                 <div className="flex flex-col items-center">
                   <div
-                    className={`flex items-center justify-center h-12 w-12 rounded-full border-2 transition-colors ${
+                    className={`flex items-center justify-center h-10 w-10 rounded-full border-2 transition-all duration-300 ${
                       isActive
-                        ? 'border-primary bg-primary text-primary-foreground'
+                        ? 'border-primary bg-primary text-primary-foreground scale-110'
                         : isCompleted
                         ? 'border-green-500 bg-green-500 text-white'
                         : 'border-muted bg-background text-muted-foreground'
                     }`}
                   >
-                    <Icon className="h-5 w-5" />
+                    {isCompleted ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      <Icon className="h-4 w-4" />
+                    )}
                   </div>
-                  <span className="text-xs mt-2 font-medium">{step.title}</span>
+                  <span className={`text-xs mt-2 font-medium transition-colors ${
+                    isActive ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
+                    {step.title}
+                  </span>
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-4 transition-colors ${
+                    className={`flex-1 h-0.5 mx-4 transition-all duration-300 ${
                       isCompleted ? 'bg-green-500' : 'bg-muted'
                     }`}
                   />
