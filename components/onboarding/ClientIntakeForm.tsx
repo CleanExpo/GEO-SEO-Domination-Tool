@@ -395,6 +395,16 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   // Old implementation used manual validation logic with race condition bug
   // New implementation uses Zod schemas with reactive validation
 
+  // TASK 1.5: Helper function to get field-specific error message
+  const getFieldError = (fieldPath: string): string | undefined => {
+    return validationErrors[fieldPath];
+  };
+
+  // TASK 1.5: Helper function to determine if field has error
+  const hasFieldError = (fieldPath: string): boolean => {
+    return !!validationErrors[fieldPath];
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Progress Steps */}
@@ -530,7 +540,11 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
                     value={formData.businessName}
                     onChange={(e) => updateField('businessName', e.target.value)}
                     placeholder="Acme Corporation"
+                    className={hasFieldError('businessName') ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
+                  {getFieldError('businessName') && (
+                    <p className="text-xs text-red-500 mt-1">{getFieldError('businessName')}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -552,7 +566,11 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
                     value={formData.contactName}
                     onChange={(e) => updateField('contactName', e.target.value)}
                     placeholder="John Doe"
+                    className={hasFieldError('contactName') ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
+                  {getFieldError('contactName') && (
+                    <p className="text-xs text-red-500 mt-1">{getFieldError('contactName')}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -563,7 +581,11 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
                     value={formData.email}
                     onChange={(e) => updateField('email', e.target.value)}
                     placeholder="john@acme.com"
+                    className={hasFieldError('email') ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
+                  {getFieldError('email') && (
+                    <p className="text-xs text-red-500 mt-1">{getFieldError('email')}</p>
+                  )}
                 </div>
               </div>
 
@@ -672,6 +694,9 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
                     </div>
                   ))}
                 </div>
+                {getFieldError('primaryGoals') && (
+                  <p className="text-xs text-red-500 mt-2">{getFieldError('primaryGoals')}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -791,6 +816,9 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
                     </div>
                   ))}
                 </div>
+                {getFieldError('contentTypes') && (
+                  <p className="text-xs text-red-500 mt-2">{getFieldError('contentTypes')}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -876,6 +904,9 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
                     </Card>
                   ))}
                 </div>
+                {getFieldError('selectedServices') && (
+                  <p className="text-xs text-red-500 mt-2">{getFieldError('selectedServices')}</p>
+                )}
               </div>
 
               <div className="space-y-2">
