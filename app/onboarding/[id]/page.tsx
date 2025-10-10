@@ -84,10 +84,10 @@ export default function OnboardingStatusPage() {
       if (data.success) {
         setProgress(data.progress);
 
-        // Redirect to dashboard when completed
+        // Redirect to company SEO audit when completed
         if (data.progress.status === 'completed' && data.progress.companyId) {
           setTimeout(() => {
-            router.push(`/companies/${data.progress.companyId}`);
+            router.push(`/companies/${data.progress.companyId}/seo-audit`);
           }, 3000);
         }
       } else {
@@ -336,9 +336,9 @@ export default function OnboardingStatusPage() {
           <CardContent>
             <Button
               className="w-full"
-              onClick={() => router.push(`/companies/${progress.companyId}`)}
+              onClick={() => router.push(`/companies/${progress.companyId}/seo-audit`)}
             >
-              Go to Dashboard
+              View SEO Audit
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
