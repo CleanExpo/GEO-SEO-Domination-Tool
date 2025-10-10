@@ -73,7 +73,12 @@ interface ClientIntakeData {
   budget: string;
 }
 
-export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientIntakeData) => void }) {
+interface ClientIntakeFormProps {
+  onComplete?: (data: ClientIntakeData) => void;
+  initialFormData?: ClientIntakeData | null;
+}
+
+export function ClientIntakeForm({ onComplete, initialFormData }: ClientIntakeFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
@@ -86,7 +91,7 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
   const [isCurrentStepValid, setIsCurrentStepValid] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const [formData, setFormData] = useState<ClientIntakeData>({
+  const defaultFormData: ClientIntakeData = {
     businessName: '',
     industry: '',
     contactName: '',
@@ -105,7 +110,22 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
     competitors: [],
     selectedServices: [],
     budget: ''
-  });
+  };
+
+  const [formData, setFormData] = useState<ClientIntakeData>(initialFormData || defaultFormData);
+
+  // Load initialFormData when it changes
+  useEffect(() => {
+    if (initialFormData) {
+      console.log('[ClientIntakeForm] Loading initial form data:', initialFormData);
+      setFormData(initialFormData);
+      setCurrentStep(0); // Start from beginning when loading
+      toast({
+        title: 'Client Data Loaded',
+        description: `Loaded data for ${initialFormData.businessName}`,
+      });
+    }
+  }, [initialFormData, toast]);
 
   const updateField = <K extends keyof ClientIntakeData>(
     field: K,
