@@ -45,19 +45,29 @@ export async function GET(
 
     console.log(`[Onboarding API] Found in database: ${row.status || 'pending'}`);
 
+    // Parse steps_data (might already be an object in PostgreSQL)
+    let steps;
+    if (row.steps_data) {
+      steps = typeof row.steps_data === 'string'
+        ? JSON.parse(row.steps_data)
+        : row.steps_data;
+    } else {
+      steps = [
+        { name: 'Create Company Record', status: 'pending' },
+        { name: 'Setup Workspace', status: 'pending' },
+        { name: 'Run SEO Audit', status: 'pending' },
+        { name: 'Generate Content Calendar', status: 'pending' },
+        { name: 'Send Welcome Email', status: 'pending' }
+      ];
+    }
+
     // Build progress object from database record
     const progress = {
       onboardingId: row.id,
       companyId: row.company_id || '',
       status: row.status || 'pending',
       currentStep: row.current_step || 'Initializing',
-      steps: row.steps_data ? JSON.parse(row.steps_data) : [
-        { name: 'Create Company Record', status: 'pending' },
-        { name: 'Setup Workspace', status: 'pending' },
-        { name: 'Run SEO Audit', status: 'pending' },
-        { name: 'Generate Content Calendar', status: 'pending' },
-        { name: 'Send Welcome Email', status: 'pending' }
-      ],
+      steps,
       startedAt: row.created_at,
       completedAt: row.completed_at || null,
       error: row.error || null
