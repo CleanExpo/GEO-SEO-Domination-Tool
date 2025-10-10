@@ -40,17 +40,36 @@ User clicks "Run Audit"
 Run this SQL in Supabase SQL Editor:
 👉 **https://supabase.com/dashboard/project/qwoggbbavikzhypzodcr/sql/new**
 
+**IMPORTANT**: Use the v2 script that handles existing NULL values:
+
 ```sql
--- Make user_id nullable to allow server-side audits
+-- Step 1: Handle existing NULL values
+DO $$
+DECLARE
+  system_user_id UUID := '00000000-0000-0000-0000-000000000000';
+BEGIN
+  UPDATE seo_audits
+  SET user_id = system_user_id
+  WHERE user_id IS NULL;
+END $$;
+
+-- Step 2: Make column nullable
 ALTER TABLE seo_audits ALTER COLUMN user_id DROP NOT NULL;
 
--- Verify the change
+-- Step 3: Verify
 SELECT column_name, is_nullable, data_type
 FROM information_schema.columns
 WHERE table_name = 'seo_audits' AND column_name = 'user_id';
 ```
 
+**What this does**:
+1. Assigns existing NULL values to a system user ID (`00000000-0000-0000-0000-000000000000`)
+2. Makes the `user_id` column nullable for future audits
+3. Verifies the change was successful
+
 Expected result: `is_nullable = 'YES'`
+
+**Alternative**: Copy/paste from `URGENT_FIX_seo_audits_v2.sql` for the complete version with verification steps.
 
 ### Step 2: Verify Environment Variables (Already Done)
 
