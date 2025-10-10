@@ -82,12 +82,13 @@ export class DatabaseClient {
       this.pgPool = new Pool({
         connectionString: this.config.connectionString,
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
-        // Aggressive connection pool limits for Vercel serverless
-        max: 10, // Conservative max (Supabase free tier: 60 total, but multiple instances)
-        min: 0, // No minimum - connections created on demand
-        idleTimeoutMillis: 10000, // Close idle after 10s (aggressive cleanup)
-        connectionTimeoutMillis: 5000, // Fail fast if pool exhausted
-        maxUses: 1000, // Recycle connections frequently
+        // Optimized for Supabase Pro Plan - Large Compute
+        // Large: 160 direct connections + 800 pooler connections
+        max: 30, // Per serverless instance (5 instances × 30 = 150, well within 160)
+        min: 2, // Keep 2 warm connections per instance
+        idleTimeoutMillis: 30000, // Keep connections alive for 30s
+        connectionTimeoutMillis: 10000, // 10s timeout for acquiring connection
+        maxUses: 7500, // Recycle after 7500 uses
         allowExitOnIdle: true, // Allow graceful shutdown
       });
 
