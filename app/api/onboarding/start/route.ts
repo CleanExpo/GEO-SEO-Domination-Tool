@@ -5,11 +5,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { onboardingOrchestrator } from '@/services/onboarding/onboarding-orchestrator';
+import { getDatabase } from '@/lib/db';
+import { randomUUID } from 'crypto';
 
-// Force Node.js runtime (orchestrator uses fs, path, EventEmitter)
+// Force Node.js runtime
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const db = getDatabase();
 
 export async function POST(request: NextRequest) {
   console.log('[Start Onboarding] API called');
@@ -44,12 +47,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('[Start Onboarding] Starting orchestrator...');
+    // Generate onboarding ID
+    const onboardingId = `onboarding_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Start client onboarding process
-    const onboardingId = await onboardingOrchestrator.startOnboarding(body);
+    console.log('[Start Onboarding] Creating onboarding session:', onboardingId);
 
-    console.log('[Start Onboarding] Orchestrator started successfully:', onboardingId);
+    // Save to database
+    await db.query(`
+      INSERT INTO onboarding_sessions (
+        id, business_name, email, status, request_data, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      onboardingId,
+      body.businessName,
+      body.email,
+      'pending',
+      JSON.stringify(body),
+      new Date().toISOString()
+    ]);
+
+    console.log('[Start Onboarding] Session saved to database');
+
+    // TODO: Trigger background processing
+    // For now, just return success
 
     return NextResponse.json({
       success: true,
