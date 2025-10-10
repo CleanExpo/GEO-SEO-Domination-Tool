@@ -11,7 +11,7 @@ import { getDatabase } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { businessName, email, formData, currentStep } = body;
+    const { businessName, email, formData, currentStep, onboardingData } = body;
 
     if (!businessName || !email) {
       return NextResponse.json(
@@ -20,12 +20,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use formData if provided, otherwise use onboardingData, or default to empty object
+    const dataToSave = formData || onboardingData || {};
+
     const db = getDatabase();
     await db.initialize();
 
     // Detect if using PostgreSQL (JSONB) or SQLite (TEXT)
     const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
-    const formDataValue = isPostgres ? formData : JSON.stringify(formData);
+    const formDataValue = isPostgres ? dataToSave : JSON.stringify(dataToSave);
 
     // Check if save already exists
     const existing = await db.queryOne(
@@ -86,7 +89,6 @@ export async function POST(request: NextRequest) {
         details: error.message,
         code: error.code,
         debug: {
-          dbType: db.getType(),
           hasDatabaseUrl: !!process.env.DATABASE_URL,
           errorName: error.name,
           errorStack: error.stack?.split('\n').slice(0, 3).join('\n')

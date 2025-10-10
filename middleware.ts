@@ -67,6 +67,7 @@ function addSecurityHeaders(response: NextResponse) {
     [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://accounts.google.com https://accounts.google.com/gsi/",
+      "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline' https://accounts.google.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
