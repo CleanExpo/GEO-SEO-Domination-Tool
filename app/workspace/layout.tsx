@@ -1,8 +1,10 @@
 /**
  * Workspace Layout Wrapper
  *
- * Phase 1.1 Day 2: Workspace route wrapper
+ * Phase 1.1 Day 5-7: Wrapped with WorkspaceProvider for global state
  */
+
+import { WorkspaceProvider } from '@/lib/workspace/WorkspaceContext';
 
 export const metadata = {
   title: 'Workspace - GEO-SEO Domination Tool',
@@ -14,5 +16,9 @@ export default function WorkspaceRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <WorkspaceProvider>
+      {children}
+    </WorkspaceProvider>
+  );
 }

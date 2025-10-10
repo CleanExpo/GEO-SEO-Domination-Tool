@@ -1,7 +1,7 @@
 /**
  * Workspace Page
  *
- * Phase 1.1 Day 2: Main workspace route
+ * Phase 1.1 Day 5-7: Connected to WorkspaceContext
  *
  * This is the unified IDE workspace where all tools come together
  */
@@ -13,16 +13,23 @@ import { UnifiedSidebar } from '@/components/workspace/UnifiedSidebar';
 import { MainPanel } from '@/components/workspace/MainPanel';
 import { RightPanel } from '@/components/workspace/RightPanel';
 import { BottomPanel } from '@/components/workspace/BottomPanel';
+import { useWorkspace } from '@/lib/workspace/WorkspaceContext';
 
 export default function WorkspacePage() {
-  const handleSaveWorkspace = () => {
-    console.log('Save workspace');
-    // Will be implemented in Phase 1.2
+  const { saveWorkspace, loadWorkspace } = useWorkspace();
+
+  const handleSaveWorkspace = async () => {
+    try {
+      await saveWorkspace();
+      console.log('Workspace saved successfully');
+    } catch (error) {
+      console.error('Failed to save workspace:', error);
+    }
   };
 
   const handleLoadWorkspace = () => {
-    console.log('Load workspace');
-    // Will be implemented in Phase 1.2
+    console.log('Open load workspace dialog');
+    // Will show workspace selector dialog in Phase 1.2
   };
 
   const handleOpenCommandPalette = () => {

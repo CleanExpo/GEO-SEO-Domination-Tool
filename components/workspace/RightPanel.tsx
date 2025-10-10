@@ -1,16 +1,35 @@
 /**
  * Right Panel
  *
- * Phase 1.1 Day 4: Right panel with Terminal, AI, Debug tabs
+ * Phase 1.1 Day 5-7: Connected to WorkspaceContext for terminal management
  */
 
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Terminal, Bot, Bug } from 'lucide-react';
+import { Terminal, Bot, Bug, Plus, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { useWorkspace } from '@/lib/workspace/WorkspaceContext';
 
 export function RightPanel() {
+  const { terminals, createTerminal, closeTerminal, setActiveTerminal } = useWorkspace();
+
+  const activeTerminal = terminals.find(t => t.active);
+
+  const handleNewTerminal = () => {
+    const terminal = createTerminal();
+    console.log('Created new terminal:', terminal.name);
+  };
+
+  const handleCloseTerminal = (id: string) => {
+    closeTerminal(id);
+  };
+
+  const handleSwitchTerminal = (id: string) => {
+    setActiveTerminal(id);
+  };
+
   return (
     <div className="h-full flex flex-col">
       <Tabs defaultValue="terminal" className="h-full flex flex-col">
@@ -18,6 +37,9 @@ export function RightPanel() {
           <TabsTrigger value="terminal" className="gap-2">
             <Terminal className="h-4 w-4" />
             Terminal
+            {terminals.length > 0 && (
+              <span className="text-xs text-muted-foreground">({terminals.length})</span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="ai" className="gap-2">
             <Bot className="h-4 w-4" />
@@ -29,12 +51,80 @@ export function RightPanel() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="terminal" className="flex-1 overflow-hidden m-0 p-0">
-          <ScrollArea className="h-full bg-black/95 text-green-400 font-mono text-sm">
+        <TabsContent value="terminal" className="flex-1 overflow-hidden m-0 p-0 flex flex-col">
+          {/* Terminal tabs */}
+          {terminals.length > 0 && (
+            <div className="flex items-center gap-1 border-b bg-muted/20 px-2 py-1">
+              {terminals.map((terminal) => (
+                <div
+                  key={terminal.id}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-md cursor-pointer text-xs ${
+                    terminal.active ? 'bg-background border' : 'hover:bg-muted/50'
+                  }`}
+                  onClick={() => handleSwitchTerminal(terminal.id)}
+                >
+                  <span>{terminal.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-3 w-3 p-0 hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseTerminal(terminal.id);
+                    }}
+                  >
+                    <X className="h-2 w-2" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={handleNewTerminal}
+                title="New terminal"
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+
+          <ScrollArea className="flex-1 bg-black/95 text-green-400 font-mono text-sm">
             <div className="p-4">
-              <p>$ Terminal ready</p>
-              <p>$ Will integrate with existing Terminal Pro in Phase 1.2</p>
-              <p className="text-muted-foreground mt-2">_</p>
+              {activeTerminal ? (
+                <div>
+                  <p className="text-blue-400">$ {activeTerminal.name}</p>
+                  <p className="text-muted-foreground">Working directory: {activeTerminal.cwd}</p>
+                  {activeTerminal.history.length > 0 ? (
+                    <div className="mt-2 space-y-1">
+                      {activeTerminal.history.map((entry, i) => (
+                        <div key={i}>
+                          <p className="text-white">$ {entry.command}</p>
+                          <p className="text-green-400">{entry.output}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-muted-foreground">No command history</p>
+                  )}
+                  <p className="text-green-400 mt-2">_</p>
+                </div>
+              ) : (
+                <div>
+                  <p>$ Terminal ready</p>
+                  <p>$ Click + to create a new terminal</p>
+                  <p>$ Will integrate with existing Terminal Pro in Phase 1.2</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={handleNewTerminal}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Terminal
+                  </Button>
+                </div>
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
