@@ -40,8 +40,8 @@ const testData = {
   brandVoice: 'Professional and friendly',
 
   // Step 5: Services
-  selectedServices: ['SEO Audit', 'Content Creation'],
-  budget: '$1000-$5000'
+  selectedServices: ['SEO Audit & Optimization', 'Content Creation'],
+  budget: '$1,000 - $2,500/month'
 };
 
 async function runE2ETest() {
@@ -150,26 +150,25 @@ async function runE2ETest() {
     // Step 4: Content
     console.log('📝 Step 4: Content Strategy');
 
-    // Check content types
+    // Check content types - Click labels for shadcn/ui components
     for (const type of testData.contentTypes) {
       try {
-        await page.check(`text="${type}"`);
+        await page.click(`label:has-text("${type}")`);
+        console.log(`   ✓ Checked: ${type}`);
       } catch (e) {
-        console.warn(`⚠️  Could not find checkbox for: ${type}`);
+        console.warn(`   ⚠️  Could not find checkbox for: ${type}`);
       }
     }
 
-    // Select frequency (radio button)
+    // Fill brand voice (textarea)
     try {
-      await page.check(`text="${testData.contentFrequency}" i`);
+      const brandVoiceInput = await page.$('textarea');
+      if (brandVoiceInput) {
+        await brandVoiceInput.fill(testData.brandVoice);
+        console.log(`   ✓ Filled brand voice`);
+      }
     } catch (e) {
-      console.warn(`⚠️  Could not select frequency: ${testData.contentFrequency}`);
-    }
-
-    // Fill brand voice
-    const brandVoiceInput = await page.$('[placeholder*="brand" i], textarea');
-    if (brandVoiceInput) {
-      await brandVoiceInput.fill(testData.brandVoice);
+      console.warn(`   ⚠️  Could not fill brand voice`);
     }
 
     await page.screenshot({ path: 'onboarding-step-4.png' });
@@ -183,20 +182,31 @@ async function runE2ETest() {
     // Step 5: Services
     console.log('📝 Step 5: Services & Budget');
 
-    // Check services
+    // Click service cards (services are clickable Cards)
     for (const service of testData.selectedServices) {
       try {
-        await page.check(`text="${service}"`);
-      } catch (e) {
-        console.warn(`⚠️  Could not find checkbox for: ${service}`);
+        // Try clicking the Card by finding text within it
+        await page.locator('div[role="button"]', { hasText: service }).click();
+        await page.waitForTimeout(200);
+        console.log(`   ✓ Selected service: ${service}`);
+      } catch (e1) {
+        try {
+          // Fallback: try clicking any element with the service text
+          await page.click(`text="${service}"`);
+          await page.waitForTimeout(200);
+          console.log(`   ✓ Selected service: ${service}`);
+        } catch (e2) {
+          console.warn(`   ⚠️  Could not find service: ${service}`);
+        }
       }
     }
 
-    // Select budget (radio button)
+    // Select budget - Click label for radio button
     try {
-      await page.check(`text="${testData.budget}"`);
+      await page.click(`label:has-text("${testData.budget}")`);
+      console.log(`   ✓ Selected budget: ${testData.budget}`);
     } catch (e) {
-      console.warn(`⚠️  Could not select budget: ${testData.budget}`);
+      console.warn(`   ⚠️  Could not select budget: ${testData.budget}`);
     }
 
     await page.screenshot({ path: 'onboarding-step-5.png' });
@@ -207,25 +217,33 @@ async function runE2ETest() {
     console.log('🚀 Submitting onboarding...');
 
     // Wait for navigation or response
-    const [response] = await Promise.all([
-      page.waitForResponse(resp => resp.url().includes('/api/onboarding'), { timeout: 10000 }),
-      page.click('button:has-text("Submit"), button:has-text("Start Onboarding")')
-    ]);
+    try {
+      const [response] = await Promise.all([
+        page.waitForResponse(resp => resp.url().includes('/api/onboarding/start'), { timeout: 30000 }),
+        page.click('button:has-text("Start Onboarding")')
+      ]);
 
-    const responseData = await response.json();
-    console.log('\n📊 API Response:');
-    console.log(JSON.stringify(responseData, null, 2));
+      const responseData = await response.json();
+      console.log('\n📊 API Response:');
+      console.log(JSON.stringify(responseData, null, 2));
 
-    if (response.status() === 201 || response.ok()) {
-      console.log('\n✅ ONBOARDING SUCCESSFUL!');
-      console.log(`   Onboarding ID: ${responseData.onboardingId || responseData.success}`);
-    } else {
-      console.log('\n❌ ONBOARDING FAILED!');
-      console.log(`   Status: ${response.status()}`);
+      if (response.status() === 201 || response.ok()) {
+        console.log('\n✅ ONBOARDING SUCCESSFUL!');
+        console.log(`   Onboarding ID: ${responseData.onboardingId || responseData.success}`);
+      } else {
+        console.log('\n❌ ONBOARDING FAILED!');
+        console.log(`   Status: ${response.status()}`);
+        errors.push({
+          type: 'onboarding',
+          status: response.status(),
+          data: responseData
+        });
+      }
+    } catch (submitError) {
+      console.error('\n❌ Submit Error:', submitError.message);
       errors.push({
-        type: 'onboarding',
-        status: response.status(),
-        data: responseData
+        type: 'submit',
+        message: submitError.message
       });
     }
 
