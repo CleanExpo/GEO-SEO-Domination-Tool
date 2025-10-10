@@ -361,8 +361,8 @@ export function ClientIntakeForm({ onComplete }: { onComplete?: (data: ClientInt
         return !!(formData.businessName && formData.email && formData.contactName);
       case 1: // Website
         return formData.hasExistingWebsite ? !!formData.website : true;
-      case 2: // Goals
-        return formData.primaryGoals.length > 0 && formData.targetKeywords.length > 0;
+      case 2: // Goals - Allow proceeding if at least ONE goal OR keyword is set
+        return formData.primaryGoals.length > 0 || formData.targetKeywords.length > 0;
       case 3: // Content
         return formData.contentTypes.length > 0;
       case 4: // Services
