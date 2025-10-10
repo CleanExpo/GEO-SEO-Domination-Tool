@@ -13,7 +13,7 @@ GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platfo
 - The Electron desktop app (`src/`) exists for local development only
 - Production deployments use the Vercel project: `geo-seo-domination-tool` (Project ID: `prj_JxdLiaHoWpnXWEjEhXXpmo0eFBgQ`)
 
-**Current Branch**: `new-life` - Next development phase with build assistant tools integration
+**Current Branch**: `main` - Production-ready with all critical fixes deployed
 
 **Core Features**:
 - Lighthouse Website Audits & E-E-A-T Score Calculation
@@ -21,6 +21,7 @@ GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platfo
 - AI Search Optimization (7 proven strategies, 120%-20,000% growth)
 - Multi-platform AI Visibility Tracking (Claude, ChatGPT, Google AI)
 - Campaign Management with topic clustering & buyer journey mapping
+- Custom 117-Point SEO Analysis (Ahrefs competitor using DeepSeek V3)
 
 ## Development Commands
 
@@ -151,6 +152,74 @@ src/
 ├── utils/             # Utilities (E-E-A-T calculator, SoLV calculator)
 └── store/            # Zustand state management
 ```
+
+## 🚨 CRITICAL: Middleware Configuration
+
+### API Route Protection
+
+**CRITICAL**: The middleware must NOT intercept `/api/*` routes or all API endpoints will return 404.
+
+**Correct middleware matcher configuration** (`middleware.ts:122`):
+```typescript
+export const config = {
+  matcher: [
+    // MUST exclude 'api' to prevent 404s on API routes
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}
+```
+
+**Common Mistakes**:
+- ❌ Forgetting to exclude `api` → All API endpoints return 404
+- ❌ Middleware running on API routes → Authentication blocks API calls
+- ❌ Missing CSP headers → Web worker violations in console
+
+**Content Security Policy**: Middleware adds security headers including CSP. Ensure `worker-src 'self' blob:` is included to prevent web worker violations.
+
+### AI Integration Architecture
+
+The system uses **two separate AI services** for different purposes:
+
+**1. Anthropic Claude** (Direct API - `services/api/claude.ts`):
+- Purpose: Content generation, analysis, recommendations
+- Model: `claude-sonnet-4-20250514`
+- API Key: `ANTHROPIC_API_KEY` (direct from Anthropic, NOT via OpenRouter)
+- Use cases: Blog content, SEO recommendations, analysis reports
+
+**2. DeepSeek V3** (via OpenRouter - `services/api/deepseek-local-seo.ts`):
+- Purpose: Custom 117-point SEO analysis system (Ahrefs competitor)
+- Model: `deepseek/deepseek-chat` (via OpenRouter for cost management)
+- API Keys: `DEEPSEEK_API_KEY` (direct) or `OPENROUTER_API` (via OpenRouter)
+- Use cases: Local SEO analysis, competitor research, keyword opportunities
+- Configuration: `lib/deepseek-config.ts` handles client initialization
+
+**Important**: Do NOT use SEMrush or Ahrefs APIs - we built a custom replacement using DeepSeek.
+
+### Business Lookup System
+
+The `/api/onboarding/lookup` endpoint uses a **hybrid approach**:
+
+**Primary Method**: Free website scraper (`app/api/onboarding/lookup/route.ts:115-238`):
+- Scrapes HTML directly (no API cost)
+- Extracts: business name, phone, email, address
+- Detects website platform (WordPress, Shopify, Wix, Next.js)
+- Reads Schema.org structured data
+- **Cost**: $0/month (saves $10-20 vs. Google Places API)
+
+**Fallback Method**: Google Places API (when website URL not available):
+- Used only for name-based searches
+- Requires `GOOGLE_API_KEY` environment variable
+- Note: Current key may be expired, scraper is preferred
+
+### Integration Status
+
+**Fully Implemented Integrations** (NOT placeholders):
+- ✅ **Firecrawl** (5 endpoints) - `services/api/firecrawl.ts`
+- ✅ **Lighthouse** (2 endpoints) - `services/api/lighthouse.ts`
+- ✅ **Claude** (8 endpoints) - `services/api/claude.ts`
+- ✅ **DeepSeek** - `services/api/deepseek-local-seo.ts`
+
+**Note**: Static code analysis may falsely mark working endpoints as "placeholders" if they don't contain "Not implemented" text. Always test endpoints before assuming they need implementation.
 
 ## Critical Build Notes
 
@@ -296,12 +365,23 @@ DROP TABLE example;
 
 The repository includes extensive documentation:
 
+### Critical Production Fixes (October 2025)
+- `MOUNTAIN_CONQUERED.md` - **Complete victory report**: All critical bugs fixed
+- `SESSION_SUMMARY_COMPLETE.md` - Comprehensive session chronicle with all fixes
+- `CRITICAL_DEPLOYMENT_FIXES.md` - Step-by-step deployment troubleshooting guide
+- `PLAYWRIGHT_TEST_RESULTS_ANALYSIS.md` - Automated test results and analysis
+- `INTEGRATION_STATUS_UPDATE.md` - Integration health check and roadmap
+- `DEPLOYMENT_STATUS_LATEST.md` - Current deployment status and verification
+
+### System Architecture & Setup
 - `DEPLOYMENT_CHECKPOINT.md` - Last successful build details and TypeScript fixes
 - `SUPABASE_SETUP.md` - Database setup guide
 - `DATABASE_ARCHITECTURE.md` - Database design diagrams and relationships
 - `NAVIGATION_COMPLETE.md` - Complete navigation map with all 23 pages
 - `SCHEDULER_*.md` - Job scheduler documentation and package scripts
 - `NOTIFICATION_*.md` - Notification system architecture
+
+### Integration Guides
 - `*_MCP_GUIDE.md` - Integration guides for SEMrush, GitHub, Vercel, Playwright, Schema.org
 - `docs/build-assistant-tools/` - Build assistant tools documentation
   - `README.md` - Master index with integration strategies
@@ -311,7 +391,7 @@ The repository includes extensive documentation:
   - `parallel-r1.md` - Parallel thinking framework for AI optimization
   - `spec-kit.md` - GitHub documentation framework (DocFX, GitHub Pages)
 
-**Before making significant changes**: Review `DEPLOYMENT_CHECKPOINT.md` for known issues and fixes.
+**Before making significant changes**: Review `MOUNTAIN_CONQUERED.md` for recently fixed issues and `CRITICAL_DEPLOYMENT_FIXES.md` for deployment best practices.
 
 ## 🚨 CRITICAL: Before Debugging ANY Issue
 
