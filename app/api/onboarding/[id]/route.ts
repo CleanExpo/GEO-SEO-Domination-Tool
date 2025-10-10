@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { onboardingOrchestrator } from '@/services/onboarding/onboarding-orchestrator';
 import { getDatabase } from '@/lib/db';
 
 // Force Node.js runtime (uses database and file system)
@@ -24,47 +23,45 @@ export async function GET(
 
     console.log(`[Onboarding API] Getting progress for: ${onboardingId}`);
 
-    // Try to get from memory first
-    let progress = onboardingOrchestrator.getProgress(onboardingId);
+    // Load from database
+    const result = await db.query(
+      'SELECT * FROM onboarding_sessions WHERE id = ?',
+      [onboardingId]
+    );
 
-    // If not in memory, load from database
-    if (!progress) {
-      console.log(`[Onboarding API] Not in memory, checking database...`);
+    const row = result.rows && result.rows.length > 0 ? result.rows[0] : null;
 
-      const result = await db.query(
-        'SELECT * FROM onboarding_sessions WHERE id = ?',
-        [onboardingId]
+    if (!row) {
+      console.log(`[Onboarding API] Session not found in database`);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Onboarding session not found',
+          onboardingId
+        },
+        { status: 404 }
       );
-
-      const row = result.rows ? result.rows[0] : result[0];
-
-      if (!row) {
-        console.log(`[Onboarding API] Session not found in database`);
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Onboarding session not found',
-            onboardingId
-          },
-          { status: 404 }
-        );
-      }
-
-      console.log(`[Onboarding API] Found in database: ${row.status}`);
-
-      progress = {
-        onboardingId: row.id,
-        companyId: row.company_id,
-        status: row.status,
-        currentStep: row.current_step || '',
-        steps: row.steps_data ? JSON.parse(row.steps_data) : [],
-        startedAt: row.created_at,
-        completedAt: row.completed_at,
-        error: row.error
-      };
-    } else {
-      console.log(`[Onboarding API] Found in memory: ${progress.status}`);
     }
+
+    console.log(`[Onboarding API] Found in database: ${row.status || 'pending'}`);
+
+    // Build progress object from database record
+    const progress = {
+      onboardingId: row.id,
+      companyId: row.company_id || '',
+      status: row.status || 'pending',
+      currentStep: row.current_step || 'Initializing',
+      steps: row.steps_data ? JSON.parse(row.steps_data) : [
+        { name: 'Create Company Record', status: 'pending' },
+        { name: 'Setup Workspace', status: 'pending' },
+        { name: 'Run SEO Audit', status: 'pending' },
+        { name: 'Generate Content Calendar', status: 'pending' },
+        { name: 'Send Welcome Email', status: 'pending' }
+      ],
+      startedAt: row.created_at,
+      completedAt: row.completed_at || null,
+      error: row.error || null
+    };
 
     return NextResponse.json({
       success: true,
@@ -72,12 +69,14 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('[Onboarding API] Error getting progress:', error);
+    console.error('[Onboarding API] Stack:', error.stack);
+
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to get onboarding progress',
         message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
       { status: 500 }
     );
