@@ -14,6 +14,7 @@
 
 import { EventEmitter } from 'events';
 import { getDatabase } from '@/lib/db';
+import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { masterOrchestrator } from '../engines/master-orchestrator';
@@ -250,7 +251,8 @@ export class OnboardingOrchestrator extends EventEmitter {
    * Step 1: Create company record in database
    */
   private async createCompanyRecord(request: OnboardingRequest): Promise<string> {
-    const companyId = `portfolio_${Date.now()}`;
+    // Generate UUID for PostgreSQL compatibility
+    const companyId = randomUUID();
 
     // Use company_portfolios table (new schema)
     // Note: target_keywords is ARRAY type, target_locations and content_preferences are JSONB
