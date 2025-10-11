@@ -5,21 +5,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const db = getDatabase();
 
 export async function GET(request: NextRequest) {
   try {
     console.log('[Saved Onboarding] Fetching saved sessions');
 
+    const supabase = createAdminClient();
+
     // Fetch only the MOST RECENT onboarding session per business name
     // This prevents showing duplicate test attempts
-    const result = await db.query(
-      `SELECT
+    const { data: allSessions, error } = await supabase
+      .from('onboarding_sessions')
+      .select(`
         id,
         business_name,
         email,
@@ -29,27 +30,31 @@ export async function GET(request: NextRequest) {
         created_at,
         completed_at,
         request_data
-      FROM onboarding_sessions
-      ORDER BY business_name ASC, created_at DESC`
-    );
+      `)
+      .order('business_name', { ascending: true })
+      .order('created_at', { ascending: false });
 
-    const allSessions = result.rows || [];
-    console.log('[Saved Onboarding] Found', allSessions.length, 'total sessions');
+    if (error) {
+      console.error('[Saved Onboarding] Supabase error:', error);
+      throw error;
+    }
+
+    console.log('[Saved Onboarding] Found', sessions.length, 'total sessions');
 
     // Keep only the most recent session per business name
     const uniqueSessions = new Map();
-    for (const session of allSessions) {
+    for (const session of sessions) {
       const key = session.business_name.toLowerCase().trim();
       if (!uniqueSessions.has(key)) {
         uniqueSessions.set(key, session);
       }
     }
 
-    const sessions = Array.from(uniqueSessions.values());
-    console.log('[Saved Onboarding] Filtered to', sessions.length, 'unique clients');
+    const filteredSessions = Array.from(uniqueSessions.values());
+    console.log('[Saved Onboarding] Filtered to', filteredSessions.length, 'unique clients');
 
     // Format response with client details
-    const savedClients = sessions.map(session => {
+    const savedClients = filteredSessions.map(session => {
       // Parse request_data (might be object or string)
       let requestData;
       if (session.request_data) {
