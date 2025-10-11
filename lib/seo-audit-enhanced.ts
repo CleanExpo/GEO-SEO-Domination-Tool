@@ -283,11 +283,14 @@ export class EnhancedSEOAuditor {
       console.log(`[EnhancedSEOAuditor] Lighthouse audit completed for ${url}`);
       return scores;
     } catch (error: any) {
-      // Check for rate limiting
+      // Check for specific error types
       if (error.response?.status === 429) {
         console.error('[EnhancedSEOAuditor] Lighthouse API rate limit exceeded - falling back to basic audit');
-      } else if (error.response?.status === 403 || error.response?.status === 400) {
-        console.error('[EnhancedSEOAuditor] Lighthouse API authentication failed - check GOOGLE_SPEED_KEY in Vercel');
+      } else if (error.response?.status === 403 || error.response?.status === 400 || error.response?.status === 401) {
+        console.error('[EnhancedSEOAuditor] Lighthouse API authentication failed:', error.response?.data?.error?.message || error.message);
+        console.error('[EnhancedSEOAuditor] Using basic audit instead (no API key required)');
+      } else if (error.message?.includes('ECONNREFUSED') || error.message?.includes('ETIMEDOUT')) {
+        console.error('[EnhancedSEOAuditor] Network error connecting to Lighthouse API - using basic audit');
       } else {
         console.error('[EnhancedSEOAuditor] Lighthouse audit failed:', error.message || error);
       }
