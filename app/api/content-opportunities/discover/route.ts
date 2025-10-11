@@ -4,9 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { findBestOpportunities, buildOpportunity } from '@/services/content-opportunity-engine';
 import { getKeywordIdeas } from '@/services/api/dataforseo';
+import { randomUUID } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,30 +28,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = await getDatabase();
+    const supabase = createAdminClient();
     const startTime = Date.now();
+    const searchId = randomUUID();
 
     // Create search record
-    const searchResult = await db.run(
-      `INSERT INTO opportunity_searches
-       (seed_keyword, company_id, database_region, subreddits, status)
-       VALUES (?, ?, ?, ?, ?)`,
-      [seedKeyword, companyId || null, 'us', JSON.stringify(subreddits), 'running']
-    );
+    const { error: searchError } = await supabase
+      .from('opportunity_searches')
+      .insert([{
+        id: searchId,
+        seed_keyword: seedKeyword,
+        company_id: companyId || null,
+        database_region: 'us',
+        subreddits: subreddits,
+        status: 'running'
+      }]);
 
-    const searchId = searchResult.lastID;
+    if (searchError) {
+      throw new Error(`Failed to create search record: ${searchError.message}`);
+    }
 
     try {
       // Step 1: Get keyword ideas from DataForSEO
       const keywordData = await getKeywordIdeas(seedKeyword);
 
       if (!keywordData || keywordData.length === 0) {
-        await db.run(
-          `UPDATE opportunity_searches
-           SET status = ?, error_message = ?, completed_at = CURRENT_TIMESTAMP
-           WHERE id = ?`,
-          ['failed', 'No keyword data found from DataForSEO', searchId]
-        );
+        await supabase
+          .from('opportunity_searches')
+          .update({
+            status: 'failed',
+            error_message: 'No keyword data found from DataForSEO',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', searchId);
 
         return NextResponse.json(
           { error: 'No keyword data found' },
@@ -72,39 +82,37 @@ export async function POST(request: NextRequest) {
       });
 
       // Step 3: Save opportunities to database
-      const opportunityIds: number[] = [];
+      const opportunityIds: string[] = [];
 
       for (const opp of opportunities) {
-        const result = await db.run(
-          `INSERT INTO content_opportunities
-           (company_id, keyword, search_volume, keyword_difficulty, opportunity_score,
-            reddit_mentions, repeated_questions, confusion_markers, dissatisfaction_markers, gap_weight,
-            intents, top_questions, canonical_answer, key_bullets, citations,
-            source_type, source_thread_ids, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            companyId || null,
-            opp.keyword,
-            opp.volume,
-            opp.difficulty,
-            opp.opportunityScore,
-            opp.gap.redditMentions,
-            opp.gap.repeatedQuestions,
-            opp.gap.confusionMarkers,
-            opp.gap.dissatisfactionMarkers,
-            0, // gap_weight will be computed
-            JSON.stringify(opp.intents),
-            JSON.stringify(opp.topQuestions),
-            opp.aeo?.canonicalAnswer || null,
-            JSON.stringify(opp.aeo?.keyBullets || []),
-            JSON.stringify(opp.aeo?.citations || []),
-            'reddit',
-            JSON.stringify(opp.sources.redditThreads || []),
-            'discovered'
-          ]
-        );
+        const oppId = randomUUID();
+        const { error: oppError } = await supabase
+          .from('content_opportunities')
+          .insert([{
+            id: oppId,
+            company_id: companyId || null,
+            keyword: opp.keyword,
+            search_volume: opp.volume,
+            keyword_difficulty: opp.difficulty,
+            opportunity_score: opp.opportunityScore,
+            reddit_mentions: opp.gap.redditMentions,
+            repeated_questions: opp.gap.repeatedQuestions,
+            confusion_markers: opp.gap.confusionMarkers,
+            dissatisfaction_markers: opp.gap.dissatisfactionMarkers,
+            gap_weight: 0,
+            intents: opp.intents,
+            top_questions: opp.topQuestions,
+            canonical_answer: opp.aeo?.canonicalAnswer || null,
+            key_bullets: opp.aeo?.keyBullets || [],
+            citations: opp.aeo?.citations || [],
+            source_type: 'reddit',
+            source_thread_ids: opp.sources.redditThreads || [],
+            status: 'discovered'
+          }]);
 
-        opportunityIds.push(result.lastID!);
+        if (!oppError) {
+          opportunityIds.push(oppId);
+        }
       }
 
       // Step 4: Update search record
@@ -113,22 +121,18 @@ export async function POST(request: NextRequest) {
         ? opportunities.reduce((sum, o) => sum + o.opportunityScore, 0) / opportunities.length
         : 0;
 
-      await db.run(
-        `UPDATE opportunity_searches
-         SET status = ?, keywords_found = ?, opportunities_discovered = ?,
-             avg_opportunity_score = ?, top_opportunity_id = ?,
-             execution_time_ms = ?, completed_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [
-          'completed',
-          keywordData.length,
-          opportunities.length,
-          avgScore,
-          opportunityIds[0] || null,
-          executionTime,
-          searchId
-        ]
-      );
+      await supabase
+        .from('opportunity_searches')
+        .update({
+          status: 'completed',
+          keywords_found: keywordData.length,
+          opportunities_discovered: opportunities.length,
+          avg_opportunity_score: avgScore,
+          top_opportunity_id: opportunityIds[0] || null,
+          execution_time_ms: executionTime,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', searchId);
 
       return NextResponse.json({
         success: true,
@@ -144,12 +148,14 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
       // Update search record with error
-      await db.run(
-        `UPDATE opportunity_searches
-         SET status = ?, error_message = ?, completed_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        ['failed', error.message, searchId]
-      );
+      await supabase
+        .from('opportunity_searches')
+        .update({
+          status: 'failed',
+          error_message: error.message,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', searchId);
 
       throw error;
     }

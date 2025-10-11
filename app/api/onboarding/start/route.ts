@@ -5,14 +5,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { randomUUID } from 'crypto';
 
 // Force Node.js runtime
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const db = getDatabase();
 
 export async function POST(request: NextRequest) {
   console.log('[Start Onboarding] API called');
@@ -53,18 +51,22 @@ export async function POST(request: NextRequest) {
     console.log('[Start Onboarding] Creating onboarding session:', onboardingId);
 
     // Save to database
-    await db.query(`
-      INSERT INTO onboarding_sessions (
-        id, business_name, email, status, request_data, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-      onboardingId,
-      body.businessName,
-      body.email,
-      'pending',
-      JSON.stringify(body),
-      new Date().toISOString()
-    ]);
+    const supabase = createAdminClient();
+    const { error: insertError } = await supabase
+      .from('onboarding_sessions')
+      .insert([{
+        id: onboardingId,
+        business_name: body.businessName,
+        email: body.email,
+        status: 'pending',
+        request_data: body,
+        created_at: new Date().toISOString()
+      }]);
+
+    if (insertError) {
+      console.error('[Start Onboarding] Insert error:', insertError);
+      throw new Error(`Failed to save onboarding session: ${insertError.message}`);
+    }
 
     console.log('[Start Onboarding] Session saved to database');
 

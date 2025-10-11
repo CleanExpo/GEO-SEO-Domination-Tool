@@ -4,7 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
+import { randomUUID } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,38 +26,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = await getDatabase();
+    const supabase = createAdminClient();
+    const taskId = randomUUID();
 
     // Create task in database
-    const result = await db.run(
-      `INSERT INTO autonomous_tasks
-       (title, description, input_type, workflow_id, status, priority, metadata, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [
+    const { data: task, error: insertError } = await supabase
+      .from('autonomous_tasks')
+      .insert([{
+        id: taskId,
         title,
         description,
-        inputType,
-        workflow || 'content-opportunity-discovery',
-        'queued',
+        input_type: inputType,
+        workflow_id: workflow || 'content-opportunity-discovery',
+        status: 'queued',
         priority,
-        JSON.stringify(metadata)
-      ]
-    );
+        metadata,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
 
-    const taskId = result.lastID;
-
-    // Return created task
-    const task = await db.get(
-      `SELECT * FROM autonomous_tasks WHERE id = ?`,
-      [taskId]
-    );
+    if (insertError) {
+      throw new Error(`Failed to create task: ${insertError.message}`);
+    }
 
     return NextResponse.json({
       success: true,
-      task: {
-        ...task,
-        metadata: JSON.parse(task.metadata || '{}')
-      }
+      task
     });
   } catch (error: any) {
     console.error('Task creation error:', error);

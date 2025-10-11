@@ -3,7 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,80 +14,42 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const db = await getDatabase();
+    const supabase = createAdminClient();
 
-    let query = `
-      SELECT
-        co.*,
-        COUNT(cp.id) as content_plans_count,
-        c.name as company_name
-      FROM content_opportunities co
-      LEFT JOIN content_plans cp ON co.id = cp.opportunity_id
-      LEFT JOIN companies c ON co.company_id = c.id
-      WHERE 1=1
-    `;
-
-    const params: any[] = [];
+    // Build query with filters
+    let query = supabase
+      .from('content_opportunities')
+      .select('*, companies!inner(name)', { count: 'exact' });
 
     if (companyId) {
-      query += ` AND co.company_id = ?`;
-      params.push(companyId);
+      query = query.eq('company_id', companyId);
     }
 
     if (status) {
-      query += ` AND co.status = ?`;
-      params.push(status);
+      query = query.eq('status', status);
     }
 
     if (minScore) {
-      query += ` AND co.opportunity_score >= ?`;
-      params.push(parseFloat(minScore));
+      query = query.gte('opportunity_score', parseFloat(minScore));
     }
 
-    query += `
-      GROUP BY co.id
-      ORDER BY co.opportunity_score DESC
-      LIMIT ? OFFSET ?
-    `;
+    // Apply ordering, limit, and offset
+    query = query
+      .order('opportunity_score', { ascending: false })
+      .range(offset, offset + limit - 1);
 
-    params.push(limit, offset);
+    const { data: opportunities, error, count } = await query;
 
-    const opportunities = await db.all(query, params);
-
-    // Parse JSON fields
-    const formatted = opportunities.map((opp: any) => ({
-      ...opp,
-      intents: JSON.parse(opp.intents || '[]'),
-      top_questions: JSON.parse(opp.top_questions || '[]'),
-      key_bullets: JSON.parse(opp.key_bullets || '[]'),
-      citations: JSON.parse(opp.citations || '[]'),
-      source_thread_ids: JSON.parse(opp.source_thread_ids || '[]')
-    }));
-
-    // Get total count
-    let countQuery = `SELECT COUNT(*) as total FROM content_opportunities WHERE 1=1`;
-    const countParams: any[] = [];
-
-    if (companyId) {
-      countQuery += ` AND company_id = ?`;
-      countParams.push(companyId);
+    if (error) {
+      throw new Error(`Failed to fetch opportunities: ${error.message}`);
     }
 
-    if (status) {
-      countQuery += ` AND status = ?`;
-      countParams.push(status);
-    }
-
-    if (minScore) {
-      countQuery += ` AND opportunity_score >= ?`;
-      countParams.push(parseFloat(minScore));
-    }
-
-    const countResult = await db.get(countQuery, countParams);
+    // Note: JSONB fields are already parsed by Supabase
+    // No need to manually parse intents, top_questions, etc.
 
     return NextResponse.json({
-      opportunities: formatted,
-      total: countResult.total,
+      opportunities: opportunities || [],
+      total: count || 0,
       limit,
       offset
     });

@@ -5,13 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 
 // Force Node.js runtime (uses database and file system)
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const db = getDatabase();
 
 export async function GET(
   request: NextRequest,
@@ -22,15 +20,14 @@ export async function GET(
     const onboardingId = id;
 
     // Load from database
-    const result = await db.query(
-      'SELECT * FROM onboarding_sessions WHERE id = ?',
-      [onboardingId]
-    );
+    const supabase = createAdminClient();
+    const { data: row, error } = await supabase
+      .from('onboarding_sessions')
+      .select('*')
+      .eq('id', onboardingId)
+      .single();
 
-    const row = result.rows && result.rows.length > 0 ? result.rows[0] : null;
-
-    if (!row) {
-
+    if (error || !row) {
       return NextResponse.json(
         {
           success: false,

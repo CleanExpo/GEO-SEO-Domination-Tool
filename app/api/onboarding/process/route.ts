@@ -6,14 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Max 60 seconds for hobby plan
-
-const db = getDatabase();
 
 interface OnboardingStep {
   name: string;
@@ -37,23 +35,22 @@ export async function POST(request: NextRequest) {
     console.log('[Process Onboarding] Processing:', onboardingId);
 
     // Get onboarding session
-    const sessionResult = await db.query(
-      'SELECT * FROM onboarding_sessions WHERE id = ?',
-      [onboardingId]
-    );
+    const supabase = createAdminClient();
+    const { data: session, error: sessionError } = await supabase
+      .from('onboarding_sessions')
+      .select('*')
+      .eq('id', onboardingId)
+      .single();
 
-    const session = sessionResult.rows?.[0];
-    if (!session) {
+    if (sessionError || !session) {
       return NextResponse.json(
         { success: false, error: 'Onboarding session not found' },
         { status: 404 }
       );
     }
 
-    // Parse request_data (might already be an object in PostgreSQL)
-    const requestData = typeof session.request_data === 'string'
-      ? JSON.parse(session.request_data)
-      : session.request_data;
+    // Parse request_data (already an object in PostgreSQL JSONB)
+    const requestData = session.request_data as any;
 
     // Initialize steps
     const steps: OnboardingStep[] = [
@@ -65,12 +62,15 @@ export async function POST(request: NextRequest) {
     ];
 
     // Update status to in_progress
-    await db.query(
-      `UPDATE onboarding_sessions
-       SET status = ?, current_step = ?, steps_data = ?, started_at = ?
-       WHERE id = ?`,
-      ['in_progress', 'Create Company Record', JSON.stringify(steps), new Date().toISOString(), onboardingId]
-    );
+    await supabase
+      .from('onboarding_sessions')
+      .update({
+        status: 'in_progress',
+        current_step: 'Create Company Record',
+        steps_data: steps,
+        started_at: new Date().toISOString()
+      })
+      .eq('id', onboardingId);
 
     let companyId = '';
     let currentStepIndex = 0;
@@ -83,17 +83,18 @@ export async function POST(request: NextRequest) {
 
       companyId = randomUUID();
       // Create company record with minimal fields (matches companies API schema)
-      await db.query(
-        `INSERT INTO companies (
-          id, name, website, industry
-        ) VALUES (?, ?, ?, ?)`,
-        [
-          companyId,
-          requestData.businessName,
-          requestData.website || 'https://example.com',
-          requestData.industry || 'General'
-        ]
-      );
+      const { error: companyError } = await supabase
+        .from('companies')
+        .insert([{
+          id: companyId,
+          name: requestData.businessName,
+          website: requestData.website || 'https://example.com',
+          industry: requestData.industry || 'General'
+        }]);
+
+      if (companyError) {
+        throw new Error(`Failed to create company: ${companyError.message}`);
+      }
 
       steps[0].status = 'completed';
       currentStepIndex = 1;
@@ -138,20 +139,16 @@ export async function POST(request: NextRequest) {
       steps[4].status = 'completed';
 
       // Mark as completed
-      await db.query(
-        `UPDATE onboarding_sessions
-         SET status = ?, current_step = ?, steps_data = ?,
-             company_id = ?, completed_at = ?
-         WHERE id = ?`,
-        [
-          'completed',
-          'Completed',
-          JSON.stringify(steps),
-          companyId,
-          new Date().toISOString(),
-          onboardingId
-        ]
-      );
+      await supabase
+        .from('onboarding_sessions')
+        .update({
+          status: 'completed',
+          current_step: 'Completed',
+          steps_data: steps,
+          company_id: companyId,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', onboardingId);
 
       console.log('[Process Onboarding] Completed successfully');
 
@@ -170,17 +167,14 @@ export async function POST(request: NextRequest) {
         steps[currentStepIndex].error = stepError.message;
       }
 
-      await db.query(
-        `UPDATE onboarding_sessions
-         SET status = ?, steps_data = ?, error = ?
-         WHERE id = ?`,
-        [
-          'failed',
-          JSON.stringify(steps),
-          stepError.message,
-          onboardingId
-        ]
-      );
+      await supabase
+        .from('onboarding_sessions')
+        .update({
+          status: 'failed',
+          steps_data: steps,
+          error: stepError.message
+        })
+        .eq('id', onboardingId);
 
       return NextResponse.json({
         success: false,
@@ -207,19 +201,19 @@ async function updateProgress(
   steps: OnboardingStep[],
   companyId?: string
 ) {
+  const supabase = createAdminClient();
+  const updateData: any = {
+    status,
+    current_step: currentStep,
+    steps_data: steps
+  };
+
   if (companyId) {
-    await db.query(
-      `UPDATE onboarding_sessions
-       SET status = ?, current_step = ?, steps_data = ?, company_id = ?
-       WHERE id = ?`,
-      [status, currentStep, JSON.stringify(steps), companyId, onboardingId]
-    );
-  } else {
-    await db.query(
-      `UPDATE onboarding_sessions
-       SET status = ?, current_step = ?, steps_data = ?
-       WHERE id = ?`,
-      [status, currentStep, JSON.stringify(steps), onboardingId]
-    );
+    updateData.company_id = companyId;
   }
+
+  await supabase
+    .from('onboarding_sessions')
+    .update(updateData)
+    .eq('id', onboardingId);
 }

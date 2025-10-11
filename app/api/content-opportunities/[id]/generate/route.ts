@@ -4,36 +4,38 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import Anthropic from '@anthropic-ai/sdk';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const opportunityId = parseInt(params.id);
+    const { id } = await params;
+    const opportunityId = id;
     const body = await request.json();
     const { contentTypes = ['article', 'social', 'newsletter'] } = body;
 
-    const db = await getDatabase();
+    const supabase = createAdminClient();
 
     // Fetch opportunity
-    const opportunity = await db.get(
-      `SELECT * FROM content_opportunities WHERE id = ?`,
-      [opportunityId]
-    );
+    const { data: opportunity, error: oppError } = await supabase
+      .from('content_opportunities')
+      .select('*')
+      .eq('id', opportunityId)
+      .single();
 
-    if (!opportunity) {
+    if (oppError || !opportunity) {
       return NextResponse.json(
         { error: 'Opportunity not found' },
         { status: 404 }
       );
     }
 
-    // Parse JSON fields
-    const topQuestions = JSON.parse(opportunity.top_questions || '[]');
-    const keyBullets = JSON.parse(opportunity.key_bullets || '[]');
+    // JSONB fields are already parsed
+    const topQuestions = opportunity.top_questions || [];
+    const keyBullets = opportunity.key_bullets || [];
 
     // Generate content using Claude
     const claude = new Anthropic({

@@ -1,24 +1,28 @@
 /**
  * Debug endpoint to expose database configuration in production
  *
- * This endpoint helps troubleshoot why SQL placeholder conversion isn't working
+ * This endpoint verifies Supabase connection and configuration
  */
 
 import { NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 
 export async function GET() {
   try {
-    const db = getDatabase();
-    await db.initialize();
+    const supabase = createAdminClient();
 
-    // Test a simple query with ? placeholder to verify conversion
+    // Test a simple query to verify connection
     let testQueryResult = null;
     let testQueryError = null;
 
     try {
-      const testQuery = 'SELECT 1 as test WHERE 1 = ?';
-      testQueryResult = await db.query(testQuery, [1]);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('count')
+        .limit(1);
+
+      testQueryResult = { count: data?.length || 0 };
+      testQueryError = error;
     } catch (error: any) {
       testQueryError = {
         message: error.message,
@@ -29,29 +33,27 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       config: {
-        dbType: db.getType(),
-        hasDatabaseUrl: !!process.env.DATABASE_URL,
-        hasPostgresUrl: !!process.env.POSTGRES_URL,
+        dbType: 'Supabase PostgreSQL',
+        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         nodeEnv: process.env.NODE_ENV,
-        databaseUrlSet: process.env.DATABASE_URL ? 'YES' : 'NO',
-        postgresUrlSet: process.env.POSTGRES_URL ? 'YES' : 'NO',
-        databaseUrlLength: process.env.DATABASE_URL?.length || 0,
-        postgresUrlLength: process.env.POSTGRES_URL?.length || 0,
+        supabaseUrlSet: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'YES' : 'NO',
+        supabaseKeySet: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'YES' : 'NO',
       },
       testQuery: {
-        success: testQueryResult !== null,
+        success: testQueryResult !== null && !testQueryError,
         result: testQueryResult,
         error: testQueryError
       },
-      message: `Database type detected: ${db.getType()}`
+      message: 'Database type: Supabase PostgreSQL'
     });
   } catch (error: any) {
     return NextResponse.json({
       success: false,
       error: error.message,
       config: {
-        hasDatabaseUrl: !!process.env.DATABASE_URL,
-        hasPostgresUrl: !!process.env.POSTGRES_URL,
+        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         nodeEnv: process.env.NODE_ENV,
       }
     }, { status: 500 });

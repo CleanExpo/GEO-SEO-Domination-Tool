@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { seoAuditAgent } from '@/services/agents/seo-audit-agent';
 import { socialMediaAuditAgent } from '@/services/agents/social-media-audit-agent';
-
-const db = getDatabase();
 
 /**
  * POST /api/crm/audit/full
@@ -40,24 +38,28 @@ export async function POST(request: NextRequest) {
     console.log(`   Social Platforms: ${Object.keys(socialAccounts).length}`);
 
     // Create swarm coordination session
+    const supabase = createAdminClient();
     const sessionId = crypto.randomUUID();
-    await db.run(`
-      INSERT INTO swarm_coordination (
-        portfolio_id, session_id, coordination_type, priority, agents_deployed, status, started_at
-      ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-    `, [
-      portfolioId,
-      sessionId,
-      'audit',
-      auditType === 'initial' ? 'high' : 'medium',
-      JSON.stringify([
-        { agent: 'SEOAuditAgent', status: 'pending' },
-        { agent: 'SocialMediaAuditAgent', status: 'pending' },
-        { agent: 'GMBAuditAgent', status: 'pending' },
-        { agent: 'ContentQualityAuditAgent', status: 'pending' }
-      ]),
-      'running'
-    ]);
+    const { error: coordError } = await supabase
+      .from('swarm_coordination')
+      .insert([{
+        portfolio_id: portfolioId,
+        session_id: sessionId,
+        coordination_type: 'audit',
+        priority: auditType === 'initial' ? 'high' : 'medium',
+        agents_deployed: [
+          { agent: 'SEOAuditAgent', status: 'pending' },
+          { agent: 'SocialMediaAuditAgent', status: 'pending' },
+          { agent: 'GMBAuditAgent', status: 'pending' },
+          { agent: 'ContentQualityAuditAgent', status: 'pending' }
+        ],
+        status: 'running',
+        started_at: new Date().toISOString()
+      }]);
+
+    if (coordError) {
+      console.error('Failed to create coordination session:', coordError);
+    }
 
     // Execute audits in parallel
 
@@ -145,48 +147,46 @@ export async function POST(request: NextRequest) {
 
     // Save audit results
     const auditDuration = Math.round((Date.now() - startTime) / 1000);
+    const now = new Date().toISOString();
+    const startedAt = new Date(Date.now() - auditDuration * 1000).toISOString();
 
     const auditId = crypto.randomUUID();
-    await db.run(`
-      INSERT INTO portfolio_audits (
-        id, portfolio_id, audit_type,
-        overall_score, seo_score, social_score, gmb_score, content_quality_score, brand_authority_score,
-        findings, recommendations, opportunities,
-        audit_duration_seconds, data_sources_used,
-        started_at, completed_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-' || ? || ' seconds'), datetime('now'))
-    `, [
-      auditId,
-      portfolioId,
-      auditType,
-      overallScore,
-      scores.seo,
-      scores.social,
-      scores.gmb,
-      scores.content_quality,
-      scores.brand_authority,
-      JSON.stringify(findings),
-      JSON.stringify(recommendations),
-      JSON.stringify(opportunities),
-      auditDuration,
-      JSON.stringify(['DeepSeek SEO', 'DeepSeek Social Media']),
-      auditDuration
-    ]);
+    const { error: auditError } = await supabase
+      .from('portfolio_audits')
+      .insert([{
+        id: auditId,
+        portfolio_id: portfolioId,
+        audit_type: auditType,
+        overall_score: overallScore,
+        seo_score: scores.seo,
+        social_score: scores.social,
+        gmb_score: scores.gmb,
+        content_quality_score: scores.content_quality,
+        brand_authority_score: scores.brand_authority,
+        findings: findings,
+        recommendations: recommendations,
+        opportunities: opportunities,
+        audit_duration_seconds: auditDuration,
+        data_sources_used: ['DeepSeek SEO', 'DeepSeek Social Media'],
+        started_at: startedAt,
+        completed_at: now
+      }]);
+
+    if (auditError) {
+      console.error('Failed to save audit results:', auditError);
+    }
 
     // Update swarm coordination
-    await db.run(`
-      UPDATE swarm_coordination
-      SET status = 'completed',
-          completion_percentage = 100,
-          combined_score = ?,
-          completed_at = datetime('now'),
-          results = ?
-      WHERE session_id = ?
-    `, [
-      overallScore,
-      JSON.stringify({ seo: seoResults, social: socialResults }),
-      sessionId
-    ]);
+    await supabase
+      .from('swarm_coordination')
+      .update({
+        status: 'completed',
+        completion_percentage: 100,
+        combined_score: overallScore,
+        completed_at: new Date().toISOString(),
+        results: { seo: seoResults, social: socialResults }
+      })
+      .eq('session_id', sessionId);
 
 
 
@@ -252,21 +252,21 @@ async function triggerAutonomousOptimization(
     r => r.priority === 'critical' || r.priority === 'high'
   ).slice(0, 5);
 
+  const supabase = createAdminClient();
+  const scheduledFor = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // +1 hour
+
   for (const rec of urgent) {
     // Log autonomous action
-    await db.run(`
-      INSERT INTO autonomous_actions (
-        portfolio_id, agent_name, action_type, action_category,
-        action_description, status, scheduled_for
-      ) VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+1 hour'))
-    `, [
-      portfolioId,
-      'AutoOptimizationAgent',
-      'optimize',
-      rec.category,
-      rec.action,
-      'pending'
-    ]);
+    await supabase
+      .from('autonomous_actions')
+      .insert([{
+        portfolio_id: portfolioId,
+        agent_name: 'AutoOptimizationAgent',
+        action_type: 'optimize',
+        action_category: rec.category,
+        action_description: rec.action,
+        status: 'pending',
+        scheduled_for: scheduledFor
+      }]);
   }
-
 }

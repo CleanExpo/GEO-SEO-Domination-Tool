@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { orchestrator } from '@/services/agents/orchestrator';
 import { AgentTask } from '@/services/agents/types';
 
@@ -20,15 +20,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = await getDatabase();
+    const supabase = createAdminClient();
 
     // Get task from database
-    const task = await db.get(
-      `SELECT * FROM autonomous_tasks WHERE id = ?`,
-      [taskId]
-    );
+    const { data: task, error: taskError } = await supabase
+      .from('autonomous_tasks')
+      .select('*')
+      .eq('id', taskId)
+      .single();
 
-    if (!task) {
+    if (taskError || !task) {
       return NextResponse.json(
         { error: 'Task not found' },
         { status: 404 }
@@ -36,12 +37,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Update task status to in_progress
-    await db.run(
-      `UPDATE autonomous_tasks
-       SET status = ?, started_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      ['in_progress', taskId]
-    );
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'in_progress',
+        started_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
 
     // Prepare agent task
     const agentTask: AgentTask = {
@@ -65,23 +67,23 @@ export async function POST(request: NextRequest) {
       agentTask,
       async (agentId, agentResult) => {
         // Log progress to database
-        await db.run(
-          `INSERT INTO task_agent_logs
-           (task_id, agent_id, result, created_at)
-           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-          [taskId, agentId, JSON.stringify(agentResult)]
-        );
+        await supabase
+          .from('task_agent_logs')
+          .insert([{
+            task_id: taskId,
+            agent_id: agentId,
+            result: agentResult,
+            created_at: new Date().toISOString()
+          }]);
       }
     );
 
     // Update task with result
-    await db.run(
-      `UPDATE autonomous_tasks
-       SET status = ?, result = ?, completed_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [
-        result.success ? 'completed' : 'failed',
-        JSON.stringify({
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: result.success ? 'completed' : 'failed',
+        result: {
           success: result.success,
           executionTime: result.executionTime,
           agentResults: Array.from(result.agentResults.entries()).map(([id, r]) => ({
@@ -89,10 +91,10 @@ export async function POST(request: NextRequest) {
             result: r
           })),
           error: result.error
-        }),
-        taskId
-      ]
-    );
+        },
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
 
     return NextResponse.json({
       success: true,
