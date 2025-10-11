@@ -1,3 +1,11 @@
+/**
+ * Local SEO Intelligence Engine with Cascading AI
+ * Uses cost-optimized AI: Qwen → Claude Opus → Claude Sonnet 4.5
+ */
+
+import { cascadingAI, generateWithFallback } from './cascading-ai';
+import { FirecrawlService } from './firecrawl';
+
 // Lazy-load firecrawl to avoid build-time errors
 let _firecrawl: FirecrawlService | null = null;
 function getFirecrawl(): FirecrawlService {
@@ -133,15 +141,16 @@ export interface ShareOfLocalVoice {
 
 // ============================================================================
 // LOCAL SEO INTELLIGENCE ENGINE
+// Now using Cascading AI (Qwen → Claude Opus → Claude Sonnet 4.5)
 // ============================================================================
 
-export class DeepSeekLocalSEO {
+export class CascadingLocalSEO {
   /**
    * Analyze Google Business Profile optimization
    * Replaces: BrightLocal GBP Audit
    */
   async analyzeGBP(businessProfile: LocalBusinessProfile): Promise<GBPAnalysis> {
-    console.log(`🔍 DeepSeek V3: Analyzing GBP for ${businessProfile.businessName}...`);
+    console.log(`🔍 Cascading AI: Analyzing GBP for ${businessProfile.businessName}...`);
 
     const prompt = `Analyze this Google Business Profile comprehensively:
 
@@ -215,32 +224,22 @@ Return ONLY valid JSON in this format:
 }`;
 
     try {
-      const response = await deepseek.chat.completions.create({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a Google Business Profile optimization expert with deep knowledge of local SEO best practices.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 3000,
-        response_format: { type: 'json_object' },
-      });
-
-      const analysis = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const result = await cascadingAI.generate<GBPAnalysis>(
+        'You are a Google Business Profile optimization expert with deep knowledge of local SEO best practices.',
+        prompt,
+        {
+          temperature: 0.3,
+          maxTokens: 3000,
+          jsonMode: true,
+        }
+      );
 
       console.log(
-        `✅ DeepSeek V3: GBP analysis complete (Score: ${analysis.optimizationScore}/100)`
+        `✅ Cascading AI: GBP analysis complete (Score: ${result.data.optimizationScore}/100) [Model: ${result.model}, Cost: $${result.estimatedCost.toFixed(4)}]`
       );
-      return analysis as GBPAnalysis;
+      return result.data;
     } catch (error) {
-      console.error('❌ DeepSeek V3 GBP Analysis Error:', error);
+      console.error('❌ Cascading AI GBP Analysis Error:', error);
       throw error;
     }
   }
@@ -255,7 +254,7 @@ Return ONLY valid JSON in this format:
     location: string
   ): Promise<LocalPackRanking[]> {
     console.log(
-      `🔍 DeepSeek V3: Checking local pack rankings for ${businessName} in ${location}...`
+      `🔍 Cascading AI: Checking local pack rankings for ${businessName} in ${location}...`
     );
 
     const rankings: LocalPackRanking[] = [];
@@ -270,7 +269,7 @@ Return ONLY valid JSON in this format:
     }
 
     console.log(
-      `✅ DeepSeek V3: Checked ${rankings.length} local pack rankings`
+      `✅ Cascading AI: Checked ${rankings.length} local pack rankings`
     );
     return rankings;
   }
@@ -317,23 +316,16 @@ Return ONLY valid JSON:
   "serpFeatures": ["Local Pack", "Map", "Reviews", "Q&A", etc.]
 }`;
 
-    const response = await deepseek.chat.completions.create({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a local SEO analyst.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-    });
+    const aiResult = await cascadingAI.generate(
+      'You are a local SEO analyst.',
+      prompt,
+      {
+        temperature: 0.3,
+        jsonMode: true,
+      }
+    );
 
-    const result = JSON.parse(response.choices[0]?.message?.content || '{}');
+    const result = aiResult.data;
 
     return {
       keyword,
@@ -359,7 +351,7 @@ Return ONLY valid JSON:
   ): Promise<CitationData[]> {
     const { country = 'US', maxCitations = 50 } = options;
 
-    console.log(`🔍 DeepSeek V3: Finding citations for ${businessProfile.businessName}...`);
+    console.log(`🔍 Cascading AI: Finding citations for ${businessProfile.businessName}...`);
 
     // Step 1: Get list of citation sources using AI
     const citationSources = options.citationSources || await this.getTopCitationSources(
@@ -381,7 +373,7 @@ Return ONLY valid JSON:
       }
     }
 
-    console.log(`✅ DeepSeek V3: Found ${citations.length} citations`);
+    console.log(`✅ Cascading AI: Found ${citations.length} citations`);
     return citations;
   }
 
@@ -407,23 +399,16 @@ Return ONLY valid JSON:
 
     Prioritize high-authority, niche-relevant sources.`;
 
-    const response = await deepseek.chat.completions.create({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a local SEO citation expert.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-    });
+    const aiResult = await cascadingAI.generate(
+      'You are a local SEO citation expert.',
+      prompt,
+      {
+        temperature: 0.3,
+        jsonMode: true,
+      }
+    );
 
-    const result = JSON.parse(response.choices[0]?.message?.content || '{"sources":[]}');
+    const result = aiResult.data;
     return result.sources || [];
   }
 
@@ -496,23 +481,16 @@ Return ONLY valid JSON:
 
 If any field is not found, return empty string.`;
 
-    const response = await deepseek.chat.completions.create({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a data extraction specialist.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
-    });
+    const aiResult = await cascadingAI.generate(
+      'You are a data extraction specialist.',
+      prompt,
+      {
+        temperature: 0.1,
+        jsonMode: true,
+      }
+    );
 
-    return JSON.parse(response.choices[0]?.message?.content || '{"name":"","address":"","phone":""}');
+    return aiResult.data || { name: '', address: '', phone: '' };
   }
 
   /**
@@ -573,7 +551,7 @@ If any field is not found, return empty string.`;
     keywords: string[],
     location: string
   ): Promise<ShareOfLocalVoice> {
-    console.log(`🔍 DeepSeek V3: Calculating Share of Local Voice...`);
+    console.log(`🔍 Cascading AI: Calculating Share of Local Voice...`);
 
     // Check rankings for all businesses
     const allBusinesses = [yourBusiness, ...competitors];
@@ -653,23 +631,16 @@ Focus on:
 Return ONLY a JSON array of recommendations:
 ["recommendation 1", "recommendation 2", ...]`;
 
-    const response = await deepseek.chat.completions.create({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a local SEO strategist.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.4,
-      response_format: { type: 'json_object' },
-    });
+    const aiResult = await cascadingAI.generate(
+      'You are a local SEO strategist.',
+      prompt,
+      {
+        temperature: 0.4,
+        jsonMode: true,
+      }
+    );
 
-    const result = JSON.parse(response.choices[0]?.message?.content || '{"recommendations":[]}');
+    const result = aiResult.data;
     return result.recommendations || [];
   }
 
@@ -681,7 +652,7 @@ Return ONLY a JSON array of recommendations:
     competitorNames: string[],
     keywords: string[]
   ): Promise<LocalCompetitorAnalysis[]> {
-    console.log(`🔍 DeepSeek V3: Analyzing ${competitorNames.length} local competitors...`);
+    console.log(`🔍 Cascading AI: Analyzing ${competitorNames.length} local competitors...`);
 
     const analyses: LocalCompetitorAnalysis[] = [];
 
@@ -698,7 +669,7 @@ Return ONLY a JSON array of recommendations:
       }
     }
 
-    console.log(`✅ DeepSeek V3: Analyzed ${analyses.length} local competitors`);
+    console.log(`✅ Cascading AI: Analyzed ${analyses.length} local competitors`);
     return analyses;
   }
 
@@ -743,24 +714,17 @@ Return ONLY valid JSON:
   "opportunities": ["string"]
 }`;
 
-    const response = await deepseek.chat.completions.create({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a local SEO competitive analyst.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 2000,
-      response_format: { type: 'json_object' },
-    });
+    const aiResult = await cascadingAI.generate(
+      'You are a local SEO competitive analyst.',
+      prompt,
+      {
+        temperature: 0.3,
+        maxTokens: 2000,
+        jsonMode: true,
+      }
+    );
 
-    const result = JSON.parse(response.choices[0]?.message?.content || '{}');
+    const result = aiResult.data;
 
     return {
       businessName: competitorName,
@@ -781,4 +745,11 @@ Return ONLY valid JSON:
   }
 }
 
-export const deepseekLocalSEO = new DeepSeekLocalSEO();
+// Legacy export for backward compatibility
+export const deepseekLocalSEO = new CascadingLocalSEO();
+
+// New export with updated name
+export const cascadingLocalSEO = new CascadingLocalSEO();
+
+// Keep the old class name as alias for backward compatibility
+export const DeepSeekLocalSEO = CascadingLocalSEO;

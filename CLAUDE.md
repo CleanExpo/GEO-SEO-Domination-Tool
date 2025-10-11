@@ -194,22 +194,46 @@ export const config = {
 
 ### AI Integration Architecture
 
-The system uses **two separate AI services** for different purposes:
+The system uses a **cost-optimized cascading AI strategy** with automatic fallback:
 
-**1. Anthropic Claude** (Direct API - `services/api/claude.ts`):
-- Purpose: Content generation, analysis, recommendations
+**Cascading Order**: Qwen (cheapest) → Claude Opus → Claude Sonnet 4.5
+
+**Cost Savings**: 85-95% compared to using Claude exclusively
+
+#### AI Services:
+
+**1. Qwen (Alibaba Cloud Model Studio)** - Primary (`services/api/cascading-ai.ts`):
+- Purpose: Cost-effective AI for all SEO analysis tasks
+- Model: `qwen-plus` (default), `qwen-turbo`, or `qwen-max`
+- API Key: `QWEN_API_KEY` or `DASHSCOPE_API_KEY`
+- Base URL: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` (Singapore)
+- Configuration: `lib/qwen-config.ts`
+- Pricing: $0.40 input / $1.20 output per 1M tokens (84-97% cheaper than Claude)
+- Use cases: **ALL SEO analysis** (local SEO, competitor research, GBP audits)
+- Get API key: https://modelstudio.console.alibabacloud.com/?tab=model#/api-key
+
+**2. Claude Opus** (Anthropic) - First Fallback:
+- Model: `claude-opus-4-20250514`
+- Pricing: $15 input / $75 output per 1M tokens
+- Triggered: When Qwen fails or times out
+- Use cases: Complex analysis requiring premium reasoning
+
+**3. Claude Sonnet 4.5** (Anthropic) - Final Fallback:
 - Model: `claude-sonnet-4-20250514`
-- API Key: `ANTHROPIC_API_KEY` (direct from Anthropic, NOT via OpenRouter)
-- Use cases: Blog content, SEO recommendations, analysis reports
+- API Key: `ANTHROPIC_API_KEY`
+- Pricing: $3 input / $15 output per 1M tokens
+- Triggered: When both Qwen and Opus fail
+- Use cases: Content generation, recommendations, analysis reports
 
-**2. DeepSeek V3** (via OpenRouter - `services/api/deepseek-local-seo.ts`):
-- Purpose: Custom 117-point SEO analysis system (Ahrefs competitor)
-- Model: `deepseek/deepseek-chat` (via OpenRouter for cost management)
-- API Keys: `DEEPSEEK_API_KEY` (direct) or `OPENROUTER_API` (via OpenRouter)
-- Use cases: Local SEO analysis, competitor research, keyword opportunities
-- Configuration: `lib/deepseek-config.ts` handles client initialization
+**4. DeepSeek V3** - DEPRECATED (Legacy):
+- Replaced by Qwen + cascading AI
+- Old files kept for backward compatibility
+- DO NOT use for new features
 
-**Important**: Do NOT use SEMrush or Ahrefs APIs - we built a custom replacement using DeepSeek.
+**Important**:
+- The system automatically tries Qwen first for cost savings
+- Falls back to Claude only if Qwen fails
+- Do NOT use SEMrush or Ahrefs APIs - we built a custom replacement using cascading AI
 
 ### Business Lookup System
 
@@ -230,10 +254,12 @@ The `/api/onboarding/lookup` endpoint uses a **hybrid approach**:
 ### Integration Status
 
 **Fully Implemented Integrations** (NOT placeholders):
+- ✅ **Qwen (Alibaba Cloud)** - `lib/qwen-config.ts`, `services/api/cascading-ai.ts`
+- ✅ **Cascading AI** - Cost-optimized AI with automatic fallback
 - ✅ **Firecrawl** (5 endpoints) - `services/api/firecrawl.ts`
 - ✅ **Lighthouse** (2 endpoints) - `services/api/lighthouse.ts`
 - ✅ **Claude** (8 endpoints) - `services/api/claude.ts`
-- ✅ **DeepSeek** - `services/api/deepseek-local-seo.ts`
+- ⚠️  **DeepSeek** - DEPRECATED, replaced by Qwen - `services/api/deepseek-local-seo.ts`
 
 **Note**: Static code analysis may falsely mark working endpoints as "placeholders" if they don't contain "Not implemented" text. Always test endpoints before assuming they need implementation.
 
@@ -285,10 +311,11 @@ Both apps use **strict TypeScript**. Common issues from deployment history:
 NEXT_PUBLIC_SUPABASE_URL=https://xyz.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 
-# AI Services
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-PERPLEXITY_API_KEY=pplx-...
+# AI Services (Cascading Strategy: Qwen → Claude Opus → Claude Sonnet 4.5)
+QWEN_API_KEY=sk-xxx...                  # Alibaba Cloud Model Studio (Primary - cheapest)
+ANTHROPIC_API_KEY=sk-ant-...            # Claude Opus & Sonnet (Fallback)
+OPENAI_API_KEY=sk-...                   # OpenAI GPT (Legacy)
+PERPLEXITY_API_KEY=pplx-...             # Perplexity AI (Citations)
 
 # SEO Tools
 SEMRUSH_API_KEY=...

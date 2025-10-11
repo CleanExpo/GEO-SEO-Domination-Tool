@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getJobStatus } from '@/services/scheduler/post-audit-jobs';
 
 /**
  * GET /api/scheduler
@@ -6,14 +7,17 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Return scheduler status
-    // In a real implementation, this would check the actual scheduler state
+    const jobStatus = getJobStatus();
+    const activeJobs = Object.values(jobStatus).filter((job: any) => job.running).length;
+    const initialized = Object.keys(jobStatus).length > 0;
+
     return NextResponse.json({
       status: {
-        initialized: true,
-        running: true,
-        activeJobs: 0,
+        initialized,
+        running: activeJobs > 0,
+        activeJobs,
       },
+      jobs: jobStatus,
       message: 'Scheduler is operational',
     });
   } catch (error) {
@@ -43,36 +47,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { startPostAuditJobs, stopPostAuditJobs } = await import('@/services/scheduler/post-audit-jobs');
+
     // Handle different actions
     switch (action) {
       case 'initialize':
-        // In a real implementation, this would initialize the scheduler
+      case 'start':
+        startPostAuditJobs();
+        const startStatus = getJobStatus();
         return NextResponse.json({
           success: true,
           message: 'Scheduler initialized successfully',
           status: {
             initialized: true,
-            running: true,
-            activeJobs: 0,
+            running: Object.values(startStatus).some((job: any) => job.running),
+            activeJobs: Object.values(startStatus).filter((job: any) => job.running).length,
           },
-        });
-
-      case 'start':
-        return NextResponse.json({
-          success: true,
-          message: 'Scheduler started successfully',
+          jobs: startStatus,
         });
 
       case 'stop':
+        stopPostAuditJobs();
         return NextResponse.json({
           success: true,
           message: 'Scheduler stopped successfully',
         });
 
       case 'restart':
+        stopPostAuditJobs();
+        // Wait a brief moment before restarting
+        await new Promise(resolve => setTimeout(resolve, 100));
+        startPostAuditJobs();
+        const restartStatus = getJobStatus();
         return NextResponse.json({
           success: true,
           message: 'Scheduler restarted successfully',
+          jobs: restartStatus,
         });
 
       default:

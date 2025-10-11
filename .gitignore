@@ -138,3 +138,7 @@ playwright-report/
 .env.production*
 .env.*.verify
 .env.vercel.production
+
+# Claude settings with potential secrets
+.claude/settings.local.json
+.claude/qwen-mcp-server/

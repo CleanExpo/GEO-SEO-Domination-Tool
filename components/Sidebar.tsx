@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, FolderKanban, MessageSquare,
-  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox
+  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield
 } from 'lucide-react';
 
 const navigation = [
@@ -25,6 +25,7 @@ const navigation = [
 ];
 
 const automationNavigation = [
+  { name: 'Post-Audit System', href: '/post-audit', icon: Shield, section: 'Automation', badge: 'NEW' },
   { name: 'Task Inbox', href: '/task-inbox', icon: Inbox, section: 'Automation', badge: 'AUTONOMOUS' },
   { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Automation', badge: 'NEW' },
   { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Automation', badge: 'NEW' },
