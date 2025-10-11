@@ -41,50 +41,6 @@ export class PerplexityClient {
   }
 }
 
-// SEMrush Client
-export class SEMrushClient {
-  private apiKey: string;
-  private baseURL = 'https://api.semrush.com';
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  async getDomainOverview(domain: string): Promise<any> {
-    try {
-      const response = await axios.get(`${this.baseURL}/`, {
-        params: {
-          type: 'domain_ranks',
-          key: this.apiKey,
-          domain,
-          database: 'us',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('SEMrush API error:', error);
-      throw error;
-    }
-  }
-
-  async getKeywordData(keyword: string): Promise<any> {
-    try {
-      const response = await axios.get(`${this.baseURL}/`, {
-        params: {
-          type: 'phrase_this',
-          key: this.apiKey,
-          phrase: keyword,
-          database: 'us',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('SEMrush API error:', error);
-      throw error;
-    }
-  }
-}
-
 // Firecrawl Client
 export class FirecrawlClient {
   private apiKey: string;

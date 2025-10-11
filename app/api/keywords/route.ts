@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/auth/supabase-admin';
-import { SEMrushClient } from '@/lib/api-clients';
 import { z } from 'zod';
 
 const keywordSchema = z.object({
@@ -43,55 +42,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = keywordSchema.parse(body);
 
-    // Optionally fetch keyword data from SEMrush if API key is available
-    let keywordData = {};
-    let enrichmentStatus = 'not_attempted';
-    const semrushApiKey = process.env.SEMRUSH_API_KEY;
+    // Note: Keyword enrichment data (search volume, CPC, difficulty) can be added
+    // via Google Keyword Planner API or other sources if needed in the future.
+    // For now, keywords are created without enrichment data.
 
-    if (!semrushApiKey) {
-      console.warn('[Keywords API] SEMRUSH_API_KEY not configured - keyword will be created without enrichment data');
-      enrichmentStatus = 'no_api_key';
-    } else {
-      try {
-        const semrush = new SEMrushClient(semrushApiKey);
-        const apiData = await semrush.getKeywordData(validatedData.keyword);
-
-        // Parse SEMrush response (format: keyword;volume;cpc;difficulty)
-        if (apiData) {
-          const lines = apiData.split('\n');
-          if (lines.length > 1) {
-            const values = lines[1].split(';');
-            keywordData = {
-              search_volume: parseInt(values[1]) || undefined,
-              cpc: parseFloat(values[2]) || undefined,
-              difficulty: parseFloat(values[3]) || undefined,
-            };
-            enrichmentStatus = 'success';
-
-          } else {
-            console.warn(`[Keywords API] SEMrush returned no data for keyword "${validatedData.keyword}"`);
-            enrichmentStatus = 'no_data';
-          }
-        }
-      } catch (err: any) {
-        console.error('[Keywords API] SEMrush enrichment failed:', {
-          keyword: validatedData.keyword,
-          error: err.message || 'Unknown error',
-          code: err.response?.status,
-        });
-        enrichmentStatus = 'failed';
-        // Continue without SEMrush data - this is a graceful fallback
-      }
-    }
-
-    const { data, error } = await supabase
+    const { data, error} = await supabase
       .from('keywords')
-      .insert([
-        {
-          ...validatedData,
-          ...keywordData,
-        },
-      ])
+      .insert([validatedData])
       .select()
       .single();
 
@@ -100,14 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Include enrichment status in response for debugging
-    return NextResponse.json({
-      keyword: data,
-      enrichment: {
-        status: enrichmentStatus,
-        hasData: Object.keys(keywordData).length > 0,
-      }
-    }, { status: 201 });
+    return NextResponse.json({ keyword: data }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -142,3 +142,4 @@ playwright-report/
 # Claude settings with potential secrets
 .claude/settings.local.json
 .claude/qwen-mcp-server/
+nul
