@@ -105,8 +105,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[Credentials] New credential added: ${body.credentialType} for client ${body.clientId}`);
-
     return NextResponse.json({
       success: true,
       credentialId,
@@ -236,8 +234,6 @@ export async function DELETE(request: NextRequest) {
         .run(credential.client_id, platformName);
     }
 
-    console.log(`[Credentials] Credential deleted: ${credentialId}`);
-
     return NextResponse.json({
       success: true,
       message: 'Credential deleted successfully'
@@ -305,8 +301,6 @@ export async function PATCH(request: NextRequest) {
 
     // Log update
     logCredentialAccess(db, body.credentialId, existing.client_id, 'user:client', 'credential_update', true, request);
-
-    console.log(`[Credentials] Credential updated: ${body.credentialId}`);
 
     return NextResponse.json({
       success: true,

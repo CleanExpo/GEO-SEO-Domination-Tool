@@ -82,8 +82,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`\n🎨 Content Generation Request: ${type} about "${topic}"`);
-
     // Build content request
     const contentRequest: ContentRequest = {
       type,
@@ -109,15 +107,15 @@ export async function POST(request: NextRequest) {
     const generationTime = Date.now() - startTime;
 
     console.log(`\n✅ Content Generated in ${(generationTime / 1000).toFixed(1)}s`);
-    console.log(`   Type: ${contentPackage.type}`);
-    console.log(`   Title: ${contentPackage.title}`);
-    console.log(`   Word Count: ${contentPackage.wordCount}`);
-    console.log(`   SEO Score: ${contentPackage.seoScore}`);
-    console.log(`   Readability: ${contentPackage.readabilityScore}`);
-    console.log(`   Originality: ${contentPackage.originalityScore}`);
-    console.log(`   Images: ${contentPackage.images.length}`);
-    console.log(`   Infographics: ${contentPackage.infographics.length}`);
-    console.log(`   Diagrams: ${contentPackage.diagrams.length}`);
+
+
+
+
+
+
+
+
+
     console.log(`   Cost: $${contentPackage.cost.toFixed(4)}`);
 
     // Save to database

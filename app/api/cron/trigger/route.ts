@@ -32,7 +32,7 @@ function verifyCronSecret(request: NextRequest): boolean {
 
 // Helper to run job logic
 async function runAuditJob(): Promise<any> {
-  console.log('[Cron] Running audit job...');
+
   const startTime = new Date();
 
   try {
@@ -47,7 +47,6 @@ async function runAuditJob(): Promise<any> {
     `);
 
     const companies = result.rows;
-    console.log(`[Cron] Found ${companies.length} companies to audit`);
 
     // In production, this would trigger the actual audit service
     // For now, just log the execution
@@ -75,7 +74,7 @@ async function runAuditJob(): Promise<any> {
 }
 
 async function runRankingJob(): Promise<any> {
-  console.log('[Cron] Running ranking tracker job...');
+
   const startTime = new Date();
 
   try {
@@ -90,7 +89,6 @@ async function runRankingJob(): Promise<any> {
     `);
 
     const keywords = result.rows;
-    console.log(`[Cron] Found ${keywords.length} keywords to track`);
 
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
@@ -116,7 +114,7 @@ async function runRankingJob(): Promise<any> {
 }
 
 async function runReportJob(): Promise<any> {
-  console.log('[Cron] Running report generator job...');
+
   const startTime = new Date();
 
   try {
@@ -130,7 +128,6 @@ async function runReportJob(): Promise<any> {
     `);
 
     const companies = result.rows;
-    console.log(`[Cron] Found ${companies.length} companies for reports`);
 
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
@@ -191,7 +188,6 @@ async function logJobExecution(
 
 // POST endpoint for triggering cron jobs
 export async function POST(request: NextRequest) {
-  console.log('[Cron] Received trigger request');
 
   // Verify authorization
   if (!verifyCronSecret(request)) {
@@ -202,8 +198,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { job } = body;
-
-    console.log(`[Cron] Triggering job: ${job || 'all'}`);
 
     let result: any;
 

@@ -35,9 +35,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`\n🚀 Full Audit Started for Portfolio: ${portfolioId}`);
-    console.log(`   Type: ${auditType}`);
-    console.log(`   URL: ${websiteUrl}`);
+
+
     console.log(`   Social Platforms: ${Object.keys(socialAccounts).length}`);
 
     // Create swarm coordination session
@@ -61,13 +60,12 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Execute audits in parallel
-    console.log('\n📋 Deploying Audit Swarm Agents...\n');
 
     const [seoResults, socialResults] = await Promise.all([
       // SEO Audit Agent
       (async () => {
         try {
-          console.log('  🔍 SEO Audit Agent: ACTIVE');
+
           const result = await seoAuditAgent.auditWebsite(websiteUrl, {
             includeLocal: !!gmbId,
             competitors,
@@ -89,7 +87,7 @@ export async function POST(request: NextRequest) {
         }
 
         try {
-          console.log('  📱 Social Media Audit Agent: ACTIVE');
+
           const result = await socialMediaAuditAgent.auditAllPlatforms(socialAccounts, {
             periodDays: 30,
             includeCompetitors: competitors.length > 0
@@ -190,17 +188,15 @@ export async function POST(request: NextRequest) {
       sessionId
     ]);
 
-    console.log(`\n✅ Full Audit Complete!`);
-    console.log(`   Overall Score: ${overallScore}/100`);
-    console.log(`   SEO: ${scores.seo}/100`);
-    console.log(`   Social: ${scores.social}/100`);
-    console.log(`   Duration: ${auditDuration}s`);
-    console.log(`   Recommendations: ${recommendations.length}`);
-    console.log(`   Opportunities: ${opportunities.length}\n`);
+
+
+
+
+
 
     // Trigger autonomous actions for high-priority items
     if (overallScore < 70) {
-      console.log('🤖 Triggering autonomous optimization agents...');
+
       triggerAutonomousOptimization(portfolioId, recommendations).catch(err =>
         console.error('Failed to trigger optimization:', err)
       );
@@ -273,5 +269,4 @@ async function triggerAutonomousOptimization(
     ]);
   }
 
-  console.log(`   📝 Scheduled ${urgent.length} autonomous optimization actions`);
 }

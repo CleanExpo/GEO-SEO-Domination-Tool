@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`\n🚀 Deployment Request: Content ID ${contentId}`);
     console.log(`   Platforms: ${Object.keys(platforms).join(', ')}`);
 
     // Fetch content from database

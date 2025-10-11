@@ -21,8 +21,6 @@ export async function GET(
     const { id } = await context.params;
     const onboardingId = id;
 
-    console.log(`[Onboarding API] Getting progress for: ${onboardingId}`);
-
     // Load from database
     const result = await db.query(
       'SELECT * FROM onboarding_sessions WHERE id = ?',
@@ -32,7 +30,7 @@ export async function GET(
     const row = result.rows && result.rows.length > 0 ? result.rows[0] : null;
 
     if (!row) {
-      console.log(`[Onboarding API] Session not found in database`);
+
       return NextResponse.json(
         {
           success: false,
@@ -42,8 +40,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    console.log(`[Onboarding API] Found in database: ${row.status || 'pending'}`);
 
     // Parse steps_data (might already be an object in PostgreSQL)
     let steps;

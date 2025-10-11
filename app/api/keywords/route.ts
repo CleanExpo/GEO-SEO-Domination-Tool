@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
               difficulty: parseFloat(values[3]) || undefined,
             };
             enrichmentStatus = 'success';
-            console.log(`[Keywords API] Successfully enriched keyword "${validatedData.keyword}" with SEMrush data`);
+
           } else {
             console.warn(`[Keywords API] SEMrush returned no data for keyword "${validatedData.keyword}"`);
             enrichmentStatus = 'no_data';
