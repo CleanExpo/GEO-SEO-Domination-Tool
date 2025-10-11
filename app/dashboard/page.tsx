@@ -25,26 +25,32 @@ export default function Dashboard() {
     avgSeoScore: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
+    setError(null);
     try {
       const companiesRes = await fetch('/api/companies');
+      if (!companiesRes.ok) throw new Error('Failed to fetch companies');
       const companiesData = await companiesRes.json();
       const companiesList = companiesData.companies || [];
 
       const auditsRes = await fetch('/api/seo-audits');
+      if (!auditsRes.ok) throw new Error('Failed to fetch audits');
       const auditsData = await auditsRes.json();
       const auditsList = auditsData.audits || [];
 
       const keywordsRes = await fetch('/api/keywords');
+      if (!keywordsRes.ok) throw new Error('Failed to fetch keywords');
       const keywordsData = await keywordsRes.json();
       const keywordsList = keywordsData.keywords || [];
 
       const rankingsRes = await fetch('/api/rankings');
+      if (!rankingsRes.ok) throw new Error('Failed to fetch rankings');
       const rankingsData = await rankingsRes.json();
       const rankingsList = rankingsData.rankings || [];
 
@@ -64,6 +70,7 @@ export default function Dashboard() {
       });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -103,6 +110,20 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
         <p className="text-gray-600">Welcome, Let's dive into your personalized setup guide.</p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <p className="font-medium">Error</p>
+          <p className="text-sm">{error}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="mt-2 text-sm underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Performance Metrics */}
       <div className="mb-8">

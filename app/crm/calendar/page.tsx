@@ -58,8 +58,13 @@ export default function ContentCalendarPage() {
   const [selectedPortfolio, setSelectedPortfolio] = useState<string>('');
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingPortfolios, setLoadingPortfolios] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [calendarReport, setCalendarReport] = useState<CalendarReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Form state
   const [startDate, setStartDate] = useState('');
@@ -91,37 +96,53 @@ export default function ContentCalendarPage() {
   }, [selectedPortfolio]);
 
   const loadPortfolios = async () => {
+    setLoadingPortfolios(true);
+    setError(null);
     try {
       const response = await fetch('/api/crm/portfolio');
+      if (!response.ok) throw new Error('Failed to load portfolios');
       const data = await response.json();
       if (data.success) {
         setPortfolios(data.portfolios);
         if (data.portfolios.length > 0) {
           setSelectedPortfolio(data.portfolios[0].id);
         }
+      } else {
+        throw new Error(data.error || 'Failed to load portfolios');
       }
     } catch (error) {
       console.error('Error loading portfolios:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load portfolios');
+    } finally {
+      setLoadingPortfolios(false);
     }
   };
 
   const loadScheduledPosts = async () => {
     if (!selectedPortfolio) return;
 
+    setLoadingPosts(true);
+    setError(null);
     try {
       const response = await fetch(`/api/crm/calendar?portfolioId=${selectedPortfolio}`);
+      if (!response.ok) throw new Error('Failed to load scheduled posts');
       const data = await response.json();
       if (data.success) {
         setScheduledPosts(data.posts);
+      } else {
+        throw new Error(data.error || 'Failed to load scheduled posts');
       }
     } catch (error) {
       console.error('Error loading scheduled posts:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load scheduled posts');
+    } finally {
+      setLoadingPosts(false);
     }
   };
 
   const generateCalendar = async () => {
     if (!selectedPortfolio || !startDate || !endDate) {
-      alert('Please select a portfolio and date range');
+      setGenerateError('Please select a portfolio and date range');
       return;
     }
 
@@ -134,11 +155,12 @@ export default function ContentCalendarPage() {
       }));
 
     if (enabledPlatforms.length === 0) {
-      alert('Please enable at least one platform');
+      setGenerateError('Please enable at least one platform');
       return;
     }
 
     setLoading(true);
+    setGenerateError(null);
     try {
       const response = await fetch('/api/crm/calendar', {
         method: 'POST',
@@ -153,17 +175,18 @@ export default function ContentCalendarPage() {
         })
       });
 
+      if (!response.ok) throw new Error('Failed to generate calendar');
       const data = await response.json();
       if (data.success) {
         setCalendarReport(data);
         setShowCreateModal(false);
         loadScheduledPosts();
       } else {
-        alert(`Error: ${data.error}`);
+        throw new Error(data.error || 'Failed to generate calendar');
       }
     } catch (error) {
       console.error('Error generating calendar:', error);
-      alert('Failed to generate calendar');
+      setGenerateError(error instanceof Error ? error.message : 'Failed to generate calendar. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -172,25 +195,28 @@ export default function ContentCalendarPage() {
   const deletePost = async (postId: number) => {
     if (!confirm('Are you sure you want to delete this scheduled post?')) return;
 
+    setDeleteError(null);
     try {
       const response = await fetch(`/api/crm/calendar?id=${postId}`, {
         method: 'DELETE'
       });
 
+      if (!response.ok) throw new Error('Failed to delete post');
       const data = await response.json();
       if (data.success) {
         loadScheduledPosts();
       } else {
-        alert(`Error: ${data.error}`);
+        throw new Error(data.error || 'Failed to delete post');
       }
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('Failed to delete post');
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete post. Please try again.');
     }
   };
 
   const processDuePosts = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch('/api/crm/calendar', {
         method: 'POST',
@@ -198,16 +224,16 @@ export default function ContentCalendarPage() {
         body: JSON.stringify({ action: 'process' })
       });
 
+      if (!response.ok) throw new Error('Failed to process posts');
       const data = await response.json();
       if (data.success) {
-        alert('Due posts processed successfully');
         loadScheduledPosts();
       } else {
-        alert(`Error: ${data.error}`);
+        throw new Error(data.error || 'Failed to process posts');
       }
     } catch (error) {
       console.error('Error processing posts:', error);
-      alert('Failed to process posts');
+      setError(error instanceof Error ? error.message : 'Failed to process posts. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -234,6 +260,19 @@ export default function ContentCalendarPage() {
     }
   };
 
+  if (loadingPortfolios) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading portfolios...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       {/* Header */}
@@ -250,6 +289,21 @@ export default function ContentCalendarPage() {
           Generate Calendar
         </button>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <p className="font-medium">Error</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {deleteError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <p className="font-medium">Delete Error</p>
+          <p className="text-sm">{deleteError}</p>
+        </div>
+      )}
 
       {/* Portfolio Selector */}
       <div className="mb-6">
@@ -308,7 +362,10 @@ export default function ContentCalendarPage() {
       {/* Scheduled Posts Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Scheduled Posts ({scheduledPosts.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            Scheduled Posts ({scheduledPosts.length})
+            {loadingPosts && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -375,6 +432,11 @@ export default function ContentCalendarPage() {
               <h2 className="text-2xl font-bold text-gray-900">Generate Content Calendar</h2>
             </div>
             <div className="p-6 space-y-6">
+              {generateError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <p className="text-sm">{generateError}</p>
+                </div>
+              )}
               {/* Date Range */}
               <div className="grid grid-cols-2 gap-4">
                 <div>

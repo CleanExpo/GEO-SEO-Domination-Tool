@@ -31,6 +31,9 @@ export default function KeywordsPage() {
   const [showForm, setShowForm] = useState(false);
   const [newKeyword, setNewKeyword] = useState('');
   const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCompany();
@@ -40,20 +43,26 @@ export default function KeywordsPage() {
   const fetchCompany = async () => {
     try {
       const response = await fetch(`/api/companies/${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch company data');
       const data = await response.json();
       setCompany(data.company);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch company:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load company data');
     }
   };
 
   const fetchKeywords = async () => {
     try {
       const response = await fetch(`/api/keywords?company_id=${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch keywords');
       const data = await response.json();
       setKeywords(data.keywords || []);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load keywords');
     } finally {
       setLoading(false);
     }
@@ -62,6 +71,7 @@ export default function KeywordsPage() {
   const handleAddKeyword = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
+    setAddError(null);
 
     try {
       const response = await fetch('/api/keywords', {
@@ -73,13 +83,13 @@ export default function KeywordsPage() {
         }),
       });
 
-      if (response.ok) {
-        setNewKeyword('');
-        setShowForm(false);
-        fetchKeywords();
-      }
+      if (!response.ok) throw new Error('Failed to add keyword');
+      setNewKeyword('');
+      setShowForm(false);
+      fetchKeywords();
     } catch (error) {
       console.error('Failed to add keyword:', error);
+      setAddError(error instanceof Error ? error.message : 'Failed to add keyword. Please try again.');
     } finally {
       setAdding(false);
     }
@@ -88,16 +98,17 @@ export default function KeywordsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this keyword?')) return;
 
+    setDeleteError(null);
     try {
       const response = await fetch(`/api/keywords/${id}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
-        fetchKeywords();
-      }
+      if (!response.ok) throw new Error('Failed to delete keyword');
+      fetchKeywords();
     } catch (error) {
       console.error('Failed to delete keyword:', error);
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete keyword. Please try again.');
     }
   };
 
@@ -149,9 +160,28 @@ export default function KeywordsPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <p className="font-medium">Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <p className="font-medium">Delete Error</p>
+            <p className="text-sm">{deleteError}</p>
+          </div>
+        )}
+
         {showForm && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Add New Keyword</h2>
+            {addError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                <p className="text-sm">{addError}</p>
+              </div>
+            )}
             <form onSubmit={handleAddKeyword} className="flex gap-4">
               <input
                 type="text"

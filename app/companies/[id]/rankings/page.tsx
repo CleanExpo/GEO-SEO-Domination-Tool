@@ -41,6 +41,8 @@ export default function RankingsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rankingError, setRankingError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     keyword_id: keywordIdParam || '',
     url: '',
@@ -64,31 +66,40 @@ export default function RankingsPage() {
   const fetchCompany = async () => {
     try {
       const response = await fetch(`/api/companies/${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch company data');
       const data = await response.json();
       setCompany(data.company);
       setFormData((prev) => ({ ...prev, url: data.company.website }));
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch company:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load company data');
     }
   };
 
   const fetchKeywords = async () => {
     try {
       const response = await fetch(`/api/keywords?company_id=${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch keywords');
       const data = await response.json();
       setKeywords(data.keywords || []);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load keywords');
     }
   };
 
   const fetchRankings = async () => {
     try {
       const response = await fetch(`/api/rankings?company_id=${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch rankings');
       const data = await response.json();
       setRankings(data.rankings || []);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch rankings:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load rankings data');
     } finally {
       setLoading(false);
     }
@@ -97,6 +108,7 @@ export default function RankingsPage() {
   const handleCheckRanking = async (e: React.FormEvent) => {
     e.preventDefault();
     setChecking(true);
+    setRankingError(null);
 
     try {
       const response = await fetch('/api/rankings', {
@@ -108,12 +120,12 @@ export default function RankingsPage() {
         }),
       });
 
-      if (response.ok) {
-        setShowForm(false);
-        fetchRankings();
-      }
+      if (!response.ok) throw new Error('Failed to check ranking');
+      setShowForm(false);
+      fetchRankings();
     } catch (error) {
       console.error('Failed to check ranking:', error);
+      setRankingError(error instanceof Error ? error.message : 'Failed to check ranking. Please try again.');
     } finally {
       setChecking(false);
     }
@@ -192,9 +204,21 @@ export default function RankingsPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <p className="font-medium">Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
         {showForm && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Check Keyword Ranking</h2>
+            {rankingError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                <p className="text-sm">{rankingError}</p>
+              </div>
+            )}
             <form onSubmit={handleCheckRanking} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Keyword *</label>

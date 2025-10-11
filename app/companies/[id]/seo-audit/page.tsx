@@ -41,6 +41,8 @@ export default function SEOAuditPage() {
   const [loading, setLoading] = useState(true);
   const [runningAudit, setRunningAudit] = useState(false);
   const [auditUrl, setAuditUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCompany();
@@ -50,21 +52,27 @@ export default function SEOAuditPage() {
   const fetchCompany = async () => {
     try {
       const response = await fetch(`/api/companies/${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch company data');
       const data = await response.json();
       setCompany(data.company);
       setAuditUrl(data.company.website);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch company:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load company data');
     }
   };
 
   const fetchAudits = async () => {
     try {
       const response = await fetch(`/api/seo-audits?company_id=${companyId}`);
+      if (!response.ok) throw new Error('Failed to fetch audits');
       const data = await response.json();
       setAudits(data.audits || []);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch audits:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load audit data');
     } finally {
       setLoading(false);
     }
@@ -72,6 +80,7 @@ export default function SEOAuditPage() {
 
   const runAudit = async () => {
     setRunningAudit(true);
+    setAuditError(null);
     try {
       const response = await fetch('/api/seo-audits', {
         method: 'POST',
@@ -79,11 +88,11 @@ export default function SEOAuditPage() {
         body: JSON.stringify({ company_id: companyId, url: auditUrl }),
       });
 
-      if (response.ok) {
-        fetchAudits();
-      }
+      if (!response.ok) throw new Error('Failed to run audit');
+      fetchAudits();
     } catch (error) {
       console.error('Failed to run audit:', error);
+      setAuditError(error instanceof Error ? error.message : 'Failed to run audit. Please try again.');
     } finally {
       setRunningAudit(false);
     }
@@ -132,8 +141,20 @@ export default function SEOAuditPage() {
           <p className="text-gray-600 mt-2">Analyze and improve your website's SEO performance</p>
         </div>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <p className="font-medium">Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Run New Audit</h2>
+          {auditError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+              <p className="text-sm">{auditError}</p>
+            </div>
+          )}
           <div className="flex gap-4">
             <input
               type="url"
