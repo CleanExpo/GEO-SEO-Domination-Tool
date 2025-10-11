@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getUser } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
+import { getUser } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 
 const settingsSchema = z.object({
@@ -15,7 +16,7 @@ const settingsSchema = z.object({
 // GET /api/settings - Get user settings
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getUser();
 
     if (!user) {
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
 // PATCH /api/settings - Update user settings
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getUser();
 
     if (!user) {

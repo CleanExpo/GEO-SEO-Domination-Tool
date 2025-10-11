@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, getUser } from '@/lib/auth/supabase-server';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
+import { getUser } from '@/lib/auth/supabase-server';
 import { z } from 'zod';
 import { randomBytes } from 'crypto';
 
@@ -22,7 +23,7 @@ function generateApiKey(): string {
 // GET /api/settings/api-keys - List all API keys for the user
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getUser();
 
     if (!user) {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
 // POST /api/settings/api-keys - Generate a new API key
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getUser();
 
     if (!user) {
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
 // PATCH /api/settings/api-keys - Update API key (revoke/activate)
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getUser();
 
     if (!user) {
@@ -179,7 +180,7 @@ export async function PATCH(request: NextRequest) {
 // DELETE /api/settings/api-keys - Delete an API key
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const user = await getUser();
 
     if (!user) {
