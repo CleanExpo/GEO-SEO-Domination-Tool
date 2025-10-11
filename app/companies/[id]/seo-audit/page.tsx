@@ -23,6 +23,11 @@ interface SEOAudit {
   accessibility_score?: number;
   seo_score?: number;
   issues: AuditIssue[];
+  recommendations?: string[];
+  metadata?: {
+    recommendations?: string[];
+    [key: string]: any;
+  };
   created_at: string;
 }
 
@@ -257,6 +262,24 @@ export default function SEOAuditPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Recommendations Section */}
+              {(audit.recommendations || audit.metadata?.recommendations) && (
+                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    <Info className="h-5 w-5" />
+                    Recommended Next Steps
+                  </h4>
+                  <ul className="space-y-2">
+                    {(audit.recommendations || audit.metadata?.recommendations || []).map((rec: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-blue-800">
+                        <span className="text-blue-600 mt-1">→</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ))}
         </div>
