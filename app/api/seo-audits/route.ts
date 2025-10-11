@@ -2,13 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/auth/supabase-server';
 import { createAdminClient } from '@/lib/auth/supabase-admin';
 import { EnhancedSEOAuditor } from '@/lib/seo-audit-enhanced';
+import { auditLimiter } from '@/lib/rate-limiter';
 
-// GET /api/seo-audits - List all SEO audits
+// Simple in-memory cache for audit results (5 minute TTL)
+const auditCache = new Map<string, { data: any; expires: number }>();
+
+// GET /api/seo-audits - List all SEO audits (with caching)
 export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
     const searchParams = request.nextUrl.searchParams;
     const companyId = searchParams.get('company_id');
+
+    // Check cache
+    const cacheKey = `audits:${companyId || 'all'}`;
+    const cached = auditCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      return NextResponse.json(cached.data, {
+        headers: { 'X-Cache': 'HIT' },
+      });
+    }
 
     let query = supabase.from('seo_audits').select('*').order('created_at', { ascending: false });
 
@@ -42,7 +55,17 @@ export async function GET(request: NextRequest) {
       recommendations: audit.recommendations || [],
     }));
 
-    return NextResponse.json({ audits });
+    const responseData = { audits };
+
+    // Cache for 5 minutes
+    auditCache.set(cacheKey, {
+      data: responseData,
+      expires: Date.now() + 5 * 60 * 1000,
+    });
+
+    return NextResponse.json(responseData, {
+      headers: { 'X-Cache': 'MISS' },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch SEO audits' },
@@ -51,7 +74,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/seo-audits - Create a new SEO audit
+// POST /api/seo-audits - Create a new SEO audit (with rate limiting)
 export async function POST(request: NextRequest) {
   try {
     // Use admin client to bypass RLS for server-side audit operations
@@ -63,6 +86,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'url is required' },
         { status: 400 }
+      );
+    }
+
+    // Rate limiting: 5 audits per minute per company
+    const rateLimitKey = company_id || 'anonymous';
+    if (!auditLimiter.check(rateLimitKey)) {
+      const info = auditLimiter.getInfo(rateLimitKey);
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many audit requests. Please wait before trying again.',
+          retryAfter: info ? Math.ceil((info.resetTime - Date.now()) / 1000) : 60,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(info ? Math.ceil((info.resetTime - Date.now()) / 1000) : 60),
+          },
+        }
       );
     }
 
@@ -156,6 +198,27 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[SEO Audits API] Audit completed successfully for ${url}, ID: ${data.id}`);
+
+    // Invalidate cache for this company
+    if (company_id) {
+      auditCache.delete(`audits:${company_id}`);
+    }
+    auditCache.delete('audits:all');
+
+    // Trigger post-audit webhook asynchronously (don't wait for it)
+    fetch(`${request.nextUrl.origin}/api/webhooks/audit-complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        auditId: data.id,
+        companyId: company_id,
+        score: data.overall_score,
+        issues: data.issues || [],
+        recommendations: data.recommendations || [],
+      }),
+    }).catch((err) => {
+      console.error('[SEO Audits API] Failed to trigger webhook:', err);
+    });
 
     return NextResponse.json({
       audit: data,

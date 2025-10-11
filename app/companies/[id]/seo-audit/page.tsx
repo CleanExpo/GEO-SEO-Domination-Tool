@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Search, AlertCircle, CheckCircle, Info, TrendingUp, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
+import { AuditNextSteps } from '@/components/audit/AuditNextSteps';
 
 interface AuditIssue {
   type: 'error' | 'warning' | 'info';
@@ -263,23 +264,18 @@ export default function SEOAuditPage() {
                 </div>
               </div>
 
-              {/* Recommendations Section */}
-              {(audit.recommendations || audit.metadata?.recommendations) && (
-                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                    <Info className="h-5 w-5" />
-                    Recommended Next Steps
-                  </h4>
-                  <ul className="space-y-2">
-                    {(audit.recommendations || audit.metadata?.recommendations || []).map((rec: any, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2 text-blue-800">
-                        <span className="text-blue-600 mt-1">→</span>
-                        <span>{typeof rec === 'string' ? rec : rec.title || rec.description || JSON.stringify(rec)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Recommendations Section - Replaced with AuditNextSteps */}
+              <AuditNextSteps
+                auditId={audit.id}
+                companyId={companyId}
+                score={audit.score}
+                issues={audit.issues || []}
+                recommendations={audit.recommendations || audit.metadata?.recommendations || []}
+                onActionComplete={() => {
+                  console.log('[Audit] Action completed, refreshing data...');
+                  fetchAudits();
+                }}
+              />
             </div>
           ))}
         </div>
