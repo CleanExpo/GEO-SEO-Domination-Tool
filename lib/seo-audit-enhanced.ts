@@ -136,18 +136,42 @@ export class EnhancedSEOAuditor {
         maxRedirects: 5,
       });
     } catch (error: any) {
-      // If basic audit fails, return minimal fallback data
+      // If basic audit fails, return minimal fallback data with helpful guidance
       console.error('[EnhancedSEOAuditor] Basic audit failed for', url, ':', error.message);
       console.error('[EnhancedSEOAuditor] Status:', error.response?.status, error.response?.statusText);
 
+      // Provide helpful error messages based on status code
+      let errorMessage = 'Unable to access website';
+      let recommendations: string[] = [];
+
+      if (error.response?.status === 403) {
+        errorMessage = 'Website is blocking automated requests (403 Forbidden)';
+        recommendations = [
+          'The site has security measures (WAF/bot protection) preventing automated audits',
+          'Try using Google PageSpeed Insights: https://pagespeed.web.dev/',
+          'Or perform a manual SEO review using browser developer tools',
+        ];
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication required (401 Unauthorized)';
+        recommendations = ['This site requires login credentials to view'];
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        errorMessage = 'Connection timeout - website may be offline';
+        recommendations = ['Verify the website URL is correct', 'Check if the website is currently accessible'];
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Page not found (404)';
+        recommendations = ['Double-check the URL for typos', 'Ensure the page exists'];
+      } else {
+        recommendations = ['Check website accessibility', 'Try again later'];
+      }
+
       return {
-        title: 'Unable to fetch page',
-        metaDescription: '',
+        title: 'Audit Limited - Site Access Restricted',
+        metaDescription: errorMessage,
         h1Tags: [],
         issues: [{
           type: 'error' as const,
           category: 'connectivity',
-          message: `Unable to access website: ${error.response?.status || 'Network error'}. The site may be blocking automated requests or be temporarily unavailable.`,
+          message: errorMessage,
           impact: 'high' as const,
         }],
         seoScore: 0,
@@ -155,6 +179,7 @@ export class EnhancedSEOAuditor {
         accessibilityScore: 0,
         mobileFriendly: false,
         wordCount: 0,
+        recommendations,
       };
     }
 
