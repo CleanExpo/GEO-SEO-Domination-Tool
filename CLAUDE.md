@@ -21,7 +21,9 @@ GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platfo
 - AI Search Optimization (7 proven strategies, 120%-20,000% growth)
 - Multi-platform AI Visibility Tracking (Claude, ChatGPT, Google AI)
 - Campaign Management with topic clustering & buyer journey mapping
-- Custom 117-Point SEO Analysis (Ahrefs competitor using DeepSeek V3)
+- Custom 117-Point SEO Analysis (Ahrefs competitor using Cascading AI)
+- 13 Autonomous AI Agents (7 production-ready, 6 in development)
+- Military-grade credential encryption (AES-256-GCM)
 
 ## Development Commands
 
@@ -40,6 +42,37 @@ npm run dev              # Start Next.js dev server (port 3000)
 npm run build            # Build for production (runs TypeScript check first)
 npm start                # Start production server
 npm run lint             # Run Next.js linter
+```
+
+### Tom AI Automation
+```bash
+npm run tom              # Tom AI assistant
+npm run tom:genie        # Tom Genie mode
+npm run tom:fix          # Tom auto-fix
+npm run tom:diff         # Tom diff checker
+npm run tom:all          # Tom all tasks
+```
+
+### Gemini Computer Use Testing
+```bash
+npm run gemini:test              # Test Gemini Computer Use API
+npm run gemini:competitor        # Gemini SEO competitor analysis
+npm run gemini:local-pack        # Gemini local pack tracking
+npm run gemini:ai-search         # Gemini AI search visibility
+npm run gemini:custom            # Custom Gemini automation
+```
+
+### Vercel Deployment Monitoring
+```bash
+npm run vercel:monitor           # Monitor deployments
+npm run vercel:monitor:watch     # Watch mode monitoring
+npm run vercel:errors            # Capture latest errors
+npm run vercel:status            # Check deployment status
+npm run vercel:status:compare    # Compare deployments
+npm run vercel:deploy            # Deploy to preview
+npm run vercel:deploy:prod       # Deploy to production
+npm run vercel:rollback          # Rollback deployment
+npm run vercel:auto-report       # Generate auto report
 ```
 
 ### Database Management
@@ -311,21 +344,29 @@ Both apps use **strict TypeScript**. Common issues from deployment history:
 NEXT_PUBLIC_SUPABASE_URL=https://xyz.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 
+# Security (Required for credential encryption)
+ENCRYPTION_KEY=your-64-char-hex-key-here  # Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
 # AI Services (Cascading Strategy: Qwen → Claude Opus → Claude Sonnet 4.5)
 QWEN_API_KEY=sk-xxx...                  # Alibaba Cloud Model Studio (Primary - cheapest)
 ANTHROPIC_API_KEY=sk-ant-...            # Claude Opus & Sonnet (Fallback)
 OPENAI_API_KEY=sk-...                   # OpenAI GPT (Legacy)
 PERPLEXITY_API_KEY=pplx-...             # Perplexity AI (Citations)
 
+# Google Gemini (Computer Use API)
+GOOGLE_API_KEY=...                      # For Gemini Computer Use testing
+
 # SEO Tools
 SEMRUSH_API_KEY=...
-GOOGLE_API_KEY=...
 FIRECRAWL_API_KEY=fc-...
 
 # Email Service
 EMAIL_PROVIDER=resend
 EMAIL_API_KEY=re_...
 EMAIL_FROM=noreply@example.com
+
+# Vercel (Deployment Monitoring)
+VERCEL_TOKEN=...                        # For deployment automation
 ```
 
 ### Supabase Setup
