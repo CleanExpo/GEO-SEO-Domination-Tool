@@ -271,10 +271,10 @@ export default function SEOAuditPage() {
                     Recommended Next Steps
                   </h4>
                   <ul className="space-y-2">
-                    {(audit.recommendations || audit.metadata?.recommendations || []).map((rec: string, idx: number) => (
+                    {(audit.recommendations || audit.metadata?.recommendations || []).map((rec: any, idx: number) => (
                       <li key={idx} className="flex items-start gap-2 text-blue-800">
                         <span className="text-blue-600 mt-1">→</span>
-                        <span>{rec}</span>
+                        <span>{typeof rec === 'string' ? rec : rec.title || rec.description || JSON.stringify(rec)}</span>
                       </li>
                     ))}
                   </ul>
