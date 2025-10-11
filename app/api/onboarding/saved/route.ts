@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    console.log('[Saved Onboarding] Found', sessions.length, 'total sessions');
+    console.log('[Saved Onboarding] Found', allSessions?.length || 0, 'total sessions');
 
     // Keep only the most recent session per business name
     const uniqueSessions = new Map();
-    for (const session of sessions) {
+    for (const session of allSessions || []) {
       const key = session.business_name.toLowerCase().trim();
       if (!uniqueSessions.has(key)) {
         uniqueSessions.set(key, session);
