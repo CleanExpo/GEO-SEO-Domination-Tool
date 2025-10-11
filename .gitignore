@@ -134,3 +134,4 @@ playwright-report/
 *.png
 .env.production*
 .env.*.verify
+.env.vercel.production
