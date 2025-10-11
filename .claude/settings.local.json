@@ -51,7 +51,11 @@
       "Bash(npm run dev:*)",
       "Bash(taskkill:*)",
       "Bash(timeout:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(cat:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(vercel logs:*)"
     ],
     "deny": [],
     "ask": []
