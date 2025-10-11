@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db';
+import { createAdminClient } from '@/lib/auth/supabase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,34 +23,42 @@ export async function POST(request: NextRequest) {
     // Use formData if provided, otherwise use onboardingData, or default to empty object
     const dataToSave = formData || onboardingData || {};
 
-    const db = getDatabase();
-    await db.initialize();
-
-    // Detect if using PostgreSQL (JSONB) or SQLite (TEXT)
-    const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
-    const formDataValue = isPostgres ? dataToSave : JSON.stringify(dataToSave);
+    const supabase = createAdminClient();
 
     // Check if save already exists
-    const existing = await db.queryOne(
-      `SELECT id FROM saved_onboarding WHERE business_name = ? AND email = ?`,
-      [businessName, email]
-    );
+    const { data: existing } = await supabase
+      .from('saved_onboarding')
+      .select('id')
+      .eq('business_name', businessName)
+      .eq('email', email)
+      .single();
 
     if (existing) {
       // Update existing save
-      await db.query(
-        `UPDATE saved_onboarding
-         SET form_data = ?, current_step = ?, last_saved = ${isPostgres ? 'NOW()' : 'CURRENT_TIMESTAMP'}
-         WHERE business_name = ? AND email = ?`,
-        [formDataValue, currentStep, businessName, email]
-      );
+      const { error } = await supabase
+        .from('saved_onboarding')
+        .update({
+          form_data: dataToSave,
+          current_step: currentStep,
+          last_saved: new Date().toISOString()
+        })
+        .eq('business_name', businessName)
+        .eq('email', email);
+
+      if (error) throw error;
     } else {
       // Insert new save
-      await db.query(
-        `INSERT INTO saved_onboarding (business_name, email, form_data, current_step, last_saved)
-         VALUES (?, ?, ?, ?, ${isPostgres ? 'NOW()' : 'CURRENT_TIMESTAMP'})`,
-        [businessName, email, formDataValue, currentStep]
-      );
+      const { error } = await supabase
+        .from('saved_onboarding')
+        .insert([{
+          business_name: businessName,
+          email,
+          form_data: dataToSave,
+          current_step: currentStep,
+          last_saved: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
     }
 
     return NextResponse.json({
@@ -112,23 +120,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const db = getDatabase();
-    await db.initialize();
+    const supabase = createAdminClient();
 
-    // Use case-insensitive search with TRIM to handle whitespace
-    // PostgreSQL: Use LOWER() and TRIM() for flexible matching
-    // SQLite: Use LOWER() and TRIM() for flexible matching
-    const isPostgres = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    // Case-insensitive search using ilike
+    const { data: saved, error } = await supabase
+      .from('saved_onboarding')
+      .select('form_data, current_step, last_saved, business_name, email')
+      .ilike('business_name', businessName.trim())
+      .ilike('email', email.trim())
+      .single();
 
-    const saved = await db.queryOne(
-      `SELECT form_data, current_step, last_saved, business_name, email
-       FROM saved_onboarding
-       WHERE LOWER(TRIM(business_name)) = LOWER(TRIM(?))
-       AND LOWER(TRIM(email)) = LOWER(TRIM(?))`,
-      [businessName, email]
-    );
-
-    if (!saved) {
+    if (error || !saved) {
       // For debugging: show what we searched for
       console.log('[Load] No saved data found for:', {
         businessName: businessName.trim(),
@@ -150,14 +152,9 @@ export async function GET(request: NextRequest) {
       email: saved.email
     });
 
-    // Handle both JSONB (PostgreSQL) and TEXT (SQLite) formats
-    const formData = typeof saved.form_data === 'string'
-      ? JSON.parse(saved.form_data)
-      : saved.form_data;
-
     return NextResponse.json({
       found: true,
-      formData,
+      formData: saved.form_data,
       currentStep: saved.current_step,
       lastSaved: saved.last_saved
     });
