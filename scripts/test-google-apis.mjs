@@ -1,6 +1,17 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-const testKey = process.env.GOOGLE_API_KEY || 'AIzaSyDStJB2YvcQ9_2PgbuUbZHJNEyNN24zZi8';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env.local from project root (override system env vars)
+dotenv.config({ path: resolve(__dirname, '..', '.env.local'), override: true });
+
+const testKey = process.env.GOOGLE_API_KEY ||
+                process.env.GOOGLE_SPEED_KEY ||
+                process.env.NEXT_PUBLIC_GOOGLE_PAGESPEED_API_KEY;
 
 console.log('🔍 Testing Google API Key Configuration\n');
 console.log('Key being tested:', testKey.substring(0, 20) + '...\n');

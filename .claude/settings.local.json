@@ -58,7 +58,9 @@
       "Bash(vercel logs:*)",
       "Bash(npx kill-port:*)",
       "Bash(python:*)",
-      "Bash(GOOGLE_API_KEY=\"AIzaSyC0ZoJ4DzWNXLvA7BgdAcU9kwQuATemkc4\" node scripts/test-google-apis.mjs)"
+      "Bash(GOOGLE_API_KEY=\"AIzaSyC0ZoJ4DzWNXLvA7BgdAcU9kwQuATemkc4\" node scripts/test-google-apis.mjs)",
+      "Bash(then grep -E \"(GOOGLE_API_KEY|GOOGLE_SPEED|GOOGLE_PAGESPEED)\" .env.local)",
+      "Bash(echo \"Shell: $SHELL\")"
     ],
     "deny": [],
     "ask": []

@@ -19,14 +19,12 @@ export class LighthouseService {
 
   async auditPage(url: string, strategy: 'mobile' | 'desktop' = 'mobile'): Promise<LighthouseScores> {
     try {
-      const response = await axios.get(PSI_API_BASE, {
-        params: {
-          url,
-          key: this.apiKey,
-          strategy,
-          category: ['performance', 'accessibility', 'best-practices', 'seo', 'pwa'],
-        },
-      })
+      // Build URL with multiple category parameters (required by PSI API)
+      const requestedCategories = ['performance', 'accessibility', 'best-practices', 'seo', 'pwa'];
+      const categoryParams = requestedCategories.map(cat => `category=${cat}`).join('&');
+      const apiUrl = `${PSI_API_BASE}?url=${encodeURIComponent(url)}&key=${this.apiKey}&strategy=${strategy}&${categoryParams}`;
+
+      const response = await axios.get(apiUrl)
 
       const { lighthouseResult } = response.data
       const categories = lighthouseResult.categories
@@ -46,13 +44,12 @@ export class LighthouseService {
 
   async getDetailedAudit(url: string, strategy: 'mobile' | 'desktop' = 'mobile') {
     try {
-      const response = await axios.get(PSI_API_BASE, {
-        params: {
-          url,
-          key: this.apiKey,
-          strategy,
-        },
-      })
+      // Build URL with all categories (required for full audit data)
+      const requestedCategories = ['performance', 'accessibility', 'best-practices', 'seo'];
+      const categoryParams = requestedCategories.map(cat => `category=${cat}`).join('&');
+      const apiUrl = `${PSI_API_BASE}?url=${encodeURIComponent(url)}&key=${this.apiKey}&strategy=${strategy}&${categoryParams}`;
+
+      const response = await axios.get(apiUrl)
 
       const { lighthouseResult } = response.data
       const audits = lighthouseResult.audits

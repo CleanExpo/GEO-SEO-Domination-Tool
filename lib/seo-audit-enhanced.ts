@@ -418,15 +418,20 @@ export class EnhancedSEOAuditor {
       if (lighthouseData.best_practices) scores.push(lighthouseData.best_practices);
     }
 
-    // Add E-E-A-T scores
-    scores.push(eeatScores.experience);
-    scores.push(eeatScores.expertise);
-    scores.push(eeatScores.authoritativeness);
-    scores.push(eeatScores.trustworthiness);
+    // Add E-E-A-T scores (filter out undefined/null)
+    if (eeatScores) {
+      if (typeof eeatScores.experience === 'number') scores.push(eeatScores.experience);
+      if (typeof eeatScores.expertise === 'number') scores.push(eeatScores.expertise);
+      if (typeof eeatScores.authoritativeness === 'number') scores.push(eeatScores.authoritativeness);
+      if (typeof eeatScores.trustworthiness === 'number') scores.push(eeatScores.trustworthiness);
+    }
+
+    // Filter out any NaN values
+    const validScores = scores.filter(score => typeof score === 'number' && !isNaN(score));
 
     // Calculate average
-    const average = scores.length > 0
-      ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+    const average = validScores.length > 0
+      ? validScores.reduce((sum, score) => sum + score, 0) / validScores.length
       : 0;
 
     return Math.round(average);
