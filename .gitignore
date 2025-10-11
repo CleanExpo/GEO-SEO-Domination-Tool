@@ -132,3 +132,5 @@ integrations/
 test-results/
 playwright-report/
 *.png
+.env.production*
+.env.*.verify
