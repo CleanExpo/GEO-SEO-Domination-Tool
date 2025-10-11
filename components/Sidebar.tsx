@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, FolderKanban, MessageSquare,
-  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield
+  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield, ClipboardCheck
 } from 'lucide-react';
 
 const navigation = [
@@ -18,6 +18,7 @@ const navigation = [
   { name: 'Content Opportunities', href: '/content-opportunities', icon: Lightbulb, section: 'SEO', badge: 'NEW' },
   { name: 'SEO Audits', href: '/audits', icon: Search, section: 'SEO' },
   { name: 'SEO Audit Tools', href: '/seo/audits', icon: Zap, section: 'SEO' },
+  { name: 'Layout Audit', href: '/layout-audit', icon: ClipboardCheck, section: 'SEO', badge: 'NEW' },
   { name: 'Keywords', href: '/keywords', icon: TrendingUp, section: 'SEO' },
   { name: 'Rankings', href: '/rankings', icon: BarChart3, section: 'SEO' },
   { name: 'Reports', href: '/reports', icon: FileText, section: 'SEO' },

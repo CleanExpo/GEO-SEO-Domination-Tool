@@ -39,7 +39,12 @@
     "vercel:deploy": "node scripts/vercel/deploy-manager.js --deploy",
     "vercel:deploy:prod": "node scripts/vercel/deploy-manager.js --deploy --prod",
     "vercel:rollback": "node scripts/vercel/deploy-manager.js --rollback",
-    "vercel:auto-report": "node scripts/vercel/auto-report.js"
+    "vercel:auto-report": "node scripts/vercel/auto-report.js",
+    "audit:fix:spacing": "npx tsx scripts/audit-fixes/fix-card-spacing.ts",
+    "audit:fix:contrast": "npx tsx scripts/audit-fixes/fix-badge-contrast.ts",
+    "audit:fix:charts": "npx tsx scripts/audit-fixes/optimize-charts.ts",
+    "audit:fix:empty-states": "npx tsx scripts/audit-fixes/generate-empty-states.ts",
+    "audit:fix:all": "npm run audit:fix:spacing && npm run audit:fix:contrast && npm run audit:fix:charts && npm run audit:fix:empty-states"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.23",
