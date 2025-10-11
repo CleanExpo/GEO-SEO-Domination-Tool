@@ -1,12 +1,15 @@
 # Environment files
 .env
 .env.local
+.env.local.backup
 .env.development
 .env.test
 .env.production
 .env*.local
 .env.docker
 .env.vercel
+.env.vercel.*
+.env.vercel.test
 
 # Docker
 docker-compose.override.yml
