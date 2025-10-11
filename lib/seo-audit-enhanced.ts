@@ -124,12 +124,39 @@ export class EnhancedSEOAuditor {
     const issues: AuditIssue[] = [];
     let seoScore = 100;
 
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-      timeout: 15000,
-    });
+    let response;
+    try {
+      response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        timeout: 15000,
+        maxRedirects: 5,
+      });
+    } catch (error: any) {
+      // If basic audit fails, return minimal fallback data
+      console.error('[EnhancedSEOAuditor] Basic audit failed for', url, ':', error.message);
+      console.error('[EnhancedSEOAuditor] Status:', error.response?.status, error.response?.statusText);
+
+      return {
+        title: 'Unable to fetch page',
+        metaDescription: '',
+        h1Tags: [],
+        issues: [{
+          type: 'error' as const,
+          category: 'connectivity',
+          message: `Unable to access website: ${error.response?.status || 'Network error'}. The site may be blocking automated requests or be temporarily unavailable.`,
+          impact: 'high' as const,
+        }],
+        seoScore: 0,
+        performanceScore: 0,
+        accessibilityScore: 0,
+        mobileFriendly: false,
+        wordCount: 0,
+      };
+    }
 
     const html = response.data;
     const $ = cheerio.load(html);
