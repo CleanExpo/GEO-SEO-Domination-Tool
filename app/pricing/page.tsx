@@ -37,12 +37,13 @@ import {
 type BillingCycle = 'monthly' | 'annual';
 
 interface PricingTier {
-  id: 'basic' | 'advanced' | 'empire';
+  id: 'good' | 'better' | 'best' | 'custom';
   name: string;
   tagline: string;
   price: {
     monthly: number;
     annual: number;
+    custom?: boolean;
   };
   popular?: boolean;
   gradient: string;
@@ -65,10 +66,10 @@ interface PricingTier {
 
 const tiers: PricingTier[] = [
   {
-    id: 'basic',
-    name: 'Basic',
+    id: 'good',
+    name: 'Good',
     tagline: 'Perfect for getting started',
-    price: { monthly: 499, annual: 4990 },
+    price: { monthly: 299, annual: 2990 },
     gradient: 'from-blue-500 to-cyan-500',
     icon: Star,
     features: [
@@ -105,13 +106,13 @@ const tiers: PricingTier[] = [
       description: 'AI provides recommendations, you approve all actions',
       approval: 'Human approval required'
     },
-    cta: 'Start Basic Plan'
+    cta: 'Start Good Plan'
   },
   {
-    id: 'advanced',
-    name: 'Advanced',
+    id: 'better',
+    name: 'Better',
     tagline: 'Most popular for growing businesses',
-    price: { monthly: 1499, annual: 14990 },
+    price: { monthly: 449, annual: 4490 },
     popular: true,
     gradient: 'from-purple-500 to-pink-500',
     icon: Rocket,
@@ -149,13 +150,13 @@ const tiers: PricingTier[] = [
       description: 'AI executes scheduled tasks, you approve publishing',
       approval: 'Approval for content publishing only'
     },
-    cta: 'Start Advanced Plan'
+    cta: 'Start Better Plan'
   },
   {
-    id: 'empire',
-    name: 'Empire',
+    id: 'best',
+    name: 'Best',
     tagline: 'Full AI autonomy for enterprises',
-    price: { monthly: 2999, annual: 29990 },
+    price: { monthly: 599, annual: 5990 },
     gradient: 'from-orange-500 to-red-500',
     icon: Crown,
     features: [
@@ -192,7 +193,50 @@ const tiers: PricingTier[] = [
       description: 'AI swarm operates autonomously, no approval needed',
       approval: 'No approval required - full autonomy'
     },
-    cta: 'Start Empire Plan'
+    cta: 'Start Best Plan'
+  },
+  {
+    id: 'custom',
+    name: 'Custom',
+    tagline: 'Tailored solutions for your unique needs',
+    price: { monthly: 0, annual: 0, custom: true },
+    gradient: 'from-gray-700 to-gray-900',
+    icon: Settings,
+    features: [
+      {
+        category: 'Custom Solutions',
+        items: [
+          { name: 'Custom Website Limit', included: true },
+          { name: 'Custom Audit Schedule', included: true },
+          { name: 'Custom Keyword Limits', included: true },
+          { name: 'White-Label Options', included: true },
+          { name: 'Custom Integrations', included: true },
+        ]
+      },
+      {
+        category: 'Automation',
+        items: [
+          { name: 'Fully Customizable', included: true },
+          { name: 'Custom Workflows', included: true },
+          { name: 'API Access', included: true },
+          { name: 'Custom AI Models', included: true },
+        ]
+      },
+      {
+        category: 'Support',
+        items: [
+          { name: 'Dedicated Success Team', included: true },
+          { name: 'Custom SLA', included: true },
+          { name: 'Priority Feature Requests', included: true },
+        ]
+      }
+    ],
+    automationLevel: {
+      level: 'Fully Customizable',
+      description: 'Configure automation to your exact requirements',
+      approval: 'Custom approval workflows'
+    },
+    cta: 'Contact Sales'
   }
 ];
 
