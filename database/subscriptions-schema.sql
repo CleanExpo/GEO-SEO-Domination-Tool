@@ -294,7 +294,7 @@ ON CONFLICT (tier) DO UPDATE SET
 -- ============================================================================
 
 -- Active Subscriptions Summary
-CREATE VIEW IF NOT EXISTS v_active_subscriptions AS
+CREATE OR REPLACE VIEW v_active_subscriptions AS
 SELECT
   s.tier,
   COUNT(*) as subscription_count,
@@ -306,7 +306,7 @@ WHERE s.status = 'active'
 GROUP BY s.tier;
 
 -- Pending Approvals Summary
-CREATE VIEW IF NOT EXISTS v_pending_approvals AS
+CREATE OR REPLACE VIEW v_pending_approvals AS
 SELECT
   c.id as client_id,
   c.business_name,
@@ -320,7 +320,7 @@ WHERE at.status = 'pending'
 GROUP BY c.id, c.business_name, c.tier;
 
 -- Agent Performance Summary
-CREATE VIEW IF NOT EXISTS v_agent_performance AS
+CREATE OR REPLACE VIEW v_agent_performance AS
 SELECT
   agent_name,
   execution_mode,
