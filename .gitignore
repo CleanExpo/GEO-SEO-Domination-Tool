@@ -143,3 +143,4 @@ playwright-report/
 .claude/settings.local.json
 .claude/qwen-mcp-server/
 nul
+claude_desktop_config_COMPLETE.json
