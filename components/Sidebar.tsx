@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, FolderKanban, MessageSquare,
-  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield, ClipboardCheck
+  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield, ClipboardCheck, Link2, Sparkles, Target
 } from 'lucide-react';
 
 const navigation = [
@@ -23,6 +23,14 @@ const navigation = [
   { name: 'Rankings', href: '/rankings', icon: BarChart3, section: 'SEO' },
   { name: 'Reports', href: '/reports', icon: FileText, section: 'SEO' },
   { name: 'Schedule', href: '/schedule', icon: Clock, section: 'SEO' },
+];
+
+const freeToolsNavigation = [
+  { name: 'Free Tools Hub', href: '/tools', icon: Zap, section: 'Free Tools', badge: 'FREE' },
+  { name: 'Backlink Checker', href: '/tools/backlink-checker', icon: Link2, section: 'Free Tools' },
+  { name: 'Keyword Generator', href: '/tools/keyword-generator', icon: Sparkles, section: 'Free Tools' },
+  { name: 'Authority Checker', href: '/tools/authority-checker', icon: TrendingUp, section: 'Free Tools' },
+  { name: 'SERP Checker', href: '/tools/serp-checker', icon: Target, section: 'Free Tools' },
 ];
 
 const automationNavigation = [
@@ -153,6 +161,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
         {renderNavSection('SEO Tools', navigation)}
+        {renderNavSection('Free Tools', freeToolsNavigation)}
         {renderNavSection('Automation', automationNavigation)}
         {renderNavSection('Resources', resourcesNavigation)}
         {renderNavSection('Support', membersNavigation)}
