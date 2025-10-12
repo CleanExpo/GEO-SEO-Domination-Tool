@@ -220,8 +220,8 @@ CREATE TABLE IF NOT EXISTS tier_features_reference (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert tier definitions
-INSERT OR REPLACE INTO tier_features_reference (tier, name, price_monthly, price_annual, features, automation_level, approval_required, description) VALUES
+-- Insert tier definitions (PostgreSQL upsert syntax)
+INSERT INTO tier_features_reference (tier, name, price_monthly, price_annual, features, automation_level, approval_required, description) VALUES
 ('good', 'Good', 29900, 299000, '{
   "websites": 1,
   "audits_per_month": 1,
@@ -278,7 +278,16 @@ INSERT OR REPLACE INTO tier_features_reference (tier, name, price_monthly, price
   "custom_ai_models": true,
   "custom_sla": true,
   "priority_feature_requests": true
-}', 'custom', false, 'Fully customizable enterprise solution');
+}', 'custom', false, 'Fully customizable enterprise solution')
+ON CONFLICT (tier) DO UPDATE SET
+  name = EXCLUDED.name,
+  price_monthly = EXCLUDED.price_monthly,
+  price_annual = EXCLUDED.price_annual,
+  features = EXCLUDED.features,
+  automation_level = EXCLUDED.automation_level,
+  approval_required = EXCLUDED.approval_required,
+  description = EXCLUDED.description,
+  updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================================================
 -- Views for Analytics
@@ -321,57 +330,81 @@ SELECT
   ROUND(AVG(execution_time_ms), 2) as avg_execution_time_ms,
   ROUND(100.0 * SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) / COUNT(*), 2) as success_rate
 FROM agent_execution_logs
-WHERE started_at >= datetime('now', '-30 days')
+WHERE started_at >= CURRENT_TIMESTAMP - INTERVAL '30 days'
 GROUP BY agent_name, execution_mode;
 
 -- ============================================================================
--- Triggers
+-- Note: PostgreSQL Triggers
 -- ============================================================================
-
--- Update subscription updated_at on change
-CREATE TRIGGER IF NOT EXISTS trg_subscriptions_updated_at
-AFTER UPDATE ON subscriptions
-FOR EACH ROW
-BEGIN
-  UPDATE subscriptions SET updated_at = datetime('now') WHERE id = NEW.id;
-END;
-
--- Log subscription changes to history
-CREATE TRIGGER IF NOT EXISTS trg_subscription_history
-AFTER UPDATE ON subscriptions
-FOR EACH ROW
-WHEN OLD.tier != NEW.tier OR OLD.status != NEW.status
-BEGIN
-  INSERT INTO subscription_history (
-    id, subscription_id, client_id, event_type, old_tier, new_tier, old_status, new_status
-  ) VALUES (
-    lower(hex(randomblob(16))),
-    NEW.id,
-    NEW.client_id,
-    CASE
-      WHEN OLD.tier != NEW.tier AND NEW.tier > OLD.tier THEN 'upgraded'
-      WHEN OLD.tier != NEW.tier AND NEW.tier < OLD.tier THEN 'downgraded'
-      WHEN OLD.status = 'active' AND NEW.status = 'canceled' THEN 'canceled'
-      WHEN OLD.status = 'canceled' AND NEW.status = 'active' THEN 'reactivated'
-      ELSE 'updated'
-    END,
-    OLD.tier,
-    NEW.tier,
-    OLD.status,
-    NEW.status
-  );
-END;
-
--- Update tier_access.expires_at when subscription canceled
-CREATE TRIGGER IF NOT EXISTS trg_subscription_canceled
-AFTER UPDATE ON subscriptions
-FOR EACH ROW
-WHEN OLD.status != 'canceled' AND NEW.status = 'canceled'
-BEGIN
-  UPDATE tier_access
-  SET expires_at = NEW.current_period_end
-  WHERE client_id = NEW.client_id;
-END;
+-- PostgreSQL triggers require stored procedure functions which are not included here
+-- to maintain compatibility with both SQLite (local dev) and PostgreSQL (production).
+--
+-- For production PostgreSQL, you can create these triggers:
+--
+-- 1. Auto-update updated_at timestamp:
+--    CREATE OR REPLACE FUNCTION update_updated_at_column()
+--    RETURNS TRIGGER AS $$
+--    BEGIN
+--      NEW.updated_at = CURRENT_TIMESTAMP;
+--      RETURN NEW;
+--    END;
+--    $$ LANGUAGE plpgsql;
+--
+--    CREATE TRIGGER trg_subscriptions_updated_at
+--    BEFORE UPDATE ON subscriptions
+--    FOR EACH ROW
+--    EXECUTE FUNCTION update_updated_at_column();
+--
+-- 2. Log subscription history:
+--    CREATE OR REPLACE FUNCTION log_subscription_history()
+--    RETURNS TRIGGER AS $$
+--    BEGIN
+--      IF (OLD.tier IS DISTINCT FROM NEW.tier OR OLD.status IS DISTINCT FROM NEW.status) THEN
+--        INSERT INTO subscription_history (
+--          id, subscription_id, client_id, event_type, old_tier, new_tier, old_status, new_status
+--        ) VALUES (
+--          gen_random_uuid()::text,
+--          NEW.id,
+--          NEW.client_id,
+--          CASE
+--            WHEN OLD.tier != NEW.tier AND NEW.tier > OLD.tier THEN 'upgraded'
+--            WHEN OLD.tier != NEW.tier AND NEW.tier < OLD.tier THEN 'downgraded'
+--            WHEN OLD.status = 'active' AND NEW.status = 'canceled' THEN 'canceled'
+--            WHEN OLD.status = 'canceled' AND NEW.status = 'active' THEN 'reactivated'
+--            ELSE 'updated'
+--          END,
+--          OLD.tier,
+--          NEW.tier,
+--          OLD.status,
+--          NEW.status
+--        );
+--      END IF;
+--      RETURN NEW;
+--    END;
+--    $$ LANGUAGE plpgsql;
+--
+--    CREATE TRIGGER trg_subscription_history
+--    AFTER UPDATE ON subscriptions
+--    FOR EACH ROW
+--    EXECUTE FUNCTION log_subscription_history();
+--
+-- 3. Cancel tier access:
+--    CREATE OR REPLACE FUNCTION cancel_tier_access()
+--    RETURNS TRIGGER AS $$
+--    BEGIN
+--      IF OLD.status != 'canceled' AND NEW.status = 'canceled' THEN
+--        UPDATE tier_access
+--        SET expires_at = NEW.current_period_end
+--        WHERE client_id = NEW.client_id;
+--      END IF;
+--      RETURN NEW;
+--    END;
+--    $$ LANGUAGE plpgsql;
+--
+--    CREATE TRIGGER trg_subscription_canceled
+--    AFTER UPDATE ON subscriptions
+--    FOR EACH ROW
+--    EXECUTE FUNCTION cancel_tier_access();
 
 -- ============================================================================
 -- Functions / Helpers (via SQL comments for implementation)
