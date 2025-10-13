@@ -203,26 +203,148 @@ class AgentOrchestrator {
   }
 
   /**
-   * Execute a single agent
-   * This is a placeholder - actual implementation would call the specific agent
+   * Execute a single agent using cascading AI
    */
   private async executeAgent(agent: AgentConfig, task: AgentTask): Promise<AgentResult> {
-    console.log(`[Orchestrator] Executing agent: ${agent.name}`);
+    console.log(`[Orchestrator] Executing agent: ${agent.name} (${agent.role})`);
 
-    // This would be replaced with actual agent execution
-    // For now, return a mock result
-    return {
-      success: true,
-      data: {
-        agent: agent.name,
-        task: task.description,
-        message: `Agent ${agent.name} completed successfully (mock)`
-      },
-      metadata: {
-        agentId: agent.id,
-        executedAt: Date.now()
+    try {
+      // Import cascading AI dynamically to avoid circular dependencies
+      const { cascadingAI } = await import('../api/cascading-ai');
+
+      // Build context-rich prompt for the agent
+      const prompt = this.buildAgentPrompt(agent, task);
+
+      // Execute with AI using agent's configuration
+      const startTime = Date.now();
+      const response = await cascadingAI(prompt, {
+        temperature: agent.temperature || 0.5,
+        maxTokens: agent.maxTokens || 4000,
+      });
+
+      const executionTime = Date.now() - startTime;
+
+      // Parse AI response
+      const result = this.parseAgentResponse(response, agent);
+
+      console.log(`[Orchestrator] Agent ${agent.name} completed in ${executionTime}ms`);
+
+      return {
+        success: true,
+        data: result,
+        metadata: {
+          agentId: agent.id,
+          agentName: agent.name,
+          role: agent.role,
+          executedAt: Date.now(),
+          executionTime,
+          model: 'qwen-plus', // Primary model in cascade
+        }
+      };
+    } catch (error: any) {
+      console.error(`[Orchestrator] Agent ${agent.name} failed:`, error);
+
+      return {
+        success: false,
+        error: error.message,
+        metadata: {
+          agentId: agent.id,
+          agentName: agent.name,
+          role: agent.role,
+          executedAt: Date.now(),
+          failureReason: error.message,
+        }
+      };
+    }
+  }
+
+  /**
+   * Build context-rich prompt for agent execution
+   */
+  private buildAgentPrompt(agent: AgentConfig, task: AgentTask): string {
+    let prompt = `You are ${agent.name}, a specialist AI agent with the role: ${agent.role}.\n\n`;
+
+    // Add agent description
+    if (agent.description) {
+      prompt += `Your purpose: ${agent.description}\n\n`;
+    }
+
+    // Add capabilities context
+    if (agent.capabilities && agent.capabilities.length > 0) {
+      prompt += `Your capabilities:\n`;
+      agent.capabilities.forEach(cap => {
+        prompt += `- ${cap.name}: ${cap.description}\n`;
+      });
+      prompt += `\n`;
+    }
+
+    // Add task details
+    prompt += `Task: ${task.title || 'Untitled Task'}\n`;
+    prompt += `Description: ${task.description}\n\n`;
+
+    // Add input data if provided
+    if (task.input) {
+      prompt += `Input Data:\n${JSON.stringify(task.input, null, 2)}\n\n`;
+    }
+
+    // Add expected output format
+    prompt += `Instructions:\n`;
+    prompt += `1. Analyze the task thoroughly\n`;
+    prompt += `2. Use your capabilities to complete the task\n`;
+    prompt += `3. Provide actionable results\n`;
+    prompt += `4. Return results in JSON format with these keys:\n`;
+    prompt += `   - summary: Brief summary of what you did\n`;
+    prompt += `   - findings: Array of key findings or insights\n`;
+    prompt += `   - recommendations: Array of specific recommendations\n`;
+    prompt += `   - next_steps: Array of suggested next actions\n`;
+    prompt += `   - confidence: Your confidence level (0-100)\n\n`;
+
+    prompt += `Provide detailed, actionable output that demonstrates your expertise as ${agent.name}.`;
+
+    return prompt;
+  }
+
+  /**
+   * Parse agent response from AI
+   */
+  private parseAgentResponse(response: string, agent: AgentConfig): any {
+    try {
+      // Try to extract JSON from response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        // Validate required fields
+        if (!parsed.summary) {
+          parsed.summary = `${agent.name} completed the task`;
+        }
+
+        return parsed;
       }
-    };
+
+      // Fallback: Return raw response in structured format
+      return {
+        summary: `${agent.name} provided analysis`,
+        findings: [response.substring(0, 500)],
+        recommendations: [],
+        next_steps: [],
+        confidence: 75,
+        raw_response: response,
+      };
+    } catch (error) {
+      console.error(`[Orchestrator] Failed to parse agent response:`, error);
+
+      // Return raw response
+      return {
+        summary: `${agent.name} completed with unstructured output`,
+        findings: [],
+        recommendations: [],
+        next_steps: [],
+        confidence: 50,
+        raw_response: response,
+      };
+    }
   }
 
   /**
