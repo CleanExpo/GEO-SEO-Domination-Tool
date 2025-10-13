@@ -32,7 +32,7 @@ export default function RootLayout({
   const softwareSchema = generateStructuredData('SoftwareApplication');
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
