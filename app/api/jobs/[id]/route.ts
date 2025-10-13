@@ -13,11 +13,11 @@ const jobUpdateSchema = z.object({
 // GET /api/jobs/[id] - Get job details with execution history
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     // Fetch job details
     const { data: job, error: jobError } = await supabase
@@ -58,11 +58,11 @@ export async function GET(
 // PUT /api/jobs/[id] - Update job
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate input
@@ -102,11 +102,11 @@ export async function PUT(
 // DELETE /api/jobs/[id] - Delete job
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { error } = await supabase
       .from('scheduled_jobs')

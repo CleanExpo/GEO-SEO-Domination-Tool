@@ -5,11 +5,11 @@ import type { Component } from '@/types/resources';
 // GET /api/resources/components/[id] - Get single component
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from('resource_components')

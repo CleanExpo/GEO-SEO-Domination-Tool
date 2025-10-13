@@ -16,11 +16,11 @@ const scheduleUpdateSchema = z.object({
 // PUT /api/agents/autonomous-seo/schedules/[id] - Update schedule
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate input
@@ -60,11 +60,11 @@ export async function PUT(
 // DELETE /api/agents/autonomous-seo/schedules/[id] - Delete schedule
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { error } = await supabase
       .from('agent_schedules')

@@ -14,11 +14,11 @@ const dealUpdateSchema = z.object({
 // GET /api/crm/deals/[id] - Get single deal
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from('crm_deals')
@@ -47,11 +47,11 @@ export async function GET(
 // PUT /api/crm/deals/[id] - Update deal
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate input
@@ -91,11 +91,11 @@ export async function PUT(
 // DELETE /api/crm/deals/[id] - Delete deal
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { error } = await supabase
       .from('crm_deals')

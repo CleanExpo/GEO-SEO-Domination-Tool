@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/database/init';
+import getDatabase from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,18 +19,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const db = getDatabase('./data/geo-seo.db');
+    const db = getDatabase();
+    await db.initialize();
 
-    const workspaces = db.prepare('SELECT * FROM workspaces WHERE id = ?').all(id) as any[];
+    const workspace = await db.get('SELECT * FROM workspaces WHERE id = ?', [id]);
 
-    if (workspaces.length === 0) {
+    if (!workspace) {
       return NextResponse.json(
         { error: 'Workspace not found' },
         { status: 404 }
       );
     }
-
-    const workspace = workspaces[0];
 
     return NextResponse.json({
       workspace: {

@@ -8,14 +8,15 @@ import { supabase } from '@/lib/supabase';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 1. Get company data
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (companyError || !company) {
@@ -29,7 +30,7 @@ export async function GET(
     const { data: existingProfile } = await supabase
       .from('backlink_profiles')
       .select('*, anchor_text_distribution(*), referring_domains(*), backlink_recommendations(*)')
-      .eq('company_id', params.id)
+      .eq('company_id', id)
       .single();
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -53,8 +54,8 @@ export async function GET(
     const { data: savedProfile, error: profileError } = await supabase
       .from('backlink_profiles')
       .upsert({
-        id: `profile_${params.id}_${Date.now()}`,
-        company_id: params.id,
+        id: `profile_${id}_${Date.now()}`,
+        company_id: id,
         total_backlinks: profile.totalBacklinks,
         referring_domains: profile.referringDomains,
         domain_rating: profile.domainRating,
@@ -75,18 +76,18 @@ export async function GET(
       console.error('[Backlinks API] Profile save error:', profileError);
     }
 
-    const profileId = savedProfile?.id || `profile_${params.id}_${Date.now()}`;
+    const profileId = savedProfile?.id || `profile_${id}_${Date.now()}`;
 
     // 5. Save anchor text distribution
     if (profile.anchorTextDistribution.length > 0) {
       await supabase
         .from('anchor_text_distribution')
         .delete()
-        .eq('company_id', params.id);
+        .eq('company_id', id);
 
       const anchorTextData = profile.anchorTextDistribution.map((anchor, index) => ({
-        id: `anchor_${params.id}_${index}`,
-        company_id: params.id,
+        id: `anchor_${id}_${index}`,
+        company_id: id,
         profile_id: profileId,
         anchor_text: anchor.text,
         count: anchor.count,
@@ -104,11 +105,11 @@ export async function GET(
       await supabase
         .from('referring_domains')
         .delete()
-        .eq('company_id', params.id);
+        .eq('company_id', id);
 
       const referringDomainsData = profile.topReferringDomains.map((domain, index) => ({
-        id: `domain_${params.id}_${index}`,
-        company_id: params.id,
+        id: `domain_${id}_${index}`,
+        company_id: id,
         profile_id: profileId,
         domain: domain.domain,
         backlinks: domain.backlinks,
@@ -129,11 +130,11 @@ export async function GET(
       await supabase
         .from('backlinks')
         .delete()
-        .eq('company_id', params.id);
+        .eq('company_id', id);
 
       const backlinksData = profile.topBacklinks.map((link) => ({
         id: link.id,
-        company_id: params.id,
+        company_id: id,
         source_url: link.sourceUrl,
         target_url: link.targetUrl,
         source_domain: link.sourceDomain,
@@ -156,8 +157,8 @@ export async function GET(
     await supabase
       .from('domain_rating_history')
       .insert({
-        id: `history_${params.id}_${new Date().toISOString().split('T')[0]}`,
-        company_id: params.id,
+        id: `history_${id}_${new Date().toISOString().split('T')[0]}`,
+        company_id: id,
         date: new Date().toISOString().split('T')[0],
         referring_domains: profile.referringDomains,
         total_backlinks: profile.totalBacklinks,
@@ -175,11 +176,11 @@ export async function GET(
       await supabase
         .from('backlink_recommendations')
         .delete()
-        .eq('company_id', params.id);
+        .eq('company_id', id);
 
       const recommendationsData = recommendations.map((rec, index) => ({
-        id: `rec_${params.id}_${index}`,
-        company_id: params.id,
+        id: `rec_${id}_${index}`,
+        company_id: id,
         profile_id: profileId,
         recommendation: rec,
         priority: index < 2 ? 'Critical' : index < 5 ? 'High' : 'Medium',
@@ -221,14 +222,15 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Delete cached data to force refresh
     await supabase
       .from('backlink_profiles')
       .delete()
-      .eq('company_id', params.id);
+      .eq('company_id', id);
 
     // Call GET to regenerate
     return GET(request, { params });

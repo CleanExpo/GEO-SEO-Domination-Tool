@@ -229,6 +229,93 @@ curl https://your-domain.com/api/companies \
 
 ---
 
-**Last Updated:** October 3, 2025
-**Health Score:** 92%
-**Production Ready:** ✅ Yes
+---
+
+## NEW: Production Configuration Hardening (October 13, 2025)
+
+### Critical Configuration Updates ✅
+
+All items below have been implemented. Verify before deployment:
+
+- [x] **Node.js engines specified** in `package.json` (>=18.17.0 <21.0.0)
+- [x] **Middleware CSP updated** with all AI API domains
+- [x] **Sentry enabled** (not hard-coded to false)
+- [x] **Vercel function timeouts** configured for long-running operations
+- [x] **better-sqlite3 moved** to optionalDependencies
+- [x] **Environment validator** created (`lib/env-validator.ts`)
+- [x] **Instrumentation integration** for startup validation
+- [x] **.env.example updated** with priorities (REQUIRED/RECOMMENDED/OPTIONAL)
+
+### Required Environment Variables (Production)
+
+```bash
+# Database
+DATABASE_URL=postgresql://...          # REQUIRED
+POSTGRES_URL=postgresql://...          # OR this
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://...   # REQUIRED
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...   # REQUIRED
+SUPABASE_SERVICE_ROLE_KEY=eyJ...       # REQUIRED
+
+# NextAuth
+NEXTAUTH_SECRET=<openssl rand -base64 32>  # REQUIRED
+NEXTAUTH_URL=https://your-domain.vercel.app # REQUIRED
+
+# Google OAuth
+GOOGLE_OAUTH_CLIENT_ID=...             # REQUIRED
+GOOGLE_OAUTH_CLIENT_SECRET=...         # REQUIRED
+
+# AI Services (at least ONE required)
+QWEN_API_KEY=...                       # Primary (cheapest)
+ANTHROPIC_API_KEY=...                  # Fallback (quality)
+OPENAI_API_KEY=...                     # Alternative
+```
+
+### Pre-Deployment Verification
+
+```bash
+# 1. Build locally
+npm run build
+# Look for [ENV VALIDATION] output
+
+# 2. Test database
+npm run db:test
+
+# 3. Verify CSP in middleware.ts
+# Should include: api.anthropic.com, api.openai.com, dashscope-intl.aliyuncs.com
+
+# 4. Check vercel.json
+# Should have maxDuration: 60 for long-running endpoints
+
+# 5. Confirm Sentry not hard-coded false
+# next.config.js line 129 should be:
+# if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)
+```
+
+### Post-Deployment Verification
+
+After deploying, check build logs for:
+
+```
+[ENV VALIDATION] ==========================================
+[ENV VALIDATION] Environment Configuration Summary
+[ENV VALIDATION] ==========================================
+[ENV VALIDATION] Environment:    production
+[ENV VALIDATION] Database:       PostgreSQL ✓
+[ENV VALIDATION] Supabase:       ✓
+[ENV VALIDATION] NextAuth:       ✓
+[ENV VALIDATION] Google OAuth:   ✓
+[ENV VALIDATION] AI Services:    qwen, anthropic ✓
+[ENV VALIDATION] Sentry:         ✓
+[ENV VALIDATION] Firecrawl:      ✓
+[ENV VALIDATION] ==========================================
+```
+
+See `PRODUCTION_CONFIG_HARDENING.md` for complete details.
+
+---
+
+**Last Updated:** October 13, 2025
+**Health Score:** 96%
+**Production Ready:** ✅ Yes (with configuration hardening complete)

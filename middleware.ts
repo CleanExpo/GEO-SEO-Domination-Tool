@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
 function addSecurityHeaders(response: NextResponse) {
 
-  // Content Security Policy
+  // Content Security Policy with all AI API domains
   response.headers.set(
     'Content-Security-Policy',
     [
@@ -71,7 +71,7 @@ function addSecurityHeaders(response: NextResponse) {
       "style-src 'self' 'unsafe-inline' https://accounts.google.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.semrush.com https://api.screaming-frog.co.uk https://accounts.google.com https://*.googleapis.com https://oauth2.googleapis.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.openai.com https://api.perplexity.ai https://api.groq.com https://dashscope-intl.aliyuncs.com https://api.deepseek.com https://api.openrouter.ai https://api.semrush.com https://pagespeedonline.googleapis.com https://api.firecrawl.dev https://api.stripe.com https://accounts.google.com https://*.googleapis.com https://oauth2.googleapis.com",
       "frame-ancestors 'none'",
       "frame-src 'self' https://accounts.google.com",
       "base-uri 'self'",

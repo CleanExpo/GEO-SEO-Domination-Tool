@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/database/init';
+import getDatabase from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,52 +18,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = getDatabase('./data/geo-seo.db');
+    const db = getDatabase();
+    await db.initialize();
 
-    // Create table if it doesn't exist
-    db.exec(`
+    // Create table if it doesn't exist (PostgreSQL-compatible)
+    await db.query(`
       CREATE TABLE IF NOT EXISTS workspaces (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         layout TEXT DEFAULT '{}',
         context TEXT DEFAULT '{}',
         open_files TEXT DEFAULT '[]',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Check if workspace exists
-    const existing = db.prepare('SELECT id FROM workspaces WHERE id = ?').all(workspace.id) as any[];
+    const existing = await db.get('SELECT id FROM workspaces WHERE id = ?', [workspace.id]);
 
-    if (existing.length > 0) {
+    if (existing) {
       // Update existing workspace
-      db.prepare(
+      await db.run(
         `UPDATE workspaces
          SET name = ?,
              layout = ?,
              context = ?,
              open_files = ?,
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`
-      ).run(
-        workspace.name,
-        JSON.stringify(workspace.layout || {}),
-        JSON.stringify(workspace.context || {}),
-        JSON.stringify(workspace.openFiles || []),
-        workspace.id
+         WHERE id = ?`,
+        [
+          workspace.name,
+          JSON.stringify(workspace.layout || {}),
+          JSON.stringify(workspace.context || {}),
+          JSON.stringify(workspace.openFiles || []),
+          workspace.id
+        ]
       );
     } else {
       // Insert new workspace
-      db.prepare(
+      await db.run(
         `INSERT INTO workspaces (id, name, layout, context, open_files, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-      ).run(
-        workspace.id,
-        workspace.name,
-        JSON.stringify(workspace.layout || {}),
-        JSON.stringify(workspace.context || {}),
-        JSON.stringify(workspace.openFiles || [])
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          workspace.id,
+          workspace.name,
+          JSON.stringify(workspace.layout || {}),
+          JSON.stringify(workspace.context || {}),
+          JSON.stringify(workspace.openFiles || [])
+        ]
       );
     }
 

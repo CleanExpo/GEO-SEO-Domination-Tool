@@ -2,6 +2,10 @@
   "name": "geo-seo-domination-web",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18.17.0 <21.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -19,6 +23,7 @@
     "db:test:verbose": "node scripts/test-db-connection-verbose.js",
     "db:migrate": "node scripts/migrate.js",
     "db:migrate:status": "node scripts/migrate.js status",
+    "db:verify": "node scripts/verify-database-config.js",
     "test:saved-onboarding": "node scripts/test-saved-onboarding.js",
     "test:onboarding-api": "node scripts/test-api-direct.js",
     "test:onboarding-complete": "node scripts/test-onboarding-complete.js",
@@ -95,7 +100,6 @@
     "ai": "^5.0.60",
     "ajv": "^8.17.1",
     "axios": "^1.12.2",
-    "better-sqlite3": "^12.4.1",
     "canvas-confetti": "^1.9.3",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
@@ -123,7 +127,6 @@
     "react-is": "^19.2.0",
     "react-resizable-panels": "^3.0.6",
     "recharts": "^2.15.4",
-    "snoowrap": "^1.15.2",
     "sonner": "^2.0.7",
     "stripe": "^19.0.0",
     "tailwind-merge": "^3.3.1",
@@ -131,6 +134,9 @@
     "use-debounce": "^10.0.6",
     "ws": "^8.18.3",
     "zod": "^3.25.76"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

@@ -21,6 +21,12 @@ export type QueryResult = {
   rowCount: number;
 };
 
+// Run result type (for INSERT, UPDATE, DELETE operations)
+export type RunResult = {
+  lastID?: number;
+  changes: number;
+};
+
 /**
  * Unified database client that works with both SQLite and PostgreSQL
  */
@@ -183,6 +189,66 @@ export class DatabaseClient {
   async queryOne(sql: string, params: any[] = []): Promise<any | null> {
     const result = await this.query(sql, params);
     return result.rows[0] || null;
+  }
+
+  /**
+   * Execute a SQL query and return all rows (SQLite-style convenience method)
+   * Compatible with both SQLite and PostgreSQL
+   */
+  async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+    const result = await this.query(sql, params);
+    return result.rows as T[];
+  }
+
+  /**
+   * Execute a SQL query and return a single row (SQLite-style convenience method)
+   * Compatible with both SQLite and PostgreSQL
+   */
+  async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
+    const result = await this.queryOne(sql, params);
+    return result || undefined;
+  }
+
+  /**
+   * Execute a SQL statement (INSERT, UPDATE, DELETE) and return result (SQLite-style convenience method)
+   * Compatible with both SQLite and PostgreSQL
+   */
+  async run(sql: string, params: any[] = []): Promise<RunResult> {
+    const result = await this.query(sql, params);
+
+    // For PostgreSQL, we need to extract the inserted ID from the result
+    // This works for INSERT statements with RETURNING clause
+    let lastID: number | undefined = undefined;
+
+    if (this.config.type === 'postgres') {
+      // If the query is an INSERT with RETURNING id, extract it
+      if (sql.trim().toUpperCase().startsWith('INSERT') && result.rows.length > 0 && 'id' in result.rows[0]) {
+        lastID = result.rows[0].id;
+      }
+      // For queries without RETURNING, we can't get the ID - this is a PostgreSQL limitation
+      // The calling code should add RETURNING id to INSERT statements when needed
+    } else {
+      // SQLite: The query() method will have executed with better-sqlite3's run()
+      // which returns info with lastInsertRowid
+      // However, we need to access the sqlite info object directly
+      // Since we've already called query(), we need to modify the flow slightly
+
+      // Re-execute for SQLite to get proper lastID
+      if (sql.trim().toUpperCase().startsWith('INSERT')) {
+        const stmt = this.sqliteDb!.prepare(sql);
+        const info = stmt.run(...params);
+        lastID = Number(info.lastInsertRowid);
+        return {
+          lastID,
+          changes: info.changes,
+        };
+      }
+    }
+
+    return {
+      lastID,
+      changes: result.rowCount,
+    };
   }
 
   /**

@@ -12,9 +12,15 @@ import Stripe from 'stripe';
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
+// Lazy initialization - only create Stripe instance when needed
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-09-30.clover',
+  });
+}
 
 const dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
 
@@ -120,6 +126,7 @@ export async function POST(request: NextRequest) {
       stripeCustomerId = existingStripeCustomer.stripe_customer_id;
     } else {
       // Create Stripe customer
+      const stripe = getStripe();
       const stripeCustomer = await stripe.customers.create({
         email: client.email,
         name: client.business_name,
@@ -139,6 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe Checkout session
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: stripeCustomerId,

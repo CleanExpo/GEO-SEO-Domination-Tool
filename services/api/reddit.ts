@@ -1,9 +1,12 @@
 /**
  * Reddit API Service - Community Gap Mining
  * Discovers unanswered questions and content gaps from Reddit discussions
+ *
+ * Using direct Reddit OAuth API with axios for security and maintainability
+ * Replaces deprecated snoowrap package (had critical vulnerabilities)
  */
 
-import snoowrap from 'snoowrap';
+import axios, { AxiosInstance } from 'axios';
 
 export interface RedditThread {
   id: string;
@@ -33,9 +36,117 @@ export interface RedditConfig {
 }
 
 /**
+ * Reddit API Client using OAuth 2.0
+ */
+class RedditClient {
+  private accessToken: string | null = null;
+  private tokenExpiry: number = 0;
+  private config: RedditConfig;
+  private apiClient: AxiosInstance;
+
+  constructor(config: RedditConfig) {
+    this.config = config;
+    this.apiClient = axios.create({
+      baseURL: 'https://oauth.reddit.com',
+      headers: {
+        'User-Agent': config.userAgent
+      }
+    });
+  }
+
+  /**
+   * Authenticate with Reddit using password grant
+   */
+  async authenticate(): Promise<void> {
+    const auth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
+
+    try {
+      const response = await axios.post(
+        'https://www.reddit.com/api/v1/access_token',
+        new URLSearchParams({
+          grant_type: 'password',
+          username: this.config.username,
+          password: this.config.password
+        }),
+        {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': this.config.userAgent
+          }
+        }
+      );
+
+      this.accessToken = response.data.access_token;
+      this.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
+    } catch (error: any) {
+      throw new Error(`Reddit authentication failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Ensure valid access token before API calls
+   */
+  private async ensureAuthenticated(): Promise<void> {
+    if (!this.accessToken || Date.now() >= this.tokenExpiry) {
+      await this.authenticate();
+    }
+  }
+
+  /**
+   * Make authenticated API request
+   */
+  private async request<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await this.apiClient.get<T>(endpoint, {
+        params,
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(`Reddit API request failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Search for posts in subreddit(s)
+   */
+  async search(options: {
+    query: string;
+    subreddit?: string;
+    limit?: number;
+    sort?: string;
+    time?: string;
+  }): Promise<any> {
+    const { query, subreddit = 'all', limit = 50, sort = 'relevance', time = 'year' } = options;
+    const endpoint = subreddit === 'all' ? '/search' : `/r/${subreddit}/search`;
+
+    return this.request(endpoint, {
+      q: query,
+      limit,
+      sort,
+      t: time,
+      restrict_sr: subreddit !== 'all',
+      type: 'link'
+    });
+  }
+
+  /**
+   * Get submission by ID
+   */
+  async getSubmission(id: string): Promise<any> {
+    return this.request(`/comments/${id}`);
+  }
+}
+
+/**
  * Initialize Reddit client
  */
-export function createRedditClient(config?: RedditConfig): snoowrap {
+export function createRedditClient(config?: RedditConfig): RedditClient {
   const {
     REDDIT_CLIENT_ID: clientId,
     REDDIT_CLIENT_SECRET: clientSecret,
@@ -48,7 +159,7 @@ export function createRedditClient(config?: RedditConfig): snoowrap {
     throw new Error('Missing required Reddit environment variables (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD, REDDIT_USER_AGENT)');
   }
 
-  return new snoowrap({
+  return new RedditClient({
     userAgent: config?.userAgent || userAgent,
     clientId: config?.clientId || clientId,
     clientSecret: config?.clientSecret || clientSecret,
@@ -72,10 +183,10 @@ export async function searchThreads(
 
   // Search for self-posts (text posts, not links)
   const query = `${keyword} self:yes`;
-  const subredditName = subreddits[0] === 'all' ? undefined : subreddits.join('+');
+  const subredditName = subreddits[0] === 'all' ? 'all' : subreddits.join('+');
 
   try {
-    const results = await reddit.search({
+    const response: any = await reddit.search({
       query,
       subreddit: subredditName,
       limit,
@@ -83,15 +194,21 @@ export async function searchThreads(
       time: 'year' // last year for freshness
     });
 
-    return results.map((post: any) => ({
-      id: post.id,
-      subreddit: post.subreddit_name_prefixed,
-      title: post.title,
-      url: `https://reddit.com${post.permalink}`,
-      score: post.score,
-      num_comments: post.num_comments,
-      created_utc: post.created_utc
-    }));
+    // Reddit API returns data.data.children array
+    const posts = response.data?.children || [];
+
+    return posts.map((item: any) => {
+      const post = item.data;
+      return {
+        id: post.id,
+        subreddit: post.subreddit_name_prefixed,
+        title: post.title,
+        url: `https://reddit.com${post.permalink}`,
+        score: post.score,
+        num_comments: post.num_comments,
+        created_utc: post.created_utc
+      };
+    });
   } catch (error: any) {
     console.error('Reddit search error:', error.message);
     throw new Error(`Reddit search failed: ${error.message}`);
@@ -110,36 +227,39 @@ export async function getComments(
   const reddit = createRedditClient();
 
   try {
-    const submission = await reddit.getSubmission(threadId).expandReplies({
-      limit,
-      depth: 1
-    });
+    const response: any = await reddit.getSubmission(threadId);
 
+    // Reddit API returns [post_data, comments_data]
+    const commentsListing = response[1]?.data?.children || [];
     const comments: RedditComment[] = [];
 
     const flattenComments = (items: any[]) => {
       for (const item of items) {
-        if (!item || item.body === undefined) continue;
+        if (!item || item.kind !== 't1') continue; // t1 = comment
+
+        const commentData = item.data;
+        if (!commentData || !commentData.body) continue;
 
         comments.push({
-          id: item.id,
-          body: String(item.body || ''),
-          score: Number(item.score || 0),
-          created_utc: Number(item.created_utc || 0),
-          parent_id: String(item.parent_id || ''),
-          link_id: String(item.link_id || '')
+          id: commentData.id,
+          body: String(commentData.body || ''),
+          score: Number(commentData.score || 0),
+          created_utc: Number(commentData.created_utc || 0),
+          parent_id: String(commentData.parent_id || ''),
+          link_id: String(commentData.link_id || '')
         });
 
         // Recursively process replies
-        if (Array.isArray(item.replies)) {
-          flattenComments(item.replies);
-        } else if (item.replies && item.replies.comments) {
-          flattenComments(item.replies.comments);
+        if (commentData.replies && commentData.replies.data?.children) {
+          flattenComments(commentData.replies.data.children);
         }
+
+        // Limit total comments
+        if (comments.length >= limit) break;
       }
     };
 
-    flattenComments(submission.comments || []);
+    flattenComments(commentsListing);
     return comments;
   } catch (error: any) {
     console.error('Reddit comments fetch error:', error.message);
@@ -212,16 +332,23 @@ export interface ThreadAnalysis {
 
 export async function analyzeThread(threadId: string): Promise<ThreadAnalysis> {
   const reddit = createRedditClient();
-  const submission = await reddit.getSubmission(threadId);
+  const response: any = await reddit.getSubmission(threadId);
+
+  // Reddit API returns [post_data, comments_data]
+  const postData = response[0]?.data?.children?.[0]?.data;
+
+  if (!postData) {
+    throw new Error('Failed to fetch submission data');
+  }
 
   const thread: RedditThread = {
-    id: submission.id,
-    subreddit: submission.subreddit_name_prefixed,
-    title: submission.title,
-    url: `https://reddit.com${submission.permalink}`,
-    score: submission.score,
-    num_comments: submission.num_comments,
-    created_utc: submission.created_utc
+    id: postData.id,
+    subreddit: postData.subreddit_name_prefixed,
+    title: postData.title,
+    url: `https://reddit.com${postData.permalink}`,
+    score: postData.score,
+    num_comments: postData.num_comments,
+    created_utc: postData.created_utc
   };
 
   const comments = await getComments(threadId);

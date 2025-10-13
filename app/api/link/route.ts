@@ -23,7 +23,8 @@ async function ghCreateRepo(token: string, params: { name: string; description?:
   const r = await fetch('https://api.github.com/user/repos', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'geo-builders-mcp' },
-    body: JSON.stringify({ name: params.name, description: params.description || 'Created by GEO Builders', private: params.private ?? true })
+    body: JSON.stringify({ name: params.name, description: params.description || 'Created by GEO Builders', private: params.private ?? true }),
+    signal: AbortSignal.timeout(30000) // 30 second timeout
   });
   const j = await r.json().catch(()=>null);
   return { ok: r.ok, status: r.status, json: j };
@@ -31,7 +32,8 @@ async function ghCreateRepo(token: string, params: { name: string; description?:
 
 async function ghGetRepo(token: string, owner: string, name: string) {
   const r = await fetch(`https://api.github.com/repos/${owner}/${name}` , {
-    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'geo-builders-mcp' }
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'geo-builders-mcp' },
+    signal: AbortSignal.timeout(30000) // 30 second timeout
   });
   const j = await r.json().catch(()=>null);
   return { ok: r.ok, status: r.status, json: j };
@@ -44,7 +46,8 @@ async function vercelCreateProject(token: string, params: { name: string; repo: 
   const r = await fetch('https://api.vercel.com/v10/projects', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30000) // 30 second timeout
   });
   const j = await r.json().catch(()=>null);
   return { ok: r.ok, status: r.status, json: j };
@@ -53,7 +56,8 @@ async function vercelCreateProject(token: string, params: { name: string; repo: 
 // Optional: fetch existing Vercel project by name
 async function vercelGetProject(token: string, name: string) {
   const r = await fetch(`https://api.vercel.com/v9/projects/${encodeURIComponent(name)}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    headers: { 'Authorization': `Bearer ${token}` },
+    signal: AbortSignal.timeout(30000) // 30 second timeout
   });
   const j = await r.json().catch(()=>null);
   return { ok: r.ok, status: r.status, json: j };

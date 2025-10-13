@@ -1,4 +1,5 @@
-import axios from 'axios'
+import axios from '@/lib/axios-config'
+import { TIMEOUT_DEFAULTS } from '@/lib/timeout-wrapper'
 
 const PSI_API_BASE = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
 
@@ -24,7 +25,9 @@ export class LighthouseService {
       const categoryParams = requestedCategories.map(cat => `category=${cat}`).join('&');
       const apiUrl = `${PSI_API_BASE}?url=${encodeURIComponent(url)}&key=${this.apiKey}&strategy=${strategy}&${categoryParams}`;
 
-      const response = await axios.get(apiUrl)
+      const response = await axios.get(apiUrl, {
+        timeout: TIMEOUT_DEFAULTS.LONG // 60 seconds for PageSpeed API
+      })
 
       const { lighthouseResult } = response.data
       const categories = lighthouseResult.categories
@@ -49,7 +52,9 @@ export class LighthouseService {
       const categoryParams = requestedCategories.map(cat => `category=${cat}`).join('&');
       const apiUrl = `${PSI_API_BASE}?url=${encodeURIComponent(url)}&key=${this.apiKey}&strategy=${strategy}&${categoryParams}`;
 
-      const response = await axios.get(apiUrl)
+      const response = await axios.get(apiUrl, {
+        timeout: TIMEOUT_DEFAULTS.LONG // 60 seconds for PageSpeed API
+      })
 
       const { lighthouseResult } = response.data
       const audits = lighthouseResult.audits

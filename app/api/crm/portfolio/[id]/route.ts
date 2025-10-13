@@ -15,11 +15,11 @@ const portfolioUpdateSchema = z.object({
 // GET /api/crm/portfolio/[id] - Get single portfolio item
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from('crm_portfolio')
@@ -48,11 +48,11 @@ export async function GET(
 // PUT /api/crm/portfolio/[id] - Update portfolio item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate input
@@ -92,11 +92,11 @@ export async function PUT(
 // DELETE /api/crm/portfolio/[id] - Delete portfolio item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { error } = await supabase
       .from('crm_portfolio')

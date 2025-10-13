@@ -13,6 +13,7 @@
 import axios from 'axios';
 import { GoogleSearchConsoleService } from './google-search-console';
 import { cascadingAI } from './cascading-ai';
+import { calculateDomainAuthority } from './ai-domain-authority';
 
 export interface Backlink {
   id: string;
@@ -90,11 +91,11 @@ export class BacklinkAnalyzer {
   async analyzeBacklinks(domain: string): Promise<BacklinkProfile> {
     console.log(`[BacklinkAnalyzer] Starting analysis for ${domain}`);
 
-    // 1. Fetch backlinks from multiple sources in parallel
-    const [gscLinks, commonCrawlLinks, openPageRank] = await Promise.allSettled([
+    // 1. Fetch backlinks and domain authority from multiple sources in parallel
+    const [gscLinks, commonCrawlLinks, domainAuthority] = await Promise.allSettled([
       this.getBacklinksFromGSC(domain),
       this.getBacklinksFromCommonCrawl(domain),
-      this.getOpenPageRank(domain),
+      this.getDomainAuthority(domain), // Use AI-powered estimation
     ]);
 
     // 2. Combine and deduplicate backlinks
@@ -114,8 +115,9 @@ export class BacklinkAnalyzer {
     const referringDomains = this.countReferringDomains(uniqueBacklinks);
 
     // 4. Calculate domain rating (0-100 scale, like Ahrefs DR)
-    const domainRating = openPageRank.status === 'fulfilled'
-      ? Math.round(openPageRank.value.pageRank * 10) // Convert 0-10 to 0-100
+    // Use AI-powered domain authority as primary, fallback to heuristic
+    const domainRating = domainAuthority.status === 'fulfilled'
+      ? domainAuthority.value.domainRating
       : this.calculateDomainRatingFallback(uniqueBacklinks, referringDomains.length);
 
     // 5. Analyze anchor text
@@ -231,16 +233,36 @@ export class BacklinkAnalyzer {
   }
 
   /**
-   * Get OpenPageRank (free alternative to Ahrefs DR)
-   * Free tier: 1,000 requests/day
-   * API: https://www.domcop.com/openpagerank/
+   * Get Domain Authority using AI-powered estimation
+   * Replaces OpenPageRank API - no API key needed!
+   * Cost: ~$0.40/M tokens (Qwen) vs $10/month for OpenPageRank
    */
-  private async getOpenPageRank(domain: string): Promise<{ pageRank: number; rank: number }> {
-    if (!this.openPageRankApiKey) {
-      console.warn('[BacklinkAnalyzer] No OpenPageRank API key, using fallback calculation');
-      return { pageRank: 0, rank: 0 };
-    }
+  private async getDomainAuthority(domain: string): Promise<{ domainRating: number; trustScore: number }> {
+    try {
+      const result = await calculateDomainAuthority(domain);
 
+      console.log(`[BacklinkAnalyzer] AI Domain Authority for ${domain}: DR ${result.domainRating}, Trust ${result.trustScore}`);
+
+      return {
+        domainRating: result.domainRating,
+        trustScore: result.trustScore,
+      };
+    } catch (error) {
+      console.error(`[BacklinkAnalyzer] AI Domain Authority failed for ${domain}:`, error);
+
+      // Try OpenPageRank as fallback if API key is configured
+      if (this.openPageRankApiKey) {
+        return this.getOpenPageRankFallback(domain);
+      }
+
+      return { domainRating: 0, trustScore: 0 };
+    }
+  }
+
+  /**
+   * Fallback to OpenPageRank API if configured (legacy support)
+   */
+  private async getOpenPageRankFallback(domain: string): Promise<{ domainRating: number; trustScore: number }> {
     try {
       const response = await axios.get('https://openpagerank.com/api/v1.0/getPageRank', {
         params: { domains: [domain] },
@@ -251,15 +273,15 @@ export class BacklinkAnalyzer {
       if (response.data?.response?.[0]) {
         const data = response.data.response[0];
         return {
-          pageRank: data.page_rank_decimal || 0, // 0-10 scale
-          rank: data.rank || 0,
+          domainRating: Math.round((data.page_rank_decimal || 0) * 10), // Convert 0-10 to 0-100
+          trustScore: 70, // Default trust score
         };
       }
 
-      return { pageRank: 0, rank: 0 };
+      return { domainRating: 0, trustScore: 0 };
     } catch (error) {
-      console.error(`[BacklinkAnalyzer] OpenPageRank fetch failed for ${domain}:`, error);
-      return { pageRank: 0, rank: 0 };
+      console.error(`[BacklinkAnalyzer] OpenPageRank fallback failed for ${domain}:`, error);
+      return { domainRating: 0, trustScore: 0 };
     }
   }
 

@@ -1,12 +1,22 @@
+import { validateEnvironment } from '@/lib/env-validator';
+
 export async function register() {
-  // Temporarily disable Sentry to fix Html import error during App Router builds
-  // TODO: Re-enable after upgrading to Sentry Next.js SDK v9+ with better App Router support
+  // Validate environment variables at startup
+  const validation = validateEnvironment();
 
-  // if (process.env.NEXT_RUNTIME === 'nodejs') {
-  //   await import('./sentry.server.config');
-  // }
+  if (!validation.valid) {
+    console.error('[INSTRUMENTATION] Environment validation failed!');
+    // Don't block startup, but log prominently
+  }
 
-  // if (process.env.NEXT_RUNTIME === 'edge') {
-  //   await import('./sentry.edge.config');
-  // }
+  // Initialize Sentry if DSN is configured
+  if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    if (process.env.NEXT_RUNTIME === 'nodejs') {
+      await import('./sentry.server.config');
+    }
+
+    if (process.env.NEXT_RUNTIME === 'edge') {
+      await import('./sentry.edge.config');
+    }
+  }
 }

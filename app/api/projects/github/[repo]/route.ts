@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 // GET /api/projects/github/[repo] - Get repository details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { repo: string } }
+  { params }: { params: Promise<{ repo: string }> }
 ) {
   try {
-    const { repo } = params;
+    const { repo } = await params;
     const githubToken = process.env.GITHUB_TOKEN;
 
     if (!githubToken) {

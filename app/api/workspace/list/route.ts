@@ -5,20 +5,21 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/database/init';
+import getDatabase from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const db = getDatabase('./data/geo-seo.db');
+    const db = getDatabase();
+    await db.initialize();
 
-    const workspaces = db.prepare(
+    const workspaces = await db.all(
       `SELECT id, name, created_at, updated_at
        FROM workspaces
        ORDER BY updated_at DESC`
-    ).all() as any[];
+    );
 
     return NextResponse.json({
-      workspaces: workspaces.map((w) => ({
+      workspaces: workspaces.map((w: any) => ({
         id: w.id,
         name: w.name,
         createdAt: w.created_at,

@@ -5,7 +5,7 @@
  * Vision: Client pays → Tasks auto-scheduled → Agents execute → Results delivered
  */
 
-import { DatabaseClient } from '@/database/init';
+import { DatabaseClient } from '@/lib/db';
 
 export interface SubscriptionTier {
   name: string;
@@ -556,7 +556,9 @@ let autopilotAgent: ClientAutopilotAgent | null = null;
 
 export async function getClientAutopilotAgent(): Promise<ClientAutopilotAgent> {
   if (!autopilotAgent) {
-    const { db } = await import('@/database/init');
+    const getDatabase = (await import('@/lib/db')).default;
+    const db = getDatabase();
+    await db.initialize();
     autopilotAgent = new ClientAutopilotAgent(db);
   }
   return autopilotAgent;

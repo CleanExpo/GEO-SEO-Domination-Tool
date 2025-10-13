@@ -57,15 +57,30 @@ export async function POST(request: NextRequest) {
       : 0;
     const trustScore = Math.round((dofollowRatio * 0.6 + diversityScore * 0.4) * 100);
 
+    // Generate recommendations using AI
+    const recommendations = await analyzer.generateBacklinkRecommendations(cleanDomain, profile);
+
+    // Estimate organic traffic based on DR and backlinks
+    const estimatedTraffic = profile.domainRating > 60
+      ? `${Math.round(profile.referringDomains * 50).toLocaleString()}+`
+      : `${Math.round(profile.referringDomains * 20).toLocaleString()}+`;
+
+    // Estimate top keywords based on DR
+    const estimatedKeywords = Math.max(10, Math.round(profile.domainRating * 10));
+
     return NextResponse.json({
       success: true,
       data: {
-        domain: cleanDomain,
         domainRating: profile.domainRating,
-        totalBacklinks: profile.totalBacklinks,
-        referringDomains: profile.referringDomains,
-        authorityLevel,
         trustScore,
+        authorityLevel,
+        recommendations,
+        metrics: {
+          backlinks: profile.totalBacklinks,
+          referringDomains: profile.referringDomains,
+          organicTraffic: estimatedTraffic,
+          topKeywords: estimatedKeywords,
+        },
       },
     });
   } catch (error: any) {

@@ -1,0 +1,28 @@
+🚀 Starting Application Error Check
+════════════════════════════════════════════════════════════
+
+🔍 Checking Homepage...
+   URL: http://localhost:3000
+   ✅ Navigation successful (200)
+   📸 Screenshot saved: ./scripts/screenshots/homepage.png
+
+🔍 Checking Sign In...
+   URL: http://localhost:3000/auth/signin
+   ✅ Navigation successful (200)
+   📸 Screenshot saved: ./scripts/screenshots/sign-in.png
+
+🔍 Checking Dashboard...
+   URL: http://localhost:3000/dashboard
+   ✅ Navigation successful (200)
+   📸 Screenshot saved: ./scripts/screenshots/dashboard.png
+
+📊 Summary
+════════════════════════════════════════════════════════════
+✅ Homepage: 0 errors, 0 warnings, 0 network errors
+✅ Sign In: 0 errors, 0 warnings, 0 network errors
+✅ Dashboard: 0 errors, 0 warnings, 0 network errors
+
+────────────────────────────────────────────────────────────
+Total: 0 errors, 0 warnings, 0 network errors
+
+✅ No critical errors found!

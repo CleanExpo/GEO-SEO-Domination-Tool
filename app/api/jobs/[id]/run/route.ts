@@ -4,11 +4,11 @@ import { createAdminClient } from '@/lib/auth/supabase-admin';
 // POST /api/jobs/[id]/run - Trigger immediate job execution
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     // Fetch job details
     const { data: job, error: jobError } = await supabase

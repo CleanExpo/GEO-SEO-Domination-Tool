@@ -14,11 +14,11 @@ const promptUpdateSchema = z.object({
 // GET /api/resources/prompts/[id] - Get single prompt
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from('resource_prompts')
@@ -47,11 +47,11 @@ export async function GET(
 // PUT /api/resources/prompts/[id] - Update prompt
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate input
@@ -94,11 +94,11 @@ export async function PUT(
 // DELETE /api/resources/prompts/[id] - Delete prompt
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     // TODO: Add ownership check - user can only delete their own prompts
     // For now, using admin client bypasses RLS

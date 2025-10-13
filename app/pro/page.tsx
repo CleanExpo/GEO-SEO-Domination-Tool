@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 export const dynamic = 'force-dynamic';
 
 export default async function ProPage(){
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supa = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

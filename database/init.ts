@@ -1,31 +1,18 @@
-import Database from 'better-sqlite3'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+/**
+ * DEPRECATED: This file is kept for backward compatibility only.
+ *
+ * ALL NEW CODE SHOULD USE: import { getDatabase } from '@/lib/db'
+ *
+ * The unified database client in lib/db.ts provides:
+ * - Automatic PostgreSQL/Supabase detection in production (Vercel)
+ * - SQLite fallback for local development
+ * - Connection pooling for serverless environments
+ * - Unified API that works with both databases
+ */
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// Re-export the unified database client
+export { getDatabase, DatabaseClient, initializeDatabase } from '@/lib/db';
 
-export function initializeDatabase(dbPath: string = './database/geo-seo.db') {
-  const db = new Database(dbPath, { verbose: console.log })
-
-  // Read and execute schema
-  const schemaPath = path.join(__dirname, 'schema.sql')
-  const schema = fs.readFileSync(schemaPath, 'utf-8')
-
-  // Split by semicolon and execute each statement
-  const statements = schema
-    .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-
-  statements.forEach(statement => {
-    db.exec(statement)
-  })
-
-  console.log('Database initialized successfully')
-  return db
-}
-
-export function getDatabase(dbPath: string = './database/geo-seo.db') {
-  return new Database(dbPath)
-}
+// Export singleton instance for backward compatibility
+import getDb from '@/lib/db';
+export const db = getDb();

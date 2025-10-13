@@ -278,7 +278,9 @@ async function searchGooglePlaces(query: string) {
   try {
     const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
 
-    const searchResponse = await fetch(searchUrl);
+    const searchResponse = await fetch(searchUrl, {
+      signal: AbortSignal.timeout(30000) // 30 second timeout
+    });
     const searchData = await searchResponse.json();
 
     if (searchData.status === 'REQUEST_DENIED') {
@@ -294,7 +296,9 @@ async function searchGooglePlaces(query: string) {
 
     const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,geometry,types,rating&key=${apiKey}`;
 
-    const detailsResponse = await fetch(detailsUrl);
+    const detailsResponse = await fetch(detailsUrl, {
+      signal: AbortSignal.timeout(30000) // 30 second timeout
+    });
     const detailsData = await detailsResponse.json();
 
     return detailsData.result || null;

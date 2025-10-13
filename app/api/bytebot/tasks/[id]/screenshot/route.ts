@@ -9,11 +9,12 @@ import { getBytebotClient } from '@/lib/bytebot-client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const bytebot = getBytebotClient();
-    const screenshot = await bytebot.getTaskScreenshot(params.id);
+    const screenshot = await bytebot.getTaskScreenshot(id);
 
     return new NextResponse(screenshot, {
       headers: {

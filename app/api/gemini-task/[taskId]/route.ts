@@ -9,10 +9,10 @@ import { activeTasks } from '../route';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const taskId = params.taskId;
+    const { taskId } = await params;
 
     if (!taskId) {
       return NextResponse.json(
@@ -81,10 +81,10 @@ export async function OPTIONS() {
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const taskId = params.taskId;
+    const { taskId } = await params;
 
     if (!taskId) {
       return NextResponse.json(

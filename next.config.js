@@ -50,13 +50,9 @@ const nextConfig = {
       config.externals.push('pg', 'pg-native', 'ioredis', 'better-sqlite3', 'bufferutil', 'utf-8-validate', 'snoowrap');
     }
 
-    // Exclude tools directory from compilation
-    config.module = config.module || {};
-    config.module.rules = config.module.rules || [];
-    config.module.rules.push({
-      test: /\.tsx?$/,
-      exclude: /tools\//,
-    });
+    // NOTE: Do NOT exclude app/tools directory - it contains free tool pages
+    // Only exclude /tools/ at root level (Electron build scripts, etc.)
+    // App Router pages in app/tools/ must be compiled
 
     // Suppress warnings for optional dependencies
     config.ignoreWarnings = [
@@ -65,14 +61,13 @@ const nextConfig = {
       /Module not found.*bufferutil/,
       /Module not found.*utf-8-validate/,
       /Attempted import error.*'db' is not exported/,
-      // Ignore Electron/Vite files and third-party integrations
+      // Ignore Electron/Vite files and third-party integrations (NOT app/tools!)
       /src\//,
       /electron\//,
       /web-app\//,
       /integrations\//,
       /_src_electron\//,
       /_electron\//,
-      /tools\//,
     ];
 
     // Optimize bundle size
@@ -125,9 +120,8 @@ const sentryWebpackPluginOptions = {
 }
 
 // Export the configuration wrapped with Sentry
-// Only wrap with Sentry if DSN is configured AND not in build mode
-// Temporarily disable Sentry to fix Html import error during build
-if (false && (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)) {
+// Only wrap with Sentry if DSN is configured
+if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
   module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
 } else {
   module.exports = nextConfig;

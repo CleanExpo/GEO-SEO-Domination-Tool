@@ -1,6 +1,36 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
   "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "functions": {
+    "app/api/audits/117-point/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/seo-audits/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/integrations/firecrawl/crawl/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/onboarding/process/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/gemini-task/[taskId]/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/companies/[id]/seo-audit/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/ai-search/campaigns/[id]/analyze/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "regions": ["iad1"],
+  "env": {
+    "NODE_ENV": "production"
+  },
   "github": {
     "silent": false
   }

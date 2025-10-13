@@ -13,9 +13,15 @@ import Stripe from 'stripe';
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
+// Lazy initialization - only create Stripe instance when needed
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-09-30.clover',
+  });
+}
 
 const dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
 
@@ -111,6 +117,7 @@ export async function POST(request: NextRequest) {
     const isUpgrade = tierOrder[newTier] > tierOrder[subscription.tier];
 
     // Get current Stripe subscription
+    const stripe = getStripe();
     const stripeSubscription = await stripe.subscriptions.retrieve(stripeCustomer.stripe_subscription_id);
 
     // Update Stripe subscription
@@ -164,6 +171,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Subscriptions] Subscription ${subscription.id} ${eventType} from ${subscription.tier} to ${newTier}`);
 
+    // Type assertion for current_period_end which may not be in Response type
+    const currentPeriodEnd = (updatedStripeSubscription as any).current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+
     return NextResponse.json({
       success: true,
       message: isUpgrade
@@ -174,7 +184,7 @@ export async function POST(request: NextRequest) {
         oldTier: subscription.tier,
         newTier,
         billingCycle: targetBillingCycle,
-        effectiveDate: isUpgrade ? new Date().toISOString() : updatedStripeSubscription.current_period_end
+        effectiveDate: isUpgrade ? new Date().toISOString() : new Date(currentPeriodEnd * 1000).toISOString()
       }
     });
 

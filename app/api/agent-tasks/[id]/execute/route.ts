@@ -9,9 +9,10 @@ import { WordPressExecutor } from '@/lib/executors/wordpress-executor';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const taskId = params.id;
+  const { id } = await params;
+  const taskId = id;
   const startTime = Date.now();
 
   try {

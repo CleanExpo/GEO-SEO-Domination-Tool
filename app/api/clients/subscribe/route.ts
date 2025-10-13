@@ -3,7 +3,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientAutopilotAgent } from '@/services/agents/client-autopilot-agent';
-import { db } from '@/database/init';
+import { getDatabase } from '@/lib/db';
+
+const db = getDatabase();
 
 export async function POST(request: NextRequest) {
   try {

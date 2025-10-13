@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios from '@/lib/axios-config';
+import { TIMEOUT_DEFAULTS } from '@/lib/timeout-wrapper';
 
 // Google My Business (Google Business Profile) API Client
 // Docs: https://developers.google.com/my-business/reference/rest
@@ -96,6 +97,7 @@ export class GoogleMyBusinessService {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
         },
+        timeout: TIMEOUT_DEFAULTS.MEDIUM // 30 seconds
       });
 
       return response.data;
@@ -119,6 +121,7 @@ export class GoogleMyBusinessService {
         params: {
           pageSize,
         },
+        timeout: TIMEOUT_DEFAULTS.MEDIUM // 30 seconds
       });
 
       return response.data.reviews || [];
@@ -164,6 +167,7 @@ export class GoogleMyBusinessService {
             Authorization: `Bearer ${this.accessToken}`,
             'Content-Type': 'application/json',
           },
+          timeout: TIMEOUT_DEFAULTS.MEDIUM // 30 seconds
         }
       );
 
@@ -188,6 +192,7 @@ export class GoogleMyBusinessService {
         params: {
           pageSize,
         },
+        timeout: TIMEOUT_DEFAULTS.MEDIUM // 30 seconds
       });
 
       return response.data.mediaItems || [];

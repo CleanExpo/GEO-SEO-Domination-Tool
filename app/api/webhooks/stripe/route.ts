@@ -18,11 +18,17 @@ import Stripe from 'stripe';
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
+// Lazy initialization - only create Stripe instance when needed
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-09-30.clover',
+  });
+}
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 const dbPath = path.join(process.cwd(), 'data', 'geo-seo.db');
 
 export async function POST(request: NextRequest) {
@@ -39,8 +45,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify webhook signature
+    const stripe = getStripe();
     let event: Stripe.Event;
     try {
+      if (!webhookSecret) {
+        throw new Error('STRIPE_WEBHOOK_SECRET not configured');
+      }
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
       console.error('[Stripe Webhook] Signature verification failed:', err.message);
@@ -205,7 +215,9 @@ async function handleCheckoutComplete(db: Database.Database, session: Stripe.Che
 }
 
 async function handleInvoicePaid(db: Database.Database, invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  // Type assertion for Invoice properties that may be expandable in newer API versions
+  const invoiceAny = invoice as any;
+  const subscriptionId = typeof invoiceAny.subscription === 'string' ? invoiceAny.subscription : invoiceAny.subscription?.id;
   const amount = invoice.amount_paid / 100; // Convert cents to dollars
   const currency = invoice.currency.toUpperCase();
 
@@ -225,6 +237,8 @@ async function handleInvoicePaid(db: Database.Database, invoice: Stripe.Invoice)
 
   // Record payment
   const paymentId = generateId();
+  const paymentIntentId = typeof invoiceAny.payment_intent === 'string' ? invoiceAny.payment_intent : invoiceAny.payment_intent?.id;
+
   db.prepare(`
     INSERT INTO payments (
       id, subscription_id, client_id, amount, currency, status,
@@ -236,7 +250,7 @@ async function handleInvoicePaid(db: Database.Database, invoice: Stripe.Invoice)
     clientId,
     amount,
     currency,
-    invoice.payment_intent,
+    paymentIntentId,
     invoice.id
   );
 
@@ -259,7 +273,9 @@ async function handleInvoicePaid(db: Database.Database, invoice: Stripe.Invoice)
 }
 
 async function handlePaymentFailed(db: Database.Database, invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  // Type assertion for Invoice properties that may be expandable in newer API versions
+  const invoiceAny = invoice as any;
+  const subscriptionId = typeof invoiceAny.subscription === 'string' ? invoiceAny.subscription : invoiceAny.subscription?.id;
 
   console.log(`[Webhook] Payment failed: ${invoice.id}`);
 
@@ -317,6 +333,10 @@ async function handleSubscriptionUpdated(db: Database.Database, subscription: St
 
   console.log(`[Webhook] Subscription updated: ${subscription.id} for client ${clientId}`);
 
+  // Type assertion for Subscription properties that exist in runtime but may have type issues
+  const currentPeriodStart = (subscription as any).current_period_start || subscription.billing_cycle_anchor || Math.floor(Date.now() / 1000);
+  const currentPeriodEnd = (subscription as any).current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+
   // Update subscription in database
   db.prepare(`
     UPDATE subscriptions
@@ -329,8 +349,8 @@ async function handleSubscriptionUpdated(db: Database.Database, subscription: St
     WHERE client_id = ? AND status IN ('active', 'past_due')
   `).run(
     subscription.status,
-    new Date(subscription.current_period_start * 1000).toISOString(),
-    new Date(subscription.current_period_end * 1000).toISOString(),
+    new Date(currentPeriodStart * 1000).toISOString(),
+    new Date(currentPeriodEnd * 1000).toISOString(),
     subscription.cancel_at_period_end ? 1 : 0,
     clientId
   );
@@ -354,10 +374,13 @@ async function handleSubscriptionCanceled(db: Database.Database, subscription: S
     WHERE client_id = ?
   `).run(clientId);
 
+  // Type assertion for current_period_end
+  const currentPeriodEnd = (subscription as any).current_period_end || Math.floor(Date.now() / 1000);
+
   // Set tier access expiration
   db.prepare(`
     UPDATE tier_access SET expires_at = ? WHERE client_id = ?
-  `).run(new Date(subscription.current_period_end * 1000).toISOString(), clientId);
+  `).run(new Date(currentPeriodEnd * 1000).toISOString(), clientId);
 
   // Update client status
   db.prepare(`

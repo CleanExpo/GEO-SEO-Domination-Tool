@@ -10,10 +10,11 @@ import { encryptCredential, decryptCredential } from '@/lib/crypto-credentials';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const companyId = params.id;
+    const { id } = await params;
+    const companyId = id;
     const body = await request.json();
 
     const supabase = await createClient();
@@ -192,10 +193,11 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const companyId = params.id;
+    const { id } = await params;
+    const companyId = id;
     const { searchParams } = new URL(request.url);
     const decrypt = searchParams.get('decrypt') === 'true';
 
@@ -311,9 +313,10 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const credentialId = searchParams.get('credential_id');
 
@@ -334,7 +337,7 @@ export async function DELETE(
         deactivated_reason: 'User requested deletion',
       })
       .eq('id', credentialId)
-      .eq('company_id', params.id);
+      .eq('company_id', id);
 
     if (error) throw error;
 

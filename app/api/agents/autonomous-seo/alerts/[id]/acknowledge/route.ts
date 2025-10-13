@@ -4,11 +4,11 @@ import { createAdminClient } from '@/lib/auth/supabase-admin';
 // POST /api/agents/autonomous-seo/alerts/[id]/acknowledge - Acknowledge alert
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createAdminClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from('agent_alerts')
