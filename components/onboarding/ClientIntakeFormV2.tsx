@@ -45,12 +45,27 @@ import {
   seoGoalsSchema,
   contentStrategySchema,
   servicesSchema,
+  websiteAccessSchema,
+  socialMediaSchema,
+  googleEcosystemSchema,
+  marketingToolsSchema,
+  advertisingSchema,
   type BusinessInfo,
   type WebsiteDetails,
   type SeoGoals,
   type ContentStrategy,
-  type ServicesAndBudget
+  type ServicesAndBudget,
+  type WebsiteAccess,
+  type SocialMediaCredentials,
+  type GoogleEcosystemCredentials,
+  type MarketingToolsCredentials,
+  type AdvertisingCredentials
 } from '@/lib/validation/onboarding-schemas';
+import { WebsiteAccessStep } from './steps/WebsiteAccessStep';
+import { SocialMediaStep } from './steps/SocialMediaStep';
+import { GoogleEcosystemStep } from './steps/GoogleEcosystemStep';
+import { MarketingToolsStep } from './steps/MarketingToolsStep';
+import { AdvertisingPlatformsStep } from './steps/AdvertisingPlatformsStep';
 
 interface ClientIntakeData {
   // Business Information
@@ -83,6 +98,21 @@ interface ClientIntakeData {
   // Services
   selectedServices: string[];
   budget: string;
+
+  // Website Access (Step 5 - NEW)
+  websiteAccess?: WebsiteAccess;
+
+  // Social Media (Step 6 - NEW)
+  socialMedia?: SocialMediaCredentials;
+
+  // Google Ecosystem (Step 7 - NEW)
+  googleEcosystem?: GoogleEcosystemCredentials;
+
+  // Marketing Tools (Step 8 - NEW)
+  marketingTools?: MarketingToolsCredentials;
+
+  // Advertising Platforms (Step 9 - NEW)
+  advertising?: AdvertisingCredentials;
 }
 
 interface ClientIntakeFormV2Props {
@@ -125,7 +155,12 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     websiteSchema,
     seoGoalsSchema,
     contentStrategySchema,
-    servicesSchema
+    servicesSchema,
+    websiteAccessSchema,
+    socialMediaSchema,
+    googleEcosystemSchema,
+    marketingToolsSchema,
+    advertisingSchema
   ];
 
   // React Hook Form setup for current step
@@ -204,7 +239,12 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     { id: 'website', title: 'Website', icon: Globe },
     { id: 'goals', title: 'SEO Goals', icon: Target },
     { id: 'content', title: 'Content', icon: FileText },
-    { id: 'services', title: 'Services', icon: Sparkles }
+    { id: 'services', title: 'Services', icon: Sparkles },
+    { id: 'website-access', title: 'Website Access', icon: Save },
+    { id: 'social-media', title: 'Social Media', icon: Globe },
+    { id: 'google-ecosystem', title: 'Google Services', icon: Globe },
+    { id: 'marketing-tools', title: 'Marketing Tools', icon: Sparkles },
+    { id: 'advertising', title: 'Advertising', icon: Target }
   ];
 
   const onNext = () => {
@@ -227,10 +267,12 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
       return;
     }
 
-    // Final submission
+    // Final submission - THE COMPLETE SYSTEM FLOW
     setLoading(true);
     try {
-      const response = await fetch('/api/onboarding/start', {
+      console.log('🚀 [Form] Submitting complete onboarding with credentials...');
+
+      const response = await fetch('/api/onboarding/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -238,19 +280,30 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
 
       if (response.ok) {
         const result = await response.json();
+
+        console.log('✅ [Form] Onboarding completed:', result);
+
         toast({
           title: 'Success!',
-          description: 'Client onboarding completed successfully'
+          description: result.message || 'Onboarding completed successfully',
         });
 
         if (onComplete) {
           onComplete(data);
         }
 
-        // Redirect to onboarding status page
-        router.push(`/onboarding/${result.onboardingId}`);
+        // Redirect to company dashboard
+        if (result.redirectUrl) {
+          router.push(result.redirectUrl);
+        } else if (result.companyId) {
+          router.push(`/companies/${result.companyId}`);
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         const error = await response.json();
+        console.error('❌ [Form] Submission failed:', error);
+
         toast({
           title: 'Error',
           description: error.error || 'Failed to submit onboarding',
@@ -258,6 +311,8 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
         });
       }
     } catch (error: any) {
+      console.error('❌ [Form] Fatal error:', error);
+
       toast({
         title: 'Error',
         description: error.message || 'An error occurred',
@@ -451,6 +506,21 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
           </div>
         );
 
+      case 5: // Website Access (NEW)
+        return <WebsiteAccessStep />;
+
+      case 6: // Social Media (NEW)
+        return <SocialMediaStep />;
+
+      case 7: // Google Ecosystem (NEW)
+        return <GoogleEcosystemStep />;
+
+      case 8: // Marketing Tools (NEW)
+        return <MarketingToolsStep />;
+
+      case 9: // Advertising Platforms (NEW)
+        return <AdvertisingPlatformsStep />;
+
       default:
         return null;
     }
@@ -500,6 +570,11 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
               {currentStep === 2 && 'Define your SEO objectives'}
               {currentStep === 3 && 'Plan your content strategy'}
               {currentStep === 4 && 'Choose your services'}
+              {currentStep === 5 && 'Provide access credentials for automated improvements (optional)'}
+              {currentStep === 6 && 'Connect your social media accounts for automated posting (optional)'}
+              {currentStep === 7 && 'Connect Google services for SEO automation (optional)'}
+              {currentStep === 8 && 'Connect marketing tools for automation and reporting (optional)'}
+              {currentStep === 9 && 'Connect advertising platforms for campaign tracking (optional)'}
             </CardDescription>
           </CardHeader>
 

@@ -193,6 +193,14 @@ async function verifyTables() {
       'support_tickets',
       'support_ticket_responses',
       'support_ticket_attachments',
+      'client_credentials',
+      'credential_access_log',
+      'platform_capabilities',
+      'website_access',
+      'social_media_accounts',
+      'google_ecosystem_access',
+      'credential_validation_schedules',
+      'auto_action_permissions',
     ];
 
     log('\nVerifying tables...', colors.blue);
