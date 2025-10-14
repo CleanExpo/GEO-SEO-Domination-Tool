@@ -163,15 +163,9 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     advertisingSchema
   ];
 
-  // React Hook Form setup - FIXED: Memoize resolver to prevent re-initialization
-  const currentResolver = React.useMemo(
-    () => zodResolver(stepSchemas[currentStep]),
-    [currentStep]
-  );
-
+  // React Hook Form setup - NO RESOLVER for now to test focus issue
   const methods = useForm<ClientIntakeData>({
-    mode: 'onChange', // Real-time validation
-    resolver: currentResolver,
+    mode: 'all',
     defaultValues: initialFormData || defaultFormData
   });
 
@@ -237,24 +231,8 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   };
 
-  // Watch website field for automatic lookup
-  const websiteUrl = watch('website');
-
-  // Auto-trigger lookup when website URL is entered
-  useEffect(() => {
-    if (websiteUrl && websiteUrl.length > 10 && currentStep === 1) {
-      const timer = setTimeout(() => {
-        handleBusinessLookup();
-      }, 2000); // Debounce 2 seconds
-
-      return () => clearTimeout(timer);
-    }
-  }, [websiteUrl]);
-
-  // Watch all form values for auto-save
-  const formValues = watch();
-
   // Debounced auto-save (2 seconds after last change)
+  // NOTE: Disabled watch() to prevent re-render on every keystroke
   const debouncedSave = useDebouncedCallback(async () => {
     const data = getValues();
     if (!data.businessName || !data.email) return;
@@ -286,16 +264,8 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   }, 2000);
 
-  // Trigger auto-save when form changes - FIXED: Remove formValues dependency
-  // The debouncedSave function already calls getValues(), so we don't need to watch formValues
-  useEffect(() => {
-    if (isDirty) {
-      const data = getValues();
-      if (data.businessName && data.email) {
-        debouncedSave();
-      }
-    }
-  }, [isDirty, debouncedSave, getValues]);
+  // Removed auto-save useEffect to test focus issue
+  // TODO: Re-implement auto-save without causing re-renders
 
   // Load initial data
   useEffect(() => {
@@ -399,10 +369,19 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   };
 
-  // Field component with error display
-  const FormField = ({ name, label, required = false, children }: any) => {
-    const error = errors[name as keyof ClientIntakeData];
+  // Plain input component - NO React Hook Form register to prevent focus loss
+  const PlainInput = ({ name, placeholder, type = "text", className = "", ...props }: any) => (
+    <input
+      name={name}
+      type={type}
+      placeholder={placeholder}
+      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      {...props}
+    />
+  );
 
+  // Field component
+  const FormField = ({ name, label, required = false, children }: any) => {
     return (
       <div className="space-y-2">
         <Label htmlFor={name} className="flex items-center gap-1">
@@ -410,12 +389,6 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
           {required && <span className="text-red-500">*</span>}
         </Label>
         {children}
-        {error && (
-          <div className="flex items-center gap-1 text-sm text-red-500">
-            <AlertCircle className="h-3 w-3" />
-            <span>{error.message as string}</span>
-          </div>
-        )}
       </div>
     );
   };
@@ -426,10 +399,10 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
         return (
           <div className="space-y-6">
             <FormField name="businessName" label="Business Name" required>
-              <Input
-                {...register('businessName')}
+              <input
+                name="businessName"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Enter your business name"
-                aria-invalid={errors.businessName ? 'true' : 'false'}
               />
             </FormField>
 
@@ -717,8 +690,7 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
                 currentStep,
                 isValid,
                 isDirty,
-                errors: Object.keys(errors).length > 0 ? errors : 'None',
-                formValues
+                errors: Object.keys(errors).length > 0 ? errors : 'None'
               }, null, 2)}
             </pre>
           </details>
