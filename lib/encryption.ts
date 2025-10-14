@@ -17,7 +17,7 @@ function getEncryptionKey(): Buffer {
     throw new Error('ENCRYPTION_KEY environment variable is not set');
   }
   if (keyHex.length !== KEY_LENGTH * 2) {
-    throw new Error();
+    throw new Error('ENCRYPTION_KEY must be 64 hexadecimal characters');
   }
   try {
     return Buffer.from(keyHex, 'hex');
@@ -37,7 +37,7 @@ export function encryptCredentials(data: any): { encryptedData: string; iv: stri
     const tag = cipher.getAuthTag();
     return { encryptedData: encrypted, iv: iv.toString('hex'), tag: tag.toString('hex') };
   } catch (error: any) {
-    throw new Error();
+    throw new Error(`Failed to encrypt credentials: ${error.message}`);
   }
 }
 
@@ -55,7 +55,7 @@ export function decryptCredentials(encryptedData: string, iv: string, tag: strin
     if (error.message.includes('auth')) {
       throw new Error('Credential authentication failed');
     }
-    throw new Error();
+    throw new Error(`Failed to decrypt credentials: ${error.message}`);
   }
 }
 
@@ -104,6 +104,6 @@ export function testEncryption(): { success: boolean; message: string } {
     }
     return { success: true, message: 'Encryption test passed' };
   } catch (error: any) {
-    return { success: false, message:  };
+    return { success: false, message: error.message || 'Encryption test failed' };
   }
 }
