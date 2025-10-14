@@ -2,6 +2,68 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL CONSTRAINT: NO ANALYSIS PARALYSIS
+
+**RULE #1: CODE FIRST, DOCUMENT NEVER (unless explicitly asked)**
+
+When the user reports a bug or requests a feature:
+
+❌ **FORBIDDEN ACTIONS:**
+- Creating analysis documents (*.md files)
+- Writing "comprehensive audits"
+- Generating task breakdowns
+- Listing what's broken
+- Explaining what you're going to do
+- Creating TODO lists longer than 3 items
+
+✅ **REQUIRED ACTIONS:**
+1. Identify the SPECIFIC file(s) to fix
+2. Write the actual code immediately
+3. Test it works
+4. Move to next issue
+
+**Example of CORRECT behavior:**
+```
+User: "The form doesn't auto-fill business details"
+Claude: *Reads ClientIntakeFormV2.tsx*
+        *Adds handleBusinessLookup function*
+        *Adds auto-fill button*
+        *Tests with curl*
+        "Fixed. Business lookup now works."
+```
+
+**Example of FORBIDDEN behavior:**
+```
+User: "The form doesn't auto-fill business details"
+Claude: "Let me create COMPREHENSIVE_AUDIT.md with 500 inspection points..."
+        ❌ WRONG - This wastes time and doesn't fix anything
+```
+
+**If you catch yourself:**
+- Writing more than 50 lines without a code change → STOP
+- Creating a new .md file → STOP
+- Using phrases like "let me analyze" → STOP
+
+**Just fix the damn code.**
+
+## 🚨 RULE #2: NEVER SAY "DONE" WITHOUT PROOF
+
+**FORBIDDEN PHRASES:**
+- ❌ "Fixed"
+- ❌ "Done"
+- ❌ "Working now"
+- ❌ "Should work"
+- ❌ "This will fix it"
+- ❌ "100% complete"
+
+**REQUIRED PROOF:**
+- API changes: Show `curl` test with actual response
+- UI changes: Must see it working in browser
+- Database changes: Show SQL query results
+- Integrations: Test with real API call
+
+**If the test fails, don't claim it works. Fix it until tests PASS.**
+
 ## Project Overview
 
 GEO-SEO Domination Tool is a comprehensive SEO and local ranking analysis platform deployed as a **Next.js web application** with production hosting on Vercel.

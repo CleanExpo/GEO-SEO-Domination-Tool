@@ -58,7 +58,13 @@ export async function POST(request: NextRequest) {
       socialMedia,
 
       // Step 7: Google Ecosystem (NEW - Credentials)
-      googleEcosystem
+      googleEcosystem,
+
+      // Step 8: Marketing Tools (NEW - Credentials)
+      marketingTools,
+
+      // Step 9: Advertising Platforms (NEW - Credentials)
+      advertising
     } = body;
 
     console.log('🚀 [OnboardingSubmit] Starting complete onboarding flow...');
@@ -122,7 +128,9 @@ export async function POST(request: NextRequest) {
         companyId,
         websiteAccess,
         socialMedia,
-        googleEcosystem
+        googleEcosystem,
+        marketingTools,
+        advertising
       );
 
       credentialCount = credentialIds.length;

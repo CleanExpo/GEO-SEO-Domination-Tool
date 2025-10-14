@@ -133,7 +133,9 @@ export async function storeOnboardingCredentials(
   companyId: string,
   websiteAccess?: any,
   socialMedia?: any,
-  googleEcosystem?: any
+  googleEcosystem?: any,
+  marketingTools?: any,
+  advertising?: any
 ): Promise<string[]> {
   const credentialIds: string[] = [];
 
@@ -285,6 +287,69 @@ export async function storeOnboardingCredentials(
           credentialType: 'oauth_token'
         });
         credentialIds.push(id);
+      }
+    }
+  }
+
+  // Process Marketing Tools credentials
+  if (marketingTools) {
+    const tools = [
+      { check: 'hasMailchimp', name: 'Mailchimp', fields: ['mailchimpApiKey'] },
+      { check: 'hasKlaviyo', name: 'Klaviyo', fields: ['klaviyoApiKey'] },
+      { check: 'hasHubspot', name: 'HubSpot', fields: ['hubspotApiKey'] },
+      { check: 'hasSalesforce', name: 'Salesforce', fields: ['salesforceUsername', 'salesforcePassword'] },
+      { check: 'hasCallRail', name: 'CallRail', fields: ['callRailApiKey'] },
+      { check: 'hasHotjar', name: 'Hotjar', fields: ['hotjarSiteId'] }
+    ];
+
+    for (const tool of tools) {
+      if (marketingTools[tool.check]) {
+        const hasCredentials = tool.fields.some(field => marketingTools[field]);
+
+        if (hasCredentials) {
+          const id = await storeCredential({
+            companyId,
+            platformType: 'email_marketing',
+            platformName: tool.name,
+            credentials: Object.fromEntries(
+              Object.entries(marketingTools).filter(([key]) =>
+                key.toLowerCase().includes(tool.name.toLowerCase().replace(/\s+/g, ''))
+              )
+            ),
+            credentialType: tool.name === 'Salesforce' ? 'username_password' : 'api_key'
+          });
+          credentialIds.push(id);
+        }
+      }
+    }
+  }
+
+  // Process Advertising Platform credentials
+  if (advertising) {
+    const platforms = [
+      { check: 'hasGoogleAdsManager', name: 'Google Ads Manager', fields: ['googleAdsClientId'] },
+      { check: 'hasFacebookAds', name: 'Facebook Ads Manager', fields: ['facebookAdsAccessToken'] },
+      { check: 'hasMicrosoftAds', name: 'Microsoft Ads', fields: ['microsoftAdsAccessToken'] }
+    ];
+
+    for (const platform of platforms) {
+      if (advertising[platform.check]) {
+        const hasCredentials = platform.fields.some(field => advertising[field]);
+
+        if (hasCredentials) {
+          const id = await storeCredential({
+            companyId,
+            platformType: 'advertising',
+            platformName: platform.name,
+            credentials: Object.fromEntries(
+              Object.entries(advertising).filter(([key]) =>
+                key.toLowerCase().includes(platform.name.toLowerCase().split(' ')[0])
+              )
+            ),
+            credentialType: 'oauth_token'
+          });
+          credentialIds.push(id);
+        }
       }
     }
   }
