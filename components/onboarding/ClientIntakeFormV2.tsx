@@ -163,10 +163,15 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     advertisingSchema
   ];
 
-  // React Hook Form setup for current step
+  // React Hook Form setup - FIXED: Memoize resolver to prevent re-initialization
+  const currentResolver = React.useMemo(
+    () => zodResolver(stepSchemas[currentStep]),
+    [currentStep]
+  );
+
   const methods = useForm<ClientIntakeData>({
     mode: 'onChange', // Real-time validation
-    resolver: zodResolver(stepSchemas[currentStep]),
+    resolver: currentResolver,
     defaultValues: initialFormData || defaultFormData
   });
 
@@ -178,6 +183,73 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     setValue,
     getValues
   } = methods;
+
+  // Business lookup state
+  const [lookupLoading, setLookupLoading] = useState(false);
+
+  // Handle business lookup
+  const handleBusinessLookup = async () => {
+    const url = getValues('website');
+    if (!url || url.length < 5) return;
+
+    setLookupLoading(true);
+
+    try {
+      const response = await fetch('/api/onboarding/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: url, searchBy: 'url' })
+      });
+
+      const data = await response.json();
+
+      if (data.found) {
+        if (data.businessName) setValue('businessName', data.businessName);
+        if (data.phone) setValue('phone', data.phone);
+        if (data.email) setValue('email', data.email);
+        if (data.address) setValue('address', data.address);
+        if (data.industry) setValue('industry', data.industry);
+        if (data.websitePlatform) setValue('websitePlatform', data.websitePlatform);
+        if (data.keywords && data.keywords.length > 0) {
+          setValue('targetKeywords', data.keywords.join('\n'));
+        }
+
+        toast({
+          title: '✅ Business Found!',
+          description: `Auto-filled details for ${data.businessName}`,
+        });
+      } else {
+        toast({
+          title: 'Business not found',
+          description: 'Please enter details manually.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Lookup error:', error);
+      toast({
+        title: 'Lookup failed',
+        description: 'Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Watch website field for automatic lookup
+  const websiteUrl = watch('website');
+
+  // Auto-trigger lookup when website URL is entered
+  useEffect(() => {
+    if (websiteUrl && websiteUrl.length > 10 && currentStep === 1) {
+      const timer = setTimeout(() => {
+        handleBusinessLookup();
+      }, 2000); // Debounce 2 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [websiteUrl]);
 
   // Watch all form values for auto-save
   const formValues = watch();
@@ -214,12 +286,16 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   }, 2000);
 
-  // Trigger auto-save when form changes
+  // Trigger auto-save when form changes - FIXED: Remove formValues dependency
+  // The debouncedSave function already calls getValues(), so we don't need to watch formValues
   useEffect(() => {
-    if (isDirty && formValues.businessName && formValues.email) {
-      debouncedSave();
+    if (isDirty) {
+      const data = getValues();
+      if (data.businessName && data.email) {
+        debouncedSave();
+      }
     }
-  }, [formValues, isDirty]);
+  }, [isDirty, debouncedSave, getValues]);
 
   // Load initial data
   useEffect(() => {
@@ -410,6 +486,16 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
                 aria-invalid={errors.website ? 'true' : 'false'}
               />
             </FormField>
+
+            <Button
+              type="button"
+              onClick={handleBusinessLookup}
+              disabled={lookupLoading || !watch('website')}
+              variant="outline"
+              className="w-full"
+            >
+              {lookupLoading ? 'Looking up...' : '🔍 Auto-Fill Business Details'}
+            </Button>
 
             <FormField name="websitePlatform" label="Website Platform">
               <Input
