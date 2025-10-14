@@ -95,14 +95,14 @@ export async function POST(request: NextRequest) {
       .from('companies')
       .insert([{
         name: businessName,
-        website: website,
+        website: website || 'https://example.com',
         industry: industry || 'Not specified',
-        contact_name: contactName,
-        contact_email: email,
-        contact_phone: phone,
-        address: address,
-        onboarding_completed: true,
-        onboarding_completed_at: new Date().toISOString()
+        email: email,
+        phone: phone || '',
+        address: address || '',
+        city: '', // TODO: Parse from address
+        state: '', // TODO: Parse from address
+        zip: '' // TODO: Parse from address
       }])
       .select('id')
       .single();
