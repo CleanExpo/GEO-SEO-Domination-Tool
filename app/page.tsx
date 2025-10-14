@@ -33,15 +33,15 @@ export default function Home() {
             </p>
             <div className="flex gap-4 justify-center">
               <Button asChild size="lg" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 px-10 py-7 text-lg">
-                <Link href="/dashboard">
-                  Get Started Free
+                <Link href="/onboarding">
+                  Add New Client
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="px-10 py-7 text-lg border-2 hover:border-emerald-200">
-                <Link href="/sandbox">
-                  <Terminal className="mr-2 h-5 w-5" />
-                  Try Sandbox
+                <Link href="/dashboard">
+                  <BarChart3 className="mr-2 h-5 w-5" />
+                  View Dashboard
                 </Link>
               </Button>
             </div>
@@ -235,8 +235,8 @@ export default function Home() {
             Join thousands of businesses optimizing their SEO with our AI-powered platform
           </p>
           <Button asChild size="lg" variant="secondary" className="bg-white text-emerald-600 hover:bg-gray-50 px-12 py-8 text-lg font-bold shadow-xl hover:shadow-2xl">
-            <Link href="/dashboard">
-              Get Started Free
+            <Link href="/onboarding">
+              Add Your First Client
               <ArrowRight className="ml-3 h-6 w-6" />
             </Link>
           </Button>

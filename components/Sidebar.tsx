@@ -11,43 +11,22 @@ import {
   Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield, ClipboardCheck, Link2, Sparkles, Target
 } from 'lucide-react';
 
+// STREAMLINED NAVIGATION - Client Management & Automation Focus
 const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, section: 'SEO' },
-  { name: 'New Client', href: '/onboarding/new', icon: UserPlus, section: 'SEO', badge: 'AUTO' },
-  { name: 'Companies', href: '/companies', icon: Building2, section: 'SEO' },
-  { name: 'Content Opportunities', href: '/content-opportunities', icon: Lightbulb, section: 'SEO', badge: 'NEW' },
-  { name: 'SEO Audits', href: '/audits', icon: Search, section: 'SEO' },
-  { name: 'SEO Audit Tools', href: '/seo/audits', icon: Zap, section: 'SEO' },
-  { name: 'Layout Audit', href: '/layout-audit', icon: ClipboardCheck, section: 'SEO', badge: 'NEW' },
-  { name: 'Keywords', href: '/keywords', icon: TrendingUp, section: 'SEO' },
-  { name: 'Rankings', href: '/rankings', icon: BarChart3, section: 'SEO' },
-  { name: 'Reports', href: '/reports', icon: FileText, section: 'SEO' },
-  { name: 'Schedule', href: '/schedule', icon: Clock, section: 'SEO' },
-];
-
-const freeToolsNavigation = [
-  { name: 'Free Tools Hub', href: '/tools', icon: Zap, section: 'Free Tools', badge: 'FREE' },
-  { name: 'Backlink Checker', href: '/tools/backlink-checker', icon: Link2, section: 'Free Tools' },
-  { name: 'Keyword Generator', href: '/tools/keyword-generator', icon: Sparkles, section: 'Free Tools' },
-  { name: 'Authority Checker', href: '/tools/authority-checker', icon: TrendingUp, section: 'Free Tools' },
-  { name: 'SERP Checker', href: '/tools/serp-checker', icon: Target, section: 'Free Tools' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Main' },
+  { name: 'New Client Onboarding', href: '/onboarding', icon: UserPlus, section: 'Main', badge: 'START HERE' },
+  { name: 'My Clients', href: '/companies', icon: Building2, section: 'Main' },
+  { name: 'Task Inbox', href: '/task-inbox', icon: Inbox, section: 'Main', badge: 'AUTO' },
+  { name: 'Reports', href: '/reports', icon: FileText, section: 'Main' },
 ];
 
 const automationNavigation = [
-  { name: 'Post-Audit System', href: '/post-audit', icon: Shield, section: 'Automation', badge: 'NEW' },
-  { name: 'Task Inbox', href: '/task-inbox', icon: Inbox, section: 'Automation', badge: 'AUTONOMOUS' },
-  { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Automation', badge: 'NEW' },
-  { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Automation', badge: 'NEW' },
-  { name: 'Terminal Pro', href: '/sandbox/terminal-pro', icon: Code, section: 'Automation', badge: 'PRO' },
-  { name: 'Tactical Coding', href: '/tactical', icon: Zap, section: 'Automation', badge: 'NEW' },
+  { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Automation', badge: 'AUTO' },
+  { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Automation' },
 ];
 
 const resourcesNavigation = [
-  { name: 'Prompts Library', href: '/resources/prompts', icon: MessageSquare, section: 'Resources' },
-];
-
-const membersNavigation = [
-  { name: 'Support', href: '/support', icon: Headphones, section: 'Members' },
+  { name: 'Support', href: '/support', icon: Headphones, section: 'Resources' },
 ];
 
 export function Sidebar() {
@@ -160,11 +139,9 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
-        {renderNavSection('SEO Tools', navigation)}
-        {renderNavSection('Free Tools', freeToolsNavigation)}
+        {renderNavSection('Client Management', navigation)}
         {renderNavSection('Automation', automationNavigation)}
-        {renderNavSection('Resources', resourcesNavigation)}
-        {renderNavSection('Support', membersNavigation)}
+        {renderNavSection('Help & Support', resourcesNavigation)}
       </nav>
 
       {/* Settings & Theme Toggle */}
