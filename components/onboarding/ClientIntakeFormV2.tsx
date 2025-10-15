@@ -530,7 +530,9 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
                 onAutoFill={(data) => {
                   console.log('[Auto-Fill] Received data:', data);
 
-                  // Pre-fill all discovered fields
+                  // ========================================
+                  // STEP 0-1: Basic Business Info
+                  // ========================================
                   if (data.organization) {
                     setValue('businessName', data.organization, { shouldValidate: true, shouldDirty: true });
                     console.log('[Auto-Fill] Set businessName:', data.organization);
@@ -548,17 +550,101 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
                     console.log('[Auto-Fill] Set websitePlatform:', data.platform);
                   }
 
-                  const fieldsCount = [
+                  // ========================================
+                  // STEP 5: Website Access Credentials
+                  // ========================================
+                  let credentialFieldsCount = 0;
+
+                  // Auto-detect CMS access based on platform
+                  if (data.platform) {
+                    setValue('websiteAccess.hasCmsAccess', true, { shouldValidate: true, shouldDirty: true });
+                    setValue('websiteAccess.cmsType', data.platform, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set CMS type:', data.platform);
+                    credentialFieldsCount++;
+
+                    // Set default admin URL based on platform
+                    const website = getValues('website');
+                    if (website) {
+                      let adminUrl = '';
+                      if (data.platform.toLowerCase().includes('wordpress')) {
+                        adminUrl = `${website}/wp-admin`;
+                      } else if (data.platform.toLowerCase().includes('shopify')) {
+                        adminUrl = `${website}/admin`;
+                      } else if (data.platform.toLowerCase().includes('wix')) {
+                        adminUrl = 'https://manage.wix.com';
+                      }
+                      if (adminUrl) {
+                        setValue('websiteAccess.cmsAdminUrl', adminUrl, { shouldValidate: true, shouldDirty: true });
+                        console.log('[Auto-Fill] Set CMS admin URL:', adminUrl);
+                      }
+                    }
+                  }
+
+                  // Auto-detect hosting provider (from WHOIS)
+                  if (data.hostingProvider) {
+                    setValue('websiteAccess.hasHostingAccess', true, { shouldValidate: true, shouldDirty: true });
+                    setValue('websiteAccess.hostingProvider', data.hostingProvider, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set hosting provider:', data.hostingProvider);
+                    credentialFieldsCount++;
+                  }
+
+                  // Auto-detect DNS provider (from WHOIS)
+                  if (data.dnsProvider) {
+                    setValue('websiteAccess.hasDnsAccess', true, { shouldValidate: true, shouldDirty: true });
+                    setValue('websiteAccess.dnsProvider', data.dnsProvider, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set DNS provider:', data.dnsProvider);
+                    credentialFieldsCount++;
+                  } else if (data.registrar) {
+                    // Fallback: use registrar as DNS provider
+                    setValue('websiteAccess.hasDnsAccess', true, { shouldValidate: true, shouldDirty: true });
+                    setValue('websiteAccess.dnsProvider', data.registrar, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set DNS provider (from registrar):', data.registrar);
+                    credentialFieldsCount++;
+                  }
+
+                  // ========================================
+                  // STEP 6: Social Media Credentials
+                  // ========================================
+                  if (data.socialProfiles) {
+                    if (data.socialProfiles.facebook) {
+                      setValue('socialMedia.hasFacebookAccess', true, { shouldValidate: true, shouldDirty: true });
+                      setValue('socialMedia.facebookPageUrl', data.socialProfiles.facebook, { shouldValidate: true, shouldDirty: true });
+                      console.log('[Auto-Fill] Set Facebook URL:', data.socialProfiles.facebook);
+                      credentialFieldsCount++;
+                    }
+                    if (data.socialProfiles.instagram) {
+                      setValue('socialMedia.hasInstagramAccess', true, { shouldValidate: true, shouldDirty: true });
+                      setValue('socialMedia.instagramUsername', data.socialProfiles.instagram.replace('https://instagram.com/', '@'), { shouldValidate: true, shouldDirty: true });
+                      console.log('[Auto-Fill] Set Instagram username');
+                      credentialFieldsCount++;
+                    }
+                    if (data.socialProfiles.linkedin) {
+                      setValue('socialMedia.hasLinkedinAccess', true, { shouldValidate: true, shouldDirty: true });
+                      setValue('socialMedia.linkedinPageUrl', data.socialProfiles.linkedin, { shouldValidate: true, shouldDirty: true });
+                      console.log('[Auto-Fill] Set LinkedIn URL');
+                      credentialFieldsCount++;
+                    }
+                    if (data.socialProfiles.twitter) {
+                      setValue('socialMedia.hasTwitterAccess', true, { shouldValidate: true, shouldDirty: true });
+                      setValue('socialMedia.twitterUsername', data.socialProfiles.twitter.replace('https://twitter.com/', '@'), { shouldValidate: true, shouldDirty: true });
+                      console.log('[Auto-Fill] Set Twitter username');
+                      credentialFieldsCount++;
+                    }
+                  }
+
+                  const basicFieldsCount = [
                     data.organization,
                     data.contactEmail,
                     data.contactPhone,
                     data.platform
                   ].filter(Boolean).length;
 
+                  const totalFieldsCount = basicFieldsCount + credentialFieldsCount;
+
                   toast({
                     title: '✨ Auto-filled!',
-                    description: `Pre-filled ${fieldsCount} field${fieldsCount !== 1 ? 's' : ''} from discovered data. Go to Step 1 (Business Info) to see the data.`,
-                    duration: 5000,
+                    description: `Pre-filled ${totalFieldsCount} field${totalFieldsCount !== 1 ? 's' : ''} across multiple steps. ${credentialFieldsCount > 0 ? `Detected ${credentialFieldsCount} credential field${credentialFieldsCount !== 1 ? 's' : ''} (Steps 5-6).` : ''}`,
+                    duration: 7000,
                   });
 
                   // Navigate back to Step 0 to show the auto-filled data
