@@ -191,7 +191,7 @@ function calculateConfidence(whoisData: any, scrapedData: any) {
   if (scrapedData?.phone || whoisData?.contactPhone) contactScore += 50;
 
   // Platform confidence
-  if (scrapedData?.platform) {
+  if (scrapedData?.websitePlatform || scrapedData?.platform) {
     platformScore = 100; // We detected the platform
   }
 
