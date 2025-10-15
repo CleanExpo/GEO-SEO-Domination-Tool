@@ -232,7 +232,6 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
   };
 
   // Debounced auto-save (2 seconds after last change)
-  // NOTE: Disabled watch() to prevent re-render on every keystroke
   const debouncedSave = useDebouncedCallback(async () => {
     const data = getValues();
     if (!data.businessName || !data.email) return;
@@ -264,8 +263,17 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   }, 2000);
 
-  // Removed auto-save useEffect to test focus issue
-  // TODO: Re-implement auto-save without causing re-renders
+  // Auto-save on form changes (restored with focus-safe implementation)
+  useEffect(() => {
+    // Only trigger save if form has data
+    const subscription = methods.watch((formData) => {
+      if (formData.businessName && formData.email) {
+        debouncedSave();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [debouncedSave, methods])
 
   // Load initial data
   useEffect(() => {
