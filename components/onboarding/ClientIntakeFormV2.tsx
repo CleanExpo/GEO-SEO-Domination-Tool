@@ -454,10 +454,10 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
         return (
           <div className="space-y-6">
             <FormField name="businessName" label="Business Name" required>
-              <input
-                name="businessName"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              <Input
+                {...register('businessName')}
                 placeholder="Enter your business name"
+                aria-invalid={errors.businessName ? 'true' : 'false'}
               />
             </FormField>
 
@@ -528,14 +528,24 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
               <AutoDiscoveryCard
                 data={discoveryData}
                 onAutoFill={(data) => {
+                  console.log('[Auto-Fill] Received data:', data);
+
                   // Pre-fill all discovered fields
-                  if (data.organization) setValue('businessName', data.organization);
-                  if (data.contactEmail) setValue('email', data.contactEmail);
-                  if (data.contactPhone) setValue('phone', data.contactPhone);
-                  if (data.platform) setValue('websitePlatform', data.platform);
-                  if (data.registrar) {
-                    // Store registrar info for reference (could add to company notes later)
-                    console.log('[Auto-Fill] Registrar:', data.registrar);
+                  if (data.organization) {
+                    setValue('businessName', data.organization, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set businessName:', data.organization);
+                  }
+                  if (data.contactEmail) {
+                    setValue('email', data.contactEmail, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set email:', data.contactEmail);
+                  }
+                  if (data.contactPhone) {
+                    setValue('phone', data.contactPhone, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set phone:', data.contactPhone);
+                  }
+                  if (data.platform) {
+                    setValue('websitePlatform', data.platform, { shouldValidate: true, shouldDirty: true });
+                    console.log('[Auto-Fill] Set websitePlatform:', data.platform);
                   }
 
                   const fieldsCount = [
@@ -547,10 +557,16 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
 
                   toast({
                     title: '✨ Auto-filled!',
-                    description: `Pre-filled ${fieldsCount} field${fieldsCount !== 1 ? 's' : ''} from discovered data`,
+                    description: `Pre-filled ${fieldsCount} field${fieldsCount !== 1 ? 's' : ''} from discovered data. Go to Step 1 (Business Info) to see the data.`,
+                    duration: 5000,
                   });
 
+                  // Navigate back to Step 0 to show the auto-filled data
+                  setCurrentStep(0);
                   setShowDiscovery(false);
+
+                  // Trigger auto-save
+                  debouncedSave();
                 }}
                 onDismiss={() => setShowDiscovery(false)}
               />
