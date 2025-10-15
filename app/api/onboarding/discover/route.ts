@@ -94,18 +94,22 @@ export async function POST(request: NextRequest) {
     console.log('[Discovery] Step 2: Website analysis...');
 
     // Use existing /api/onboarding/lookup endpoint
+    // Note: lookup expects { query, searchBy } format
     const lookupResponse = await fetch(
       `${request.nextUrl.origin}/api/onboarding/lookup`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ website }),
+        body: JSON.stringify({ query: website, searchBy: 'url' }),
       }
     );
 
     let scrapedData: any = null;
     if (lookupResponse.ok) {
       scrapedData = await lookupResponse.json();
+      console.log('[Discovery] Scraped data found:', scrapedData.found);
+    } else {
+      console.error('[Discovery] Lookup failed:', await lookupResponse.text());
     }
 
     // =====================================================
@@ -128,10 +132,10 @@ export async function POST(request: NextRequest) {
       contactEmail: scrapedData?.email || whoisData?.contactEmail,
       contactPhone: scrapedData?.phone || whoisData?.contactPhone,
       contactName: whoisData?.contactName,
-      organization: whoisData?.organization || scrapedData?.businessName,
+      organization: scrapedData?.businessName || whoisData?.organization,
 
       // Website Platform
-      platform: scrapedData?.platform,
+      platform: scrapedData?.websitePlatform || scrapedData?.platform,
       platformVersion: scrapedData?.platformVersion,
       hasSSL: website.startsWith('https://'),
 
