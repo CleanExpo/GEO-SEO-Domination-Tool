@@ -27,8 +27,10 @@ import {
   Save,
   FolderOpen,
   Check,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
+import { AutoDiscoveryCard } from './AutoDiscoveryCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -181,6 +183,11 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
   // Business lookup state
   const [lookupLoading, setLookupLoading] = useState(false);
 
+  // Auto-discovery state
+  const [discoveryData, setDiscoveryData] = useState<any>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [showDiscovery, setShowDiscovery] = useState(false);
+
   // Handle business lookup
   const handleBusinessLookup = async () => {
     const url = getValues('website');
@@ -263,6 +270,35 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   }, 2000);
 
+  // Debounced auto-discovery (2 seconds after URL input)
+  const debouncedDiscover = useDebouncedCallback(async (url: string) => {
+    if (!url || url.length < 10) return;
+
+    setDiscovering(true);
+    try {
+      console.log('[Auto-Discovery] Analyzing:', url);
+
+      const response = await fetch('/api/onboarding/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ website: url })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Auto-Discovery] Success:', data);
+        setDiscoveryData(data);
+        setShowDiscovery(true);
+      } else {
+        console.error('[Auto-Discovery] Failed:', await response.text());
+      }
+    } catch (error) {
+      console.error('[Auto-Discovery] Error:', error);
+    } finally {
+      setDiscovering(false);
+    }
+  }, 2000);
+
   // Auto-save on form changes (restored with focus-safe implementation)
   useEffect(() => {
     // Only trigger save if form has data
@@ -273,7 +309,18 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     });
 
     return () => subscription.unsubscribe();
-  }, [debouncedSave, methods])
+  }, [debouncedSave, methods]);
+
+  // Auto-discovery on website URL changes
+  useEffect(() => {
+    const subscription = methods.watch((formData) => {
+      if (formData.website) {
+        debouncedDiscover(formData.website);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [debouncedDiscover, methods]);
 
   // Load initial data
   useEffect(() => {
@@ -467,6 +514,47 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
                 aria-invalid={errors.website ? 'true' : 'false'}
               />
             </FormField>
+
+            {/* Auto-Discovery Loading State */}
+            {discovering && (
+              <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Analyzing your website and discovering details...</span>
+              </div>
+            )}
+
+            {/* Auto-Discovery Results Card */}
+            {showDiscovery && discoveryData && (
+              <AutoDiscoveryCard
+                data={discoveryData}
+                onAutoFill={(data) => {
+                  // Pre-fill all discovered fields
+                  if (data.organization) setValue('businessName', data.organization);
+                  if (data.contactEmail) setValue('email', data.contactEmail);
+                  if (data.contactPhone) setValue('phone', data.contactPhone);
+                  if (data.platform) setValue('websitePlatform', data.platform);
+                  if (data.registrar) {
+                    // Store registrar info for reference (could add to company notes later)
+                    console.log('[Auto-Fill] Registrar:', data.registrar);
+                  }
+
+                  const fieldsCount = [
+                    data.organization,
+                    data.contactEmail,
+                    data.contactPhone,
+                    data.platform
+                  ].filter(Boolean).length;
+
+                  toast({
+                    title: '✨ Auto-filled!',
+                    description: `Pre-filled ${fieldsCount} field${fieldsCount !== 1 ? 's' : ''} from discovered data`,
+                  });
+
+                  setShowDiscovery(false);
+                }}
+                onDismiss={() => setShowDiscovery(false)}
+              />
+            )}
 
             <Button
               type="button"
