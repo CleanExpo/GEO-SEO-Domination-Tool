@@ -89,13 +89,27 @@ function CompaniesContent() {
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        setFormData({ name: '', website: '', industry: '', location: '' });
-        setShowForm(false);
-        fetchCompanies();
+      if (response.status === 401) {
+        // Authentication required - redirect to onboarding instead
+        alert('Please use the onboarding form to create your first company.\n\nRedirecting you now...');
+        window.location.href = '/onboarding';
+        return;
       }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        alert(`Failed to create company: ${errorData.error || 'Please try again'}`);
+        return;
+      }
+
+      // Success
+      alert(`✅ Company "${formData.name}" created successfully!`);
+      setFormData({ name: '', website: '', industry: '', location: '' });
+      setShowForm(false);
+      fetchCompanies();
     } catch (error) {
       console.error('Failed to create company:', error);
+      alert('Network error - please check your connection and try again');
     }
   };
 
