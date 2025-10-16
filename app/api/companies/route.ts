@@ -15,7 +15,16 @@ const companySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Use admin client to bypass RLS issues with organisation_members
-    const supabase = createAdminClient();
+    let supabase;
+    try {
+      supabase = createAdminClient();
+    } catch (adminError: any) {
+      console.error('[Companies API] Failed to create admin client:', adminError);
+      return NextResponse.json(
+        { companies: [], error: 'Database configuration error: ' + adminError.message },
+        { status: 200 }
+      );
+    }
 
     // Get companies - temporarily bypass auth to fix infinite recursion
     const { data, error } = await supabase
