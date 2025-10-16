@@ -77,7 +77,11 @@ export async function GET() {
         .insert({
           name: 'ENCRYPTION_TEST_COMPANY',
           website: 'https://encryption-test.example.com',
-          status: 'test'
+          address: 'Test Address',
+          city: 'Test City',
+          state: 'Test State',
+          zip: '12345',
+          phone: '555-0000'
         })
         .select('id')
         .single();
