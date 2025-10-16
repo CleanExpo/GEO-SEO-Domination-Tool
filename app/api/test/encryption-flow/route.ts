@@ -11,7 +11,14 @@
 
 import { NextResponse } from 'next/server';
 import { encryptCredentials, decryptCredentials } from '@/lib/encryption';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Use service role client to bypass RLS policies for testing
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+);
 
 export async function GET() {
   const testResults: any = {
