@@ -299,7 +299,9 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   }, 2000);
 
-  // Auto-save on form changes (restored with focus-safe implementation)
+  // DISABLED: Constant auto-save causes UI stutter
+  // Save is now triggered manually on step navigation (see onNext function)
+  /*
   useEffect(() => {
     // Only trigger save if form has data
     const subscription = methods.watch((formData) => {
@@ -310,6 +312,7 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
 
     return () => subscription.unsubscribe();
   }, [debouncedSave, methods]);
+  */
 
   // Auto-discovery on website URL changes
   useEffect(() => {
@@ -335,6 +338,61 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     }
   }, [initialFormData]);
 
+  // Load saved data from URL params (for returning users)
+  useEffect(() => {
+    const loadSavedData = async () => {
+      // Skip if initialFormData was already provided
+      if (initialFormData) return;
+
+      // Try to get business name and email from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const businessName = urlParams.get('businessName');
+      const email = urlParams.get('email');
+
+      if (!businessName || !email) {
+        console.log('[Load] No URL params found, starting fresh onboarding');
+        return;
+      }
+
+      console.log('[Load] Attempting to load saved data for:', { businessName, email });
+
+      try {
+        const response = await fetch(
+          `/api/onboarding/save?businessName=${encodeURIComponent(businessName)}&email=${encodeURIComponent(email)}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.found) {
+            console.log('[Load] Found saved data, restoring form...');
+
+            // Load all form data
+            Object.keys(data.formData).forEach((key) => {
+              setValue(key as keyof ClientIntakeData, data.formData[key]);
+            });
+
+            // Restore current step
+            if (data.currentStep !== undefined && data.currentStep !== null) {
+              setCurrentStep(data.currentStep);
+            }
+
+            toast({
+              title: '✅ Progress Restored!',
+              description: `Welcome back! Loaded saved data for ${businessName}.`,
+              duration: 5000,
+            });
+          } else {
+            console.log('[Load] No saved data found');
+          }
+        }
+      } catch (error) {
+        console.error('[Load] Failed to load saved data:', error);
+      }
+    };
+
+    loadSavedData();
+  }, []); // Run once on mount
+
   const steps = [
     { id: 'business', title: 'Business Info', icon: Building2 },
     { id: 'website', title: 'Website', icon: Globe },
@@ -348,7 +406,42 @@ export function ClientIntakeFormV2({ onComplete, initialFormData }: ClientIntake
     { id: 'advertising', title: 'Advertising', icon: Target }
   ];
 
-  const onNext = () => {
+  // Manual save function (called on step navigation)
+  const manualSave = async () => {
+    const data = getValues();
+    if (!data.businessName || !data.email) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/onboarding/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessName: data.businessName,
+          email: data.email,
+          formData: data,
+          currentStep
+        })
+      });
+
+      if (response.ok) {
+        setLastSaved(new Date());
+        console.log('[Manual Save] Success at step', currentStep);
+      } else {
+        const error = await response.json();
+        console.error('[Manual Save] Failed:', error);
+      }
+    } catch (error) {
+      console.error('[Manual Save] Error:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onNext = async () => {
+    // Save progress before moving to next step
+    await manualSave();
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
