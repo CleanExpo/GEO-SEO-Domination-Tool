@@ -7,3 +7,4 @@ export async function GET() {
     message: "This is a brand new endpoint deployed at " + new Date().toISOString()
   });
 }
+Deployment timestamp: $(date)
