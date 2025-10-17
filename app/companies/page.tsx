@@ -36,7 +36,7 @@ function CompaniesContent() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/companies');
+      const response = await fetch('/api/companies-list');
 
       if (!response.ok) {
         throw new Error('Failed to fetch companies');
