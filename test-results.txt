@@ -1,0 +1,42 @@
+
+Running 3 tests using 1 worker
+
+
+=== API Responses ===
+200  - https://geo-seo-domination-tool.vercel.app/api/companies-list
+200  - https://geo-seo-domination-tool.vercel.app/api/scheduler
+200  - https://geo-seo-domination-tool.vercel.app/api/scheduler
+
+=== Console Errors ===
+No console errors detected
+
+=== Failed Requests ===
+No failed requests
+  ok 1 tests\production-validation.spec.ts:11:7 › Production Validation Tests › Companies page should load without errors (5.7s)
+
+=== Direct API Test ===
+URL: https://geo-seo-domination-tool.vercel.app/api/companies
+Status: 200 OK
+Headers: {
+  age: [32m'0'[39m,
+  [32m'cache-control'[39m: [32m'public, max-age=0, must-revalidate'[39m,
+  [32m'content-encoding'[39m: [32m'br'[39m,
+  [32m'content-type'[39m: [32m'application/json'[39m,
+  date: [32m'Fri, 17 Oct 2025 10:09:12 GMT'[39m,
+  server: [32m'Vercel'[39m,
+  [32m'strict-transport-security'[39m: [32m'max-age=63072000; includeSubDomains; preload'[39m,
+  vary: [32m'rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch'[39m,
+  [32m'x-matched-path'[39m: [32m'/api/companies'[39m,
+  [32m'x-vercel-cache'[39m: [32m'MISS'[39m,
+  [32m'x-vercel-id'[39m: [32m'cle1::iad1::qbz24-1760695752422-38161ef2300d'[39m,
+  [32m'transfer-encoding'[39m: [32m'chunked'[39m
+}
+Body: {"companies":[]}...
+  ok 2 tests\production-validation.spec.ts:83:7 › Production Validation Tests › API /companies endpoint should return 200 (829ms)
+
+=== New Endpoint Test ===
+URL: https://geo-seo-domination-tool.vercel.app/api/companies-list
+Status: 200 OK
+  ok 3 tests\production-validation.spec.ts:105:7 › Production Validation Tests › API /companies-list endpoint should return 200 (334ms)
+
+  3 passed (10.2s)
