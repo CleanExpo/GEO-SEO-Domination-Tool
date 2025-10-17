@@ -9,6 +9,9 @@ npm-debug.log*
 .DS_Store
 .tmp
 .cache
+# Tools directories (not needed for Railway deployment)
+tools/
+**/tools
 # Next build artifacts (rebuilt in container)
 **/.next
 # Local env & secrets (compose mounts env_file when needed)
