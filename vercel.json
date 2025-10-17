@@ -3,7 +3,7 @@
   "version": 2,
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "installCommand": "npm ci --omit=dev",
   "functions": {
     "app/api/audits/117-point/route.ts": {
       "maxDuration": 60
