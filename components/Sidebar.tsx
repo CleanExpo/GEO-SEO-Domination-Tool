@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import {
   LayoutDashboard, Building2, Search, TrendingUp, BarChart3, FileText,
   Settings, Home, FolderKanban, MessageSquare,
-  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Bot, Code, UserPlus, Lightbulb, Inbox, Shield, ClipboardCheck, Link2, Sparkles, Target
+  Headphones, Clock, LogOut, Menu, X, Activity, Zap, Terminal, Code, UserPlus, Lightbulb, Inbox, Shield, ClipboardCheck, Link2, Sparkles, Target
 } from 'lucide-react';
 
 // STREAMLINED NAVIGATION - Client Management & Automation Focus
@@ -21,7 +21,6 @@ const navigation = [
 ];
 
 const automationNavigation = [
-  { name: 'AI Agents', href: '/sandbox/agents', icon: Bot, section: 'Automation', badge: 'AUTO' },
   { name: 'SEO Monitor', href: '/sandbox/seo-monitor', icon: Activity, section: 'Automation' },
 ];
 
