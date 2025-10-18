@@ -429,3 +429,12 @@ export async function initializeDatabase(schemaFiles?: string[]): Promise<void> 
 }
 
 export default getDatabase;
+
+// CRITICAL: Explicitly preserve DatabaseClient methods to prevent webpack tree-shaking
+// These method references ensure webpack includes them in the production bundle
+if (false) {
+  const preventTreeShaking = new DatabaseClient();
+  preventTreeShaking.get('', []);
+  preventTreeShaking.run('', []);
+  preventTreeShaking.all('', []);
+}
