@@ -25,29 +25,23 @@ export async function POST(request: NextRequest) {
 
     const db = getDatabase();
 
-    // DEBUG: Check what db actually is
-    console.log('[SAVE] db type:', typeof db);
-    console.log('[SAVE] db constructor:', db?.constructor?.name);
-    console.log('[SAVE] db has get?:', typeof db?.get);
-    console.log('[SAVE] db methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(db)));
-
-    // Check if save already exists
-    const existing = await db.get(
+    // Check if save already exists using queryOne (base method, not tree-shaken)
+    const existing = await db.queryOne(
       'SELECT id FROM saved_onboarding WHERE business_name = ? AND email = ?',
       [businessName, email]
     );
 
     if (existing) {
-      // Update existing save
-      await db.run(
+      // Update existing save using query (base method)
+      await db.query(
         `UPDATE saved_onboarding
          SET form_data = ?, current_step = ?, last_saved = CURRENT_TIMESTAMP
          WHERE business_name = ? AND email = ?`,
         [JSON.stringify(dataToSave), currentStep, businessName, email]
       );
     } else {
-      // Insert new save
-      await db.run(
+      // Insert new save using query (base method)
+      await db.query(
         `INSERT INTO saved_onboarding (business_name, email, form_data, current_step, last_saved)
          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [businessName, email, JSON.stringify(dataToSave), currentStep]
@@ -115,8 +109,8 @@ export async function GET(request: NextRequest) {
 
     const db = getDatabase();
 
-    // Case-insensitive search
-    const saved = await db.get(
+    // Case-insensitive search using queryOne (base method, not tree-shaken)
+    const saved = await db.queryOne(
       `SELECT form_data, current_step, last_saved, business_name, email
        FROM saved_onboarding
        WHERE LOWER(business_name) = LOWER(?) AND LOWER(email) = LOWER(?)`,
