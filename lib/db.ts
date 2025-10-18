@@ -4,9 +4,13 @@
  */
 
 import { Pool } from 'pg';
-import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import type BetterSqlite3 from 'better-sqlite3';
+
+// Lazy-load better-sqlite3 only when needed (development)
+// This prevents import errors in production when it's not installed
+let Database: typeof BetterSqlite3 | null = null;
 
 // Database configuration type
 export type DatabaseConfig = {
@@ -33,7 +37,7 @@ export type RunResult = {
 export class DatabaseClient {
   private config: DatabaseConfig;
   private pgPool?: Pool;
-  private sqliteDb?: Database.Database;
+  private sqliteDb?: BetterSqlite3.Database;
   private isInitialized = false;
 
   constructor(config?: DatabaseConfig) {
@@ -108,7 +112,16 @@ export class DatabaseClient {
         throw error;
       }
     } else {
-      // SQLite
+      // SQLite - Lazy load better-sqlite3 only when needed
+      if (!Database) {
+        try {
+          Database = (await import('better-sqlite3')).default;
+        } catch (error) {
+          console.error('❌ Failed to load better-sqlite3. Install it with: npm install better-sqlite3');
+          throw new Error('better-sqlite3 is required for SQLite database but is not installed');
+        }
+      }
+
       const dbDir = path.dirname(this.config.sqlitePath!);
       if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });
