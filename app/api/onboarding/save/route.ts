@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/auth/supabase-admin';
+import { getDatabase } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,42 +23,29 @@ export async function POST(request: NextRequest) {
     // Use formData if provided, otherwise use onboardingData, or default to empty object
     const dataToSave = formData || onboardingData || {};
 
-    const supabase = createAdminClient();
+    const db = getDatabase();
 
     // Check if save already exists
-    const { data: existing } = await supabase
-      .from('saved_onboarding')
-      .select('id')
-      .eq('business_name', businessName)
-      .eq('email', email)
-      .single();
+    const existing = await db.get(
+      'SELECT id FROM saved_onboarding WHERE business_name = ? AND email = ?',
+      [businessName, email]
+    );
 
     if (existing) {
       // Update existing save
-      const { error } = await supabase
-        .from('saved_onboarding')
-        .update({
-          form_data: dataToSave,
-          current_step: currentStep,
-          last_saved: new Date().toISOString()
-        })
-        .eq('business_name', businessName)
-        .eq('email', email);
-
-      if (error) throw error;
+      await db.run(
+        `UPDATE saved_onboarding
+         SET form_data = ?, current_step = ?, last_saved = CURRENT_TIMESTAMP
+         WHERE business_name = ? AND email = ?`,
+        [JSON.stringify(dataToSave), currentStep, businessName, email]
+      );
     } else {
       // Insert new save
-      const { error } = await supabase
-        .from('saved_onboarding')
-        .insert([{
-          business_name: businessName,
-          email,
-          form_data: dataToSave,
-          current_step: currentStep,
-          last_saved: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
+      await db.run(
+        `INSERT INTO saved_onboarding (business_name, email, form_data, current_step, last_saved)
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [businessName, email, JSON.stringify(dataToSave), currentStep]
+      );
     }
 
     return NextResponse.json({
@@ -120,17 +107,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createAdminClient();
+    const db = getDatabase();
 
-    // Case-insensitive search using ilike
-    const { data: saved, error } = await supabase
-      .from('saved_onboarding')
-      .select('form_data, current_step, last_saved, business_name, email')
-      .ilike('business_name', businessName.trim())
-      .ilike('email', email.trim())
-      .single();
+    // Case-insensitive search
+    const saved = await db.get(
+      `SELECT form_data, current_step, last_saved, business_name, email
+       FROM saved_onboarding
+       WHERE LOWER(business_name) = LOWER(?) AND LOWER(email) = LOWER(?)`,
+      [businessName.trim(), email.trim()]
+    );
 
-    if (error || !saved) {
+    if (!saved) {
       // For debugging: show what we searched for
       console.log('[Load] No saved data found for:', {
         businessName: businessName.trim(),
@@ -152,9 +139,19 @@ export async function GET(request: NextRequest) {
       email: saved.email
     });
 
+    // Parse JSON form_data if it's a string
+    let formData = saved.form_data;
+    if (typeof formData === 'string') {
+      try {
+        formData = JSON.parse(formData);
+      } catch (e) {
+        console.error('Failed to parse form_data:', e);
+      }
+    }
+
     return NextResponse.json({
       found: true,
-      formData: saved.form_data,
+      formData,
       currentStep: saved.current_step,
       lastSaved: saved.last_saved
     });
