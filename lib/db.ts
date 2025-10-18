@@ -6,11 +6,10 @@
 import { Pool } from 'pg';
 import path from 'path';
 import fs from 'fs';
-import type BetterSqlite3 from 'better-sqlite3';
 
 // Lazy-load better-sqlite3 only when needed (development)
 // This prevents import errors in production when it's not installed
-let Database: typeof BetterSqlite3 | null = null;
+let Database: any = null;
 
 // Database configuration type
 export type DatabaseConfig = {
@@ -37,7 +36,7 @@ export type RunResult = {
 export class DatabaseClient {
   private config: DatabaseConfig;
   private pgPool?: Pool;
-  private sqliteDb?: BetterSqlite3.Database;
+  private sqliteDb?: any; // better-sqlite3 Database type (loaded dynamically)
   private isInitialized = false;
 
   constructor(config?: DatabaseConfig) {

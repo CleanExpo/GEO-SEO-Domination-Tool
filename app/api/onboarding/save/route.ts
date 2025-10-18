@@ -25,6 +25,12 @@ export async function POST(request: NextRequest) {
 
     const db = getDatabase();
 
+    // DEBUG: Check what db actually is
+    console.log('[SAVE] db type:', typeof db);
+    console.log('[SAVE] db constructor:', db?.constructor?.name);
+    console.log('[SAVE] db has get?:', typeof db?.get);
+    console.log('[SAVE] db methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(db)));
+
     // Check if save already exists
     const existing = await db.get(
       'SELECT id FROM saved_onboarding WHERE business_name = ? AND email = ?',
