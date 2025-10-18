@@ -46,8 +46,9 @@ const nextConfig = {
     if (isServer) {
       // Mark optional dependencies as external to avoid bundling errors
       // These will gracefully fallback if not installed
+      // NOTE: better-sqlite3 removed from externals - now using lazy loading in lib/db.ts
       config.externals = config.externals || [];
-      config.externals.push('pg', 'pg-native', 'ioredis', 'better-sqlite3', 'bufferutil', 'utf-8-validate', 'snoowrap');
+      config.externals.push('pg', 'pg-native', 'ioredis', 'bufferutil', 'utf-8-validate', 'snoowrap');
     }
 
     // NOTE: Do NOT exclude app/tools directory - it contains free tool pages
